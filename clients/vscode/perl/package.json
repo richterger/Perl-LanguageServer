@@ -4,6 +4,7 @@
     "description": "Language Server for Perl",
     "version": "0.9.0",
     "publisher": "richterger",
+    "repository": "https://github.com/richterger/Perl-LanguageServer",
     "engines": {
         "vscode": "^1.23.0"
     },
