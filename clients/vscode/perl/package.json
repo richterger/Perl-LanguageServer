@@ -1,0 +1,97 @@
+{
+    "name": "perl",
+    "displayName": "Perl",
+    "description": "Language Server for Perl",
+    "version": "0.9.0",
+    "publisher": "richterger",
+    "engines": {
+        "vscode": "^1.23.0"
+    },
+    "categories": [
+        "Other"
+    ],
+    "activationEvents": [
+        "onLanguage:perl"
+    ],
+    "main": "./out/extension",
+    "contributes": {
+        "configuration": {
+            "type": "object",
+            "title": "Perl configuration",
+            "properties": {
+                "perl.enable": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "enable/disable this extension"
+                },
+                "perl.sshAddr": {
+                    "type": "string",
+                    "default": null,
+                    "description": "ip address of remote system"
+                },
+                "perl.sshUser": {
+                    "type": "string",
+                    "default": null,
+                    "description": "user for ssh login"
+                },
+                "perl.sshCmd": {
+                    "type": "string",
+                    "default": null,
+                    "description": "defaults to ssh on unix and plink on windows"
+                },
+                "perl.sshWorkspaceRoot": {
+                    "type": "string",
+                    "default": null,
+                    "description": "path of the workspace root on remote system"
+                },
+                "perl.perlCmd": {
+                    "type": "string",
+                    "default": null,
+                    "description": "defaults to perl"
+                },
+                "perl.sshArgs": {
+                    "type": "string",
+                    "default": null,
+                    "description": "optional arguments for ssh"
+                },
+                "perl.pathMap": {
+                    "type": "array",
+                    "default": null,
+                    "description": "mapping of local to remote paths"
+                },
+                "perl.perlInc": {
+                    "type": "array",
+                    "default": null,
+                    "description": "array with paths to add to perl library path"
+                },
+                "perl.fileFilter": {
+                    "type": "array",
+                    "default": null,
+                    "description": "array for filtering perl file, defaults to *.pm|*.pl"
+                },
+                "perl.ignoreDirs": {
+                    "type": "array",
+                    "default": null,
+                    "description": "directories to ignore, defaults to .vscode, .git, .svn"
+                }
+            }
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+    },
+    "devDependencies": {
+        "@types/mocha": "^2.2.42",
+        "@types/node": "^7.0.67",
+        "tslint": "^5.8.0",
+        "typescript": "^2.9.2",
+        "vscode": "^1.1.6"
+    },
+    "dependencies": {
+        "vscode-languageclient": "^4.3.0"
+    }
+}

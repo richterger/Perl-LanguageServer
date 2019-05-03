@@ -1,0 +1,23 @@
+Revision history for Perl-LanguageServer
+
+0.01    13.7.2018
+        First version, released on an unsuspecting world.
+
+0.02    21.7.2018
+        - Only check syntax if there are no changes for 1.5 sec
+        - Improve symbol parser
+        - Fix concurrency issues
+        - Other small improvements
+        - Add support for adding workspace folders
+
+0.03    08.9.2018
+        - Fix issue with not reading enougth from stdin, which
+          caused LanguageServer to hang sometimes
+          
+0.9     03.5.2019
+        - Fix issue with selecting text for find definition
+          or find reference, when the symbol is selected
+        - Fix issue for Perl module that print to stdout
+          during syntax check
+        - Include Compiler::Lexer from github to ease
+          installation  
