@@ -6,15 +6,18 @@ use Moose::Util qw( apply_all_roles );
 
 use Coro ;
 use Coro::AIO ;
+use Coro::Handle ;
 use AnyEvent;
+use AnyEvent::Socket ;
 use JSON ;
 use Data::Dump qw{dump} ;
+use IO::Select ;
 
 use Perl::LanguageServer::Req ; 
 use Perl::LanguageServer::Workspace ;
 
 with 'Perl::LanguageServer::Methods' ;
-
+with 'Perl::LanguageServer::IO' ;
 
 no warnings 'uninitialized' ;
 
@@ -24,11 +27,11 @@ Perl::LanguageServer - Language Server for Perl
 
 =head1 VERSION
 
-Version 0.03
+Version 2.0
 
 =cut
 
-our $VERSION = '0.9';
+our $VERSION = '2.0';
 
 
 =head1 SYNOPSIS
@@ -59,8 +62,9 @@ our %running_reqs ;
 our %running_coros ;
 our $exit ;
 our $workspace ;
+our $dev_tool ;
 our $debug1 = 1 ;
-our $debug2 = 0 ;
+our $debug2 = 1 ;
 
 
 has 'channel' =>
@@ -70,17 +74,24 @@ has 'channel' =>
     default => sub { Coro::Channel -> new }    
     ) ;
 
-has 'client_fh' =>
-    (
-    is => 'rw',
-    isa => 'AnyEvent::Handle',
-    ) ;
-
 has 'debug' =>
     (
     is => 'rw',
     isa => 'Int',
     default => 1,
+    ) ;
+
+has 'listen_port' =>
+    (
+    is => 'rw',
+    isa => 'Maybe[Int]',
+    ) ;
+
+has 'roles' =>
+    (
+    is => 'rw',
+    isa => 'HashRef',
+    default => sub { {} },
     ) ;
 
 has 'out_semaphore' =>
@@ -90,12 +101,22 @@ has 'out_semaphore' =>
     default => sub { Coro::Semaphore -> new }
     ) ;
 
+has 'log_prefix' =>
+    (
+    is => 'rw',
+    isa => 'Str',
+    default => 'LS',
+    ) ;
+
 # ---------------------------------------------------------------------------
 
 sub logger
     {
-    print STDERR @_ ;    
+    my $self = shift ;
+    
+    print STDERR $self?$self -> log_prefix . ': ':'', @_ ;    
     }
+
 
 # ---------------------------------------------------------------------------
 
@@ -108,10 +129,13 @@ sub send_notification
     my $guard = $self -> out_semaphore -> guard  ;
     use bytes ;
     my $len  = length($outdata) ;
-    #$self -> client_fh -> push_write ("Content-Length: $len\r\nContent-Type: application/vscode-jsonrpc; charset=utf-8\r\n\r\n$outdata") ;
-    aio_write (1, undef, undef, "Content-Length: $len\r\nContent-Type: application/vscode-jsonrpc; charset=utf-8\r\n\r\n$outdata", 0) ;
-    print STDERR "Content-Length: $len\nContent-Type: application/vscode-jsonrpc; charset=utf-8\n\n$outdata\n" if ($debug2) ;
-
+    my $wrdata = "Content-Length: $len\r\nContent-Type: application/vscode-jsonrpc; charset=utf-8\r\n\r\n$outdata" ;
+    $self -> _write ($wrdata) ;
+    if ($debug2)
+        {
+        $wrdata =~ s/\r//g ;
+        $self -> logger ("<--- Notification: ", $wrdata, "\n") ;
+        }
     }
 
 # ---------------------------------------------------------------------------
@@ -120,7 +144,7 @@ sub call_method
     {
     my ($self, $reqdata, $req, $id) = @_ ;
 
-    my $method = $reqdata -> {method} ;
+    my $method = $req -> is_dap?$reqdata -> {command}:$reqdata -> {method} ;
     my $module ;
     my $name ;
 
@@ -131,7 +155,7 @@ sub call_method
         }
     elsif ($method =~ /^(\w+)$/)
         {
-        $name   = $1 ;    
+        $name   = $1 ;
         }
     elsif ($method =~ /^\$\/(\w+)$/)
         {
@@ -141,28 +165,32 @@ sub call_method
         {
         die "Unknown methd $method" ;    
         }
+    $module = $req -> type eq 'dbgint'?'DebugAdapterInterface':'DebugAdapter' if ($req -> is_dap) ;    
 
-    #print STDERR "mod=$module name=$name\n" ;
     my $base_package = __PACKAGE__ . '::Methods' ;
     my $package = $base_package ;
     $package .= '::' . $module if ($module) ;
 
-    #print STDERR "package=$package\n" ;
     my $fn = $package . '.pm' ;
     $fn =~ s/::/\//g ;
-    if (!exists $INC{$fn})
+    if (!exists $INC{$fn} || !exists $self -> roles -> {$fn})
         {
-        print STDERR dump (\%INC), "\n" ;
-        print STDERR "apply_all_roles ($self, $package, $fn)\n" ;
+        #$self -> logger (dump (\%INC), "\n") ;
+        $self -> logger ("apply_all_roles ($self, $package, $fn)\n") ;
         apply_all_roles ($self, $package) ;
-            
-        #eval "require $package" ;
-        #die $@ if ($@) ;   
+        $self -> roles -> {$fn} = 1 ;
         }
 
-    #my $func = $package . (defined($id)?'::_rpcreq_':'::_rpcnot_') . $name ;
-    my $perlmethod = (defined($id)?'_rpcreq_':'_rpcnot_') . $name ;
-    print STDERR "method=$perlmethod\n" if ($debug1) ;
+    my $perlmethod ;
+    if ($req -> is_dap)
+        {
+        $perlmethod = '_dapreq_' . $name ;
+        }
+    else
+        {    
+        $perlmethod = (defined($id)?'_rpcreq_':'_rpcnot_') . $name ;
+        }
+    $self -> logger ("method=$perlmethod\n") if ($debug1) ;
     die "Unknow perlmethod $perlmethod" if (!$self -> can ($perlmethod)) ;
 
 no strict ;
@@ -184,8 +212,11 @@ sub process_req
             delete $running_coros{$id} ;
             };
 
-        print STDERR "handle_req id=$id\n" if ($debug1) ;
-        my $req = Perl::LanguageServer::Req  -> new ({ id => $id, params => $reqdata -> {params}}) ;
+        my $type   = $reqdata -> {type} ;
+        my $is_dap = $type?1:0 ;
+        $type      = defined ($id)?'request':'notification' if (!$type) ;
+        $self -> logger ("handle_req id=$id\n") if ($debug1) ;
+        my $req = Perl::LanguageServer::Req  -> new ({ id => $id, is_dap => $is_dap, type => $type, params => $is_dap?$reqdata -> {arguments} || {}:$reqdata -> {params}}) ;
         $running_reqs{$id} = $req ;
 
         my $rsp ;
@@ -193,16 +224,27 @@ sub process_req
         eval
             {
             $rsp = $self -> call_method ($reqdata, $req, $id) ;
-
-            $outdata = $json -> encode ({ id => $id, jsonrpc => '2.0', result => $rsp})  if ($rsp) ;
-            #print STDERR dump ({ id => $id, jsonrpc => '2.0', result => $rsp}), "\n" ;
-            #print STDERR dump ($outdata), "\n" ;
-
+            $id = undef if (!$rsp) ;
+            if ($req -> is_dap)
+                {
+                $outdata = $json -> encode ({ request_seq => -$id, seq => -$id, command => $reqdata -> {command}, success => JSON::true, type => 'response', $rsp?(body => $rsp):()})  ;
+                }
+            else
+                {    
+                $outdata = $json -> encode ({ id => $id, jsonrpc => '2.0', result => $rsp})  if ($rsp) ;
+                }
             } ;
         if ($@)
             {
-            print STDERR "ERROR: $@\n" ;
-            $outdata = $json -> encode ({ id => $id, jsonrpc => '2.0', error => { code => -32001, message => "$@" }}) ;
+            $self -> logger ("ERROR: $@\n") ;
+            if ($req -> is_dap)
+                {
+                $outdata = $json -> encode ({ request_seq => -$id, command => $reqdata -> {command}, success => JSON::false, message => "$@", , type => 'response'}) ;
+                }
+            else
+                {    
+                $outdata = $json -> encode ({ id => $id, jsonrpc => '2.0', error => { code => -32001, message => "$@" }}) ;
+                }
             }
 
         if (defined($id))
@@ -210,22 +252,24 @@ sub process_req
             my $guard = $self -> out_semaphore -> guard  ;
             use bytes ;
             my $len  = length ($outdata) ;
-            #$self -> client_fh -> push_write ("Content-Length: $len\r\nContent-Type: application/vscode-jsonrpc; charset=utf-8\r\n\r\n$outdata") ;
             my $wrdata = "Content-Length: $len\r\nContent-Type: application/vscode-jsonrpc; charset=utf-8\r\n\r\n$outdata" ;
             my $sum = 0 ;
             my $cnt ;
             while ($sum < length ($wrdata))
                 {
-                $cnt = aio_write (1, undef, undef, $wrdata, $sum) ;
+                $cnt = $self -> _write ($wrdata, undef, $sum) ;
                 die "write_error ($!)" if ($cnt <= 0) ;
                 $sum += $cnt ;
                 }
 
-            print STDERR "Content-Length: $len\nContent-Type: application/vscode-jsonrpc; charset=utf-8\n\n$outdata\n" if ($debug2) ;
+            if ($debug2) 
+                {
+                $wrdata =~ s/\r//g ;
+                $self -> logger ("<--- Response: ", $wrdata, "\n") ;
+                }
             }
         cede () ;
         } ;
-
     }
 
 # ---------------------------------------------------------------------------
@@ -234,7 +278,6 @@ sub mainloop
     {
     my ($self) = @_ ;
 
-    my $fh = 0 ;
     my $buffer = '' ;
     while (!$exit)
         {
@@ -246,20 +289,16 @@ sub mainloop
         header:
         while (1)
             {
-            if (!$loop && length ($buffer) == 0)
-                {
-                print STDERR "start aio read\n" ;
-                $cnt = aio_read $fh, undef, 8192, $buffer, length ($buffer) ;
-                #$cnt = sysread STDIN, $buffer, 10000, length ($buffer) ;
-                print STDERR "end aio read cnt=$cnt\n" ;
-                die "read_error reading headers" if ($cnt < 0) ;
-                return if ($cnt == 0) ;
-                }
+            $self -> logger ("start aio read\n")  if ($debug2) ;
+            $cnt = $self -> _read (\$buffer, 8192, length ($buffer), undef, 1) ;
+            $self -> logger ("end aio read cnt=$cnt\n")  if ($debug2) ;
+            die "read_error reading headers ($!)" if ($cnt < 0) ;
+            return if ($cnt == 0) ;
 
             while ($buffer =~ s/^(.*?)\R//)
                 {
                 $line = $1 ;    
-                print STDERR "line=<$line>\n" if ($debug2) ;
+                $self -> logger ("line=<$line>\n") if ($debug2) ;
                 last header if ($line eq '') ;
                 $header{$1} = $2 if ($line =~ /(.+?):\s*(.+)/) ;
                 }
@@ -267,13 +306,15 @@ sub mainloop
             }
 
         my $len = $header{'Content-Length'} ;
+        return 1 if ($len == 0);
         my $data ;
-        print STDERR "len=$len len buffer=", length ($buffer), "\n" ;
+        #$self -> logger ("len=$len len buffer=", length ($buffer), "\n")  if ($debug2) ;
         while ($len > length ($buffer)) 
             {
-            $cnt = aio_read $fh, undef, $len - length ($buffer), $buffer, length ($buffer);
-            print STDERR "cnt=$cnt len=$len len buffer=", length ($buffer), "\n" ;
-            die "read_error reading data" if ($cnt < 0) ;
+            $cnt = $self -> _read (\$buffer, $len - length ($buffer), length ($buffer)) ;
+
+            #$self -> logger ("cnt=$cnt len=$len len buffer=", length ($buffer), "\n")  if ($debug2) ;
+            die "read_error reading data ($!)" if ($cnt < 0) ;
             return if ($cnt == 0) ;
             }
         if ($len == length ($buffer)) 
@@ -290,56 +331,155 @@ sub mainloop
             {
             die "to few data bytes" ;
             }    
-        print STDERR $data, "\n" ;
-        print STDERR "header=", dump (\%header), "\n" ;
+        $self -> logger ("read data=", $data, "\n")  if ($debug2) ;
+        $self -> logger ("read header=", dump (\%header), "\n")  if ($debug2) ;
 
         my $reqdata ;
         $reqdata = $json -> decode ($data) if ($data) ;
-        print STDERR dump ($reqdata), "\n" if ($debug2) ;
-
-        my $id = $reqdata -> {id} ;
-        #print STDERR "id=$id\n" ;
+        if ($debug1) 
+            {
+            $self -> logger ("---> Request: ", dump ($reqdata), "\n") ;
+            }
+        my $id = $reqdata -> {type}?-$reqdata -> {seq}:$reqdata -> {id};
 
         $self -> process_req ($id, $reqdata)  ;
         cede () ;
         } 
 
+    return 1 ;
     }
 
+# ---------------------------------------------------------------------------
+
+sub _run_tcp_server
+    {
+    my ($listen_port) = @_ ;
+
+    if ($listen_port)
+        {
+        my $quit ;
+        while (!$quit && !$exit)
+            {
+            my $tcpcv = AnyEvent::CondVar -> new ;
+            my $guard ;
+            eval
+                {
+                $guard = tcp_server '127.0.0.1', $listen_port, sub
+                    {
+                    my ($fh, $host, $port) = @_ ;
+
+                    async
+                        {
+                        eval
+                            {
+                            $fh = Coro::Handle::unblock ($fh) ;
+                            my $self = Perl::LanguageServer -> new ({out_fh => $fh, in_fh => $fh});
+                            $self -> logger ("connect from $host:$port\n") ;
+                            $self -> listen_port ($listen_port) ;
+
+                            $quit = $self -> mainloop () ;
+                            $self -> logger ("got quit signal\n") if ($quit) ;
+                            } ;
+                        logger (undef, $@) if ($@) ;
+                        if ($fh)
+                            {
+                            close ($fh) ;
+                            $fh = undef ;
+                            }
+                        $tcpcv -> send if ($quit || $exit);
+                        } ;
+                    } ;
+                } ;
+            if (!$@)
+                {
+                $tcpcv -> recv ;
+                }
+            else
+                {
+                $guard = undef ;
+                logger (undef, $@) ;
+    $quit = 1 ;
+                # if (!$guard && ($@ =~ /Address already in use/))
+                #     {
+                #     # stop other server
+                #     tcp_connect '127.0.0.1', $listen_port, sub
+                #         {
+                #         my ($fh) = @_ ;
+                #         syswrite ($fh, "Content-Length: 0\r\n\r\n") if ($fh) ;
+                #         } ;        
+                #     }    
+                $@ = undef ;
+                Coro::AnyEvent::sleep (2) ;
+                }
+            }
+        }
+    }
 
 # ---------------------------------------------------------------------------
 
 sub run
     {
-    $debug2 = 1 if ($ARGV[0] eq '--debug') ;    
+    my $listen_port ;
+    my $no_stdio ;
+    my $heartbeat ;
+
+    while (my $opt = shift @ARGV)
+        {
+        if ($opt eq '--debug')
+            {
+            $debug2 = 1  ;    
+            }
+        elsif ($opt eq '--port')
+            {
+            $listen_port = shift @ARGV  ;    
+            }
+        elsif ($opt eq '--nostdio')
+            {
+            $no_stdio = 1  ;    
+            }
+        elsif ($opt eq '--heartbeat')
+            {
+            $heartbeat = 1  ;    
+            }
+        }
 
     $|= 1 ;
     
     my $cv = AnyEvent::CondVar -> new ;
 
-   async
+   if ($heartbeat)
         {
-        my $i = 0 ;
-        while (0)
+        async
             {
-            print STDERR "#####$i\n" ;
-            Coro::AnyEvent::sleep (3) ;
-            $i++ ;
-            }
-        } ;
+            my $i = 0 ;
+            while (1)
+                {
+                print STDERR "#####$i\n" ;
+                Coro::AnyEvent::sleep (3) ;
+                $i++ ;
+                }
+            } ;
+        }
    
+    if (!$no_stdio)
+        {
+        async
+            {    
+            my $self = Perl::LanguageServer -> new ({out_fh => 1, in_fh => 0});
+
+            $self -> mainloop () ;
+
+            $cv -> send ;
+            } ;
+        }
+
     async
-        {    
-        my $self = Perl::LanguageServer -> new ;
-
-        #$self -> run_server ;
-
-        $self -> mainloop ;
-
-        $cv -> send ;
+        {
+        _run_tcp_server ($listen_port) ;
         } ;
 
-    $cv -> recv ;    
+    $cv -> recv ;
+    $exit = 1 ;    
     }
 
 # ---------------------------------------------------------------------------

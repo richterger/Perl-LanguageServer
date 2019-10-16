@@ -76,7 +76,36 @@ sub check_perl_syntax
     }
 
 
-    
+# ---------------------------------------------------------------------------
+
+ sub run_open3
+    {
+    my ($self, $text, $inc) = @_ ;
+
+    return (0, undef, undef) ;
+
+    my($wtr, $rdr, $err);
+
+    require IPC::Open3 ;
+    use Symbol 'gensym'; $err = gensym;
+    my $pid = IPC::Open3::open3($wtr, $rdr, $err, $self -> perlcmd, '-c', @$inc) or die "Cannot run " . $self -> perlcmd ;
+    print STDERR "write start pid=$pid\n" ;
+    syswrite ($wtr,  $text . "\n__END__\n") ;
+    print STDERR "close start\n" ;
+    close ($wtr) ;
+    print STDERR "write done\n" ; 
+
+    my $out ;
+    my $errout = join ('', <$err>) ;
+    close $err ;
+    close $rdr  ;
+    print STDERR "closed\n" ;
+    waitpid( $pid, 0 );
+    my $rc = $? ;
+
+    return ($rc, $out, $errout) ;
+    }
+
 # ---------------------------------------------------------------------------
 
 sub background_checker
@@ -111,6 +140,7 @@ sub background_checker
         $text = eval { Encode::encode ('utf-8', $text) ; } ;
         print STDERR $@ if ($@) ;    
     
+        my $ret ;
         my $errout ;
         my $out ;
         my $inc = $self -> perlinc ;
@@ -118,12 +148,19 @@ sub background_checker
         @inc = map { ('-I', $_)} @$inc if ($inc) ;
 
         print STDERR "start perl -c\n" ;
-        my $ret = run_cmd ([$self -> perlcmd, '-c', @inc],
-            "<", \$text,
-            ">", \$out,
-            "2>", \$errout)
-            -> recv ;
-    
+        if ($^O =~ /Win/)
+            {
+            ($ret, $out, $errout) = $self -> run_open3 ($text, \@inc) ;
+            }
+        else
+            {
+            $ret = run_cmd ([$self -> perlcmd, '-c', @inc],
+                "<", \$text,
+                ">", \$out,
+                "2>", \$errout)
+                -> recv ;
+            }
+
         my $rc = $ret >> 8 ;
         print STDERR "perl -c rc=$rc out=$out errout=$errout\n" ;
 

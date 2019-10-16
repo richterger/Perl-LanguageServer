@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('extension "perl" is now active');
 	
 	let perlCmd : string  = config.get('perlCmd') || 'perl' ; 
-	let perlArgs : string[] = ['-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--'] ;
+	let perlArgs : string[] = ['-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', '--port', '13603'] ;
 
 	let sshCmd : string       = config.get('sshCmd') || '' ; 
 	if (!sshCmd)

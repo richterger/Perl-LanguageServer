@@ -26,6 +26,19 @@ has 'cancel' =>
     default => 0, 
     ) ; 
 
+has 'is_dap' =>
+    (
+    isa => 'Bool',
+    is  => 'rw',
+    default => 0, 
+    ) ; 
+
+has 'type' =>
+    (
+    isa => 'Str',
+    is  => 'rw',
+    ) ; 
+
 # ---------------------------------------------------------------------------
 
 sub cancel_req 

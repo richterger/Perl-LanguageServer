@@ -2,7 +2,7 @@
     "name": "perl",
     "displayName": "Perl",
     "description": "Language Server for Perl",
-    "version": "0.9.0",
+    "version": "2.0.0",
     "publisher": "richterger",
     "repository": "https://github.com/richterger/Perl-LanguageServer",
     "engines": {
@@ -12,7 +12,8 @@
         "Other"
     ],
     "activationEvents": [
-        "onLanguage:perl"
+        "onLanguage:perl",
+        "onDebug"
     ],
     "main": "./out/extension",
     "contributes": {
@@ -76,7 +77,44 @@
                     "description": "directories to ignore, defaults to .vscode, .git, .svn"
                 }
             }
-        }
+        },
+        "breakpoints": [{ "language": "perl" }],
+        "debuggers": [
+            {
+                "type": "perl",
+                "label": "Perl Debug",
+                "languages": ["perl"],
+                "program": "./out/dbgforward.js",
+                "runtime": "node",        
+                "configurationAttributes": {
+                    "launch": {
+                        "required": ["program"],
+                        "properties": {
+                            "program": {
+                                "type": "string",
+                                "description": "Absolute path to perl file that should be debugged.",
+                                "default": "${workspaceFolder}/${relativeFile}"
+                            },
+                            "stopOnEntry": {
+                                "type": "boolean",
+                                "description": "Automatically stop after launch.",
+                                "default": true
+                            }
+                        }
+                    
+                    }
+                },
+                "initialConfigurations": [
+                    {
+                      "type": "perl",
+                      "request": "launch",
+                      "name": "Perl-Debug",
+                      "program": "${workspaceFolder}/${relativeFile}",
+                      "stopOnEntry": true
+                    }
+                  ]
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
