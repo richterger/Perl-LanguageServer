@@ -106,7 +106,7 @@ sub _dapreq_initialize
         supportsHitConditionalBreakpoints => JSON::false(),
 
         # The debug adapter supports a (side effect free) evaluate request for data hovers.
-        supportsEvaluateForHovers => JSON::false(),
+        supportsEvaluateForHovers => JSON::true(),
 
         # Available filters or options for the setExceptionBreakpoints request.
         exceptionBreakpointFilters => [],
@@ -346,7 +346,8 @@ sub _dapreq_variables
     my $thread_ref = $ref -> {thread_ref} ;
     my $package    = $ref -> {package} ;
     my $type       = $ref -> {ref} ;
-
+use Data::Dump ;
+print STDERR Data::Dump::pp($self -> id2ref), "\n" ;
     my $variables = $self -> send_request ('vars', 
                                         { 
                                         thread_ref => $thread_ref,
@@ -397,7 +398,7 @@ sub _dapreq_evaluate
                                         }) ;
     
     $result -> {variablesReference} = $result -> {var_ref}?$self -> getid ($req -> params -> {variablesReference},
-                                                                    $_ -> {var_ref},
+                                                                    $result -> {var_ref},
                                                                     { 
                                                                     frame_ref  => $frame_ref, 
                                                                     thread_ref => $thread_ref, 

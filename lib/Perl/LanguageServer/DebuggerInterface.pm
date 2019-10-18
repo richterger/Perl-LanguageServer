@@ -9,11 +9,14 @@ use strict ;
 use IO::Socket ;
 use JSON ;
 use PadWalker ;
+use Data::Dump qw{pp} ;
 
+our $max_display = 5 ;
 our $debug = 1 ;
 our $session = $ENV{PLSDI_SESSION} || 1 ;
 our $socket ;
 our $json = JSON -> new -> utf8(1) -> ascii(1) ;
+our $evalresult ;
 
 
 __PACKAGE__  -> register  ; 
@@ -86,6 +89,7 @@ sub get_var_eval
 
     my %vars ;
 
+    my $prefix = $varsrc?'el:':'eg:' ;
     my $refexpr ;
     $refexpr = $name ;
     my $ref = eval ($refexpr) ;
@@ -93,13 +97,13 @@ sub get_var_eval
         {
         $vars{'ERROR'} = [$@] ;
         }
-print STDERR "name=$name ref=$ref refref=", ref ($ref), "\n" ;
+print STDERR "name=$name ref=$ref refref=", ref ($ref), "\n", pp($ref), "\n" ;
     if (ref ($ref) eq 'ARRAY')
         {
         my $n = 0 ;
         foreach my $entry (@$ref)
             {
-            $vars{"$n"} = [\$entry, '(' . $refexpr . ')->[' . $n . ']' ] ;
+            $vars{"$n"} = [\$entry, $prefix . '(' . $refexpr . ')->[' . $n . ']' ] ;
             $n++ ;
             }    
         }
@@ -107,7 +111,7 @@ print STDERR "name=$name ref=$ref refref=", ref ($ref), "\n" ;
         {
         foreach my $entry (sort keys %$ref)
             {
-            $vars{"$entry"} = [\$ref -> {$entry}, '(' . $refexpr . ')->{' . $entry . '}' ] ;
+            $vars{"$entry"} = [\$ref -> {$entry}, $prefix . '(' . $refexpr . ')->{' . $entry . '}' ] ;
             }    
         }
     else
@@ -137,7 +141,48 @@ sub get_locals
     return (\%varsrc, $vars) ;
     }
 
+# ---------------------------------------------------------------------------
 
+sub get_eval_result 
+    {
+    my ($self, $frame, $package, $expression) = @_;
+ 
+    my $vars = PadWalker::peek_my ($frame) ;
+ 
+    my $var_declare = "package $package ; no strict ; ";
+    for my $varname (keys %$vars) 
+        {
+        $var_declare .= "my $varname = " . pp(${$vars->{$varname}}) . ";";
+        }
+    my $code = "$var_declare; $expression";
+    my %vars ;
+print STDERR "code = $code\n" ;
+
+    my @result = eval $code;
+    if ($@)
+        {
+        $vars{'ERROR'} = [$@] ;
+        }
+    else
+        {
+print STDERR pp (\@result), "\n" ;
+        if (@result < 2)
+            {
+            $evalresult = \$result[0] ;    
+            }
+        elsif ($expression =~ /^\s\%/)
+            {
+            $evalresult = { @result } ;    
+            }    
+        else
+            {
+            $evalresult = \@result ;    
+            }
+        $vars{'eval'} = [$evalresult, 'eg:$Perl::LanguageServer::DebuggerInterface::evalresult']
+        }
+    
+    return \%vars ;
+    }
 
 # ---------------------------------------------------------------------------
 
@@ -179,10 +224,24 @@ print STDERR "ref val=$val ref=$ref refref=", ref ($val), "\n" ;
 
         if (ref ($val) eq 'ARRAY') 
             {
+            my $display = '[' ;
+            my $n       = 1 ;
+            foreach (@$val)
+                {
+                $display .= ',' if ($n > 1) ;
+                $display .= "$_" ;
+                if ($n++ >= $max_display)
+                    {
+                    $display .= ',...' ;
+                    last ;    
+                    }
+                }
+            $display .= ']' ;
+            
             push @$vars,
                 {
                 name  => $key,
-                value => "$val",
+                value => $display,
                 type  => 'Array',
                 var_ref => $ref,
                 indexedVariables => scalar (@$val),
@@ -191,10 +250,24 @@ print STDERR "ref val=$val ref=$ref refref=", ref ($val), "\n" ;
 
         if (ref ($val) eq 'HASH') 
             {
+            my $display = '{' ;
+            my $n       = 1 ;
+            foreach (sort keys %$val)
+                {
+                $display .= ',' if ($n > 1) ;
+                $display .= "$_->$val->{$_}" ;
+                if ($n++ >= $max_display / 2)
+                    {
+                    $display .= ',...' ;
+                    last ;    
+                    }
+                }
+            $display .= '}' ;
+
             push @$vars,
                 {
                 name  => $key,
-                value => "$val",
+                value => $display,
                 type  => 'Hash',
                 var_ref => $ref,
                 namedVariables => scalar (keys %$val),
@@ -264,7 +337,8 @@ sub req_evaluate
     my $expression  = $params -> {'expression'} ;
     my @vars ;
     my $varsrc ;
-    $varsrc = $class -> get_var_eval ($expression) ;
+
+    $varsrc = $class -> get_eval_result ($frame_ref+2, $package, $expression) ;
 
     $class -> get_vars ($varsrc, \@vars) ;
     return $vars[0] ;
