@@ -10,6 +10,8 @@ use Perl::LanguageServer::DebuggerProcess ;
 
 no warnings 'uninitialized' ;
 
+our $reqseq = 1 ;
+
 # ---------------------------------------------------------------------------
 
 has 'debugger_process' =>
@@ -23,6 +25,7 @@ has 'debug_adapter' =>
     isa => 'Perl::LanguageServer',
     is  => 'rw',
     weak_ref => 1, 
+    predicate => 'has_debug_adapter',
     ) ; 
 
 has 'channel' =>
@@ -39,6 +42,13 @@ has 'initialized' =>
     default => 0    
     ) ;
 
+has 'responses' =>
+    (
+    isa => 'HashRef',
+    is  => 'rw',
+    default => sub { {} },
+    ) ; 
+
 # ---------------------------------------------------------------------------
 
 sub send_event
@@ -54,9 +64,15 @@ sub request
     {
     my ($self, $req) = @_ ;
 
+    my $seq = $reqseq++ ;
+    $req -> {seq} = $seq ;
+
+    my $channels = $self -> responses ;
+    local $channels -> {$seq} = Coro::Channel -> new ;
+    
     $self -> send_notification ($req) ;
 
-    return $self -> channel -> get ;
+    return $channels -> {$seq} -> get ;
     }
 
 # ---------------------------------------------------------------------------
@@ -65,9 +81,11 @@ sub _dapreq_di_response
     {
     my ($self, $workspace, $req) = @_ ;
 
-    #$self -> logger ("di_response params = ", dump($req -> params), "\n") ;
-
-    $self -> channel -> put ($req -> params) ;
+    my $seq = - $req -> id ;
+    my $channels = $self -> responses ;
+    $self -> logger ("di_response seq = $seq channels = ", dump($channels), "\n") ;
+    return if (!exists $channels -> {$seq}) ;
+    $channels -> {$seq} -> put ($req -> params) ;
     return ;
     }
 
@@ -110,5 +128,65 @@ sub _dapreq_di_break
 
     return ;
     }
+
+# ---------------------------------------------------------------------------
+
+sub _dapreq_di_loadedfile
+    {
+    my ($self, $workspace, $req) = @_ ;
+
+    $self -> log_prefix ('DAI') ;
+
+    if (!$self -> has_debug_adapter)
+        {
+        my $debug_adapter = $Perl::LanguageServer::Methods::DebugAdapter::debug_adapters{$req -> params -> {session_id}} ;
+        die "no debug_adapter for session " . $req -> params -> {session_id} if (!$debug_adapter) ;
+
+        $self -> logger ("session_id = " . $req -> params -> {session_id} . "\n") ;
+        $self -> logger ("debug_adapter = ", dump ($debug_adapter), "\n") ;
+
+        $self -> debug_adapter ($debug_adapter) ;
+        $self -> debugger_process ($debug_adapter -> debugger_process) ;
+        $debug_adapter -> debug_adapter_interface ($self) ;
+        }
+
+
+    $self -> send_event ('loadedSource', 
+                        { 
+                        reason => $req -> params -> {reason},
+                        source => $req -> params -> {source},
+                        }) ;
+
+    return ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub _dapreq_di_breakpoints
+    {
+    my ($self, $workspace, $req) = @_ ;
+
+    $self -> log_prefix ('DAI') ;
+
+    foreach my $bp (@{$req -> params -> {breakpoints}})
+        {
+        $self -> send_event ('breakpoint', 
+                        { 
+                        reason => 'changed',
+                        breakpoint => 
+                            {
+                            verified => $bp -> [2]?JSON::true ():JSON::false (),
+                            message  => $bp -> [3], 
+                            line     => $bp -> [4]+0,
+                            id       => $bp -> [6]+0,
+                            source   => { path => $bp -> [5] },
+                            }
+                        }) ;
+        }
+
+    return ;
+    }
+
+# ---------------------------------------------------------------------------
 
 1 ;

@@ -10,6 +10,7 @@ use IO::Socket ;
 use JSON ;
 use PadWalker ;
 use Data::Dump qw{pp} ;
+use vars qw{@dbline %dbline $dbline} ;
 
 our $max_display = 5 ;
 our $debug = 1 ;
@@ -17,7 +18,9 @@ our $session = $ENV{PLSDI_SESSION} || 1 ;
 our $socket ;
 our $json = JSON -> new -> utf8(1) -> ascii(1) ;
 our $evalresult ;
-
+our %postponed_breakpoints ;
+our $breakpoint_id = 1 ;
+our $loaded = 0 ;
 
 __PACKAGE__  -> register  ; 
 __PACKAGE__  -> init  ; 
@@ -429,6 +432,134 @@ sub req_stack
 
 # ---------------------------------------------------------------------------
 
+sub _set_breakpoint 
+    {
+    my ($class, $location, $condition) = @_ ;
+
+    $condition ||= '1';
+    $location = DB::_find_subline($location) if ($location =~ /\D/);
+
+    return (0, "Subroutine not found.") unless $location ;
+    return (0) if (!$location) ;
+    
+    for (my $line = $location; $line <= $location + 10 && $location < @DB::dbline; $line++)
+        {
+        if ($dbline[$line] != 0)
+            {
+            $dbline{$line+0} =~ s/^[^\0]*/$condition/;
+            return (1, undef, $line) ;    
+            }
+        }
+
+    return (0, "Line $location is not breakable.") ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub req_breakpoint
+    {
+    my ($class, $params) = @_ ;
+
+    my $breakpoints  = $params -> {breakpoints} ;
+    my $filename     = $params -> {filename} ;
+
+    if ($filename && !defined $main::{'_<' . $filename})
+        {
+        $postponed_breakpoints{$filename} = $breakpoints ;
+        foreach my $bp (@$breakpoints)
+            {
+            $bp -> [6] = $breakpoint_id++ ; 
+            }
+        return { breakpoints => $breakpoints }
+        }
+    
+     
+    local *dbline = "::_<$filename" if ($filename) ;
+
+    if ($filename)
+        {
+        # Switch the magical hash temporarily.
+        local *DB::dbline = "::_<$filename";
+        $class -> clr_breaks () ;
+        }
+    
+    foreach my $bp (@$breakpoints)
+        {
+        my $line      = $bp -> [0] ;
+        my $condition = $bp -> [1] ;
+        ($bp -> [2], $bp -> [3], $bp -> [4]) = $class -> _set_breakpoint ($line, $condition, $filename) ;
+        $bp -> [5] = $filename ;
+        }
+
+    return { breakpoints_set => 1, breakpoints => $breakpoints };
+    }
+
+# ---------------------------------------------------------------------------
+
+package DB
+    {
+    use vars qw{@dbline %dbline $dbline} ;
+
+    sub postponed
+        {
+        my ($arg) = @_ ;
+
+        return if (!$loaded) ;
+
+        # If this is a subroutine...
+        if (ref(\$arg) ne 'GLOB') 
+            {
+            return ;
+            }
+        # Not a subroutine. Deal with the file.
+        local *dbline = $arg ;
+        my $filename = $dbline; 
+
+        #Perl::LanguageServer::DebuggerInterface -> _send ({ command => 'di_loadedfile', arguments => { session_id => $session, reason => 'new', source => { path => $filename}}}) ;
+
+        if (exists $postponed_breakpoints{$filename})
+            {
+            my $ret = Perl::LanguageServer::DebuggerInterface -> req_breakpoint ({ breakpoints => $postponed_breakpoints{$filename}, filename => $filename }) ;
+            if ($ret -> {breakpoints_set})
+                {
+                delete $postponed_breakpoints{$filename} ;
+                Perl::LanguageServer::DebuggerInterface -> _send ({ command => 'di_breakpoints', 
+                                                    arguments => { session_id => $session, %$ret}}) ;
+                }
+            }
+        }
+    }
+
+# ---------------------------------------------------------------------------
+
+sub req_can_break
+    {
+    my ($class, $params) = @_ ;
+
+    my $line        = $params -> {line} ;
+    my $end_line    = $params -> {end_line} || $line ;
+    my $filename    = $params -> {filename} ;
+
+    return { breakpoints => [] } if ($filename && !defined $main::{'_<' . $filename}) ;
+
+    # Switch the magical hash temporarily.
+    local *dbline = "::_<$filename";
+
+    my @bp ;
+    for (my $i = $line; $i <= $end_line; $i++)
+        {
+        if ($dbline[$line] != 0)
+            {
+            push @bp, { line => $line } ;    
+            }        
+        }
+        
+    return { breakpoints => \@bp };
+    }
+
+    
+# ---------------------------------------------------------------------------
+
 sub req_continue
     {
     my ($class, $params) = @_ ;
@@ -553,7 +684,7 @@ sub _recv
     if ($class -> can ($cmd))
         {
         my $result = $class -> $cmd ($cmddata) ;
-        $class -> _send ({ command => 'di_response', arguments => $result}) ;
+        $class -> _send ({ command => 'di_response', seq => $cmddata -> {seq}, arguments => $result}) ;
         return ;
         }
     die "unknow cmd $cmd" ;    
@@ -630,9 +761,10 @@ sub output
 
 sub showfile
     {
-    my ($class) = @_ ;
+    my ($class, $filename, $line) = @_ ;
     $class -> logger ("enter showfile @_\n") if ($debug) ;
 
+    #$class -> _send ({ command => 'di_showfile', arguments => { session_id => $session, reason => 'new', source => { path => $filename}}}) ;
     }
 
 # ---------------------------------------------------------------------------
@@ -666,5 +798,6 @@ sub cpoststop
 
 # ---------------------------------------------------------------------------
 
+$loaded = 1 ;
 
 1 ;

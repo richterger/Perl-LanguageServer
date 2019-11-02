@@ -11,7 +11,6 @@ use Perl::LanguageServer::DebuggerProcess ;
 no warnings 'uninitialized' ;
 
 our %debug_adapters ;
-our $refcnt = 1 ;
 
 # ---------------------------------------------------------------------------
 
@@ -42,6 +41,13 @@ has 'id2ref' =>
     default => sub { {} },
     ) ; 
 
+has 'refcnt' =>
+    (
+    isa => 'Int',
+    is  => 'rw',
+    default => 1,
+    ) ; 
+
 # ---------------------------------------------------------------------------
 
 sub getid
@@ -50,12 +56,14 @@ sub getid
 
     my $refs = $self -> ref2id ;
     my $ndx = $parentid . ':' . $ref ;
-print STDERR "ndx=$ndx parentid=$parentid ref=$ref cnt=$refcnt\n" ;    
+
     return $refs -> {$ndx} + 0 if (exists $refs -> {$ndx}) ;
+
+    my $refcnt = $self -> refcnt ;
     $self -> id2ref -> {$refcnt} = { ref => $ref, ($param?%$param:()) } ;
     $refs -> {$ndx} = $refcnt+0 ;
     $refcnt++ ;
-    return $refcnt-1 ; # make sure there is no string value, so encode json encodes it as number
+    return $self -> refcnt ($refcnt) - 1 ; # make sure there is no string value, so encode json encodes it as number
     }
 
 # ---------------------------------------------------------------------------
@@ -100,7 +108,7 @@ sub _dapreq_initialize
         supportsFunctionBreakpoints => JSON::true(),
 
         # The debug adapter supports conditional breakpoints.
-        supportsConditionalBreakpoints => JSON::false(),
+        supportsConditionalBreakpoints => JSON::true(),
 
         # The debug adapter supports breakpoints that break execution after a specified number of hits.
         supportsHitConditionalBreakpoints => JSON::false(),
@@ -210,11 +218,50 @@ sub _dapreq_initialize
 
 # ---------------------------------------------------------------------------
 
+sub _set_breakpoints
+    {
+    my ($self, $workspace, $req, $location, $breakpoints, $source) = @_ ;
+
+    my @bp ;
+    for (my $i; $i < @$breakpoints; $i++)
+        {
+        push @bp, [$breakpoints -> [$i]{$location}, $breakpoints -> [$i]{condition}]    
+        }
+
+    my $ret = $self -> send_request ('breakpoint', 
+                                        { 
+                                        breakpoints => \@bp,
+                                        ($source?(filename    => $source -> {path}):()),
+                                        }) ;
+
+    my @setbp ;
+    for (my $i; $i < @{$ret -> {breakpoints}}; $i++)
+        {
+        my $bp = $ret -> {breakpoints}[$i] ;
+        push @setbp, 
+            {
+            verified => $bp -> [2]?JSON::true ():JSON::false (),
+            message  => $bp -> [3], 
+            line     => $bp -> [4]+0,
+            id       => $bp -> [6]+0,
+            source   => { path => $bp -> [5] },
+            }
+        }
+    return { breakpoints => \@setbp } ;
+    }
+
+# ---------------------------------------------------------------------------
+
 sub _dapreq_setBreakpoints
     {
     my ($self, $workspace, $req) = @_ ;
 
-    return { breakpoints => [] } ;
+    my $breakpoints = $req -> params -> {breakpoints} ;
+    my $source      = $req -> params -> {source} ;
+    
+    return { breakpoints => [] } if (!$breakpoints || !$source);
+
+    return $self -> _set_breakpoints ($workspace, $req, 'line', $breakpoints, $source) ;
     }
 
 # ---------------------------------------------------------------------------
@@ -223,7 +270,11 @@ sub _dapreq_setFunctionBreakpoints
     {
     my ($self, $workspace, $req) = @_ ;
 
-    return { breakpoints => [] } ;
+    my $breakpoints = $req -> params -> {breakpoints} ;
+    
+    return { breakpoints => [] } if (!$breakpoints);
+
+    return $self -> _set_breakpoints ($workspace, $req, 'name', $breakpoints) ;
     }
 
 # ---------------------------------------------------------------------------
@@ -233,6 +284,29 @@ sub _dapreq_setExceptionBreakpoints
     my ($self, $workspace, $req) = @_ ;
 
     return {} ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub _dapreq_breakpointLocations  
+    {
+    my ($self, $workspace, $req) = @_ ;
+
+    my $source      = $req -> params -> {source} ;
+    my $ret = $self -> send_request ('can_break', 
+                                        { 
+                                        line => $req -> params -> {line},
+                                        end_line => $req -> params -> {endLine},
+                                        ($source?(filename    => $source -> {path}):()),
+                                        }) ;
+
+
+    foreach (@{$ret -> {breakpoints}})
+        {
+        $_ -> {line} += 0 ;
+        }
+    
+    return $ret ;
     }
 
 # ---------------------------------------------------------------------------
