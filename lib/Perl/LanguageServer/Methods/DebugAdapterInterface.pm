@@ -99,9 +99,10 @@ sub _dapreq_di_break
 
     my $debug_adapter = $Perl::LanguageServer::Methods::DebugAdapter::debug_adapters{$req -> params -> {session_id}} ;
     die "no debug_adapter for session " . $req -> params -> {session_id} if (!$debug_adapter) ;
-
+    $debug_adapter -> running (0) ;
+    
     $self -> logger ("session_id = " . $req -> params -> {session_id} . "\n") ;
-    $self -> logger ("debug_adapter = ", dump ($debug_adapter), "\n") ;
+    #$self -> logger ("debug_adapter = ", dump ($debug_adapter), "\n") ;
 
     $self -> debug_adapter ($debug_adapter) ;
     $self -> debugger_process ($debug_adapter -> debugger_process) ;
@@ -109,13 +110,19 @@ sub _dapreq_di_break
 
     my $initialized = $self -> initialized ;
     my $reason      = $req -> params -> {reason} ;
+print STDERR "reason = $reason tempb = ", $debug_adapter -> in_temp_break, "\n" ;
+    return if ($reason eq 'pause' && $debug_adapter -> in_temp_break) ;
+    $debug_adapter -> in_temp_break (0) ;
+
     $reason         ||= $initialized?'breakpoint':'entry' ;
+
+    $debug_adapter -> clear_non_thread_ids ;
 
     $self -> send_event ('stopped', 
                         { 
                         reason => $reason,
-                        threadId => 1,
-                        #preserveFocusHint => JSON::true (),
+                        threadId => $debug_adapter -> getid (0, $req -> params -> {thread_ref}) || 1,
+                        preserveFocusHint => JSON::false (),
                         allThreadsStopped => JSON::true (),
                         }) ;
 

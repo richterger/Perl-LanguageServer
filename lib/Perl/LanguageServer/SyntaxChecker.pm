@@ -82,7 +82,7 @@ sub check_perl_syntax
     {
     my ($self, $text, $inc) = @_ ;
 
-    return (0, undef, undef) ;
+    #return (0, undef, undef) ;
 
     my($wtr, $rdr, $err);
 

@@ -1,7 +1,7 @@
 {
     "name": "perl",
     "displayName": "Perl",
-    "description": "Language Server for Perl",
+    "description": "Language Server and Debugger for Perl",
     "version": "2.0.0",
     "publisher": "richterger",
     "repository": "https://github.com/richterger/Perl-LanguageServer",
@@ -9,7 +9,7 @@
         "vscode": "^1.23.0"
     },
     "categories": [
-        "Other"
+        "Debuggers", "Programming Languages", "Linters"
     ],
     "activationEvents": [
         "onLanguage:perl",
@@ -99,9 +99,24 @@
                                 "type": "boolean",
                                 "description": "Automatically stop after launch.",
                                 "default": true
+                            },
+                            "args": {
+                                "type": "array",
+                                "description": "optional, array with arguments for perl program.",
+                                "default": null
+                            },
+                            "env": {
+                                "type": "array",
+                                "description": "optional, object with environment settings.",
+                                "default": null
+                            },
+                            "cwd": {
+                                "type": "array",
+                                "description": "optional, change working directory.",
+                                "default": null
                             }
                         }
-                    
+                   
                     }
                 },
                 "initialConfigurations": [

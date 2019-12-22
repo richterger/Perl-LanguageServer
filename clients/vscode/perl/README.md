@@ -1,16 +1,28 @@
 # Perl README
 
-Language Server for Perl
+Language Server and Debugger for Perl
 
 ## Features
 
-* Syntax checking
-* Symbols in file
-* Symbols in workspace/directory
-* Goto Definition
-* Find References
-* Run on remote syntax check on remote system via ssh
-* Supports multiple workspace folders
+* Language Server
+  * Syntax checking
+  * Symbols in file
+  * Symbols in workspace/directory
+  * Goto Definition
+  * Find References
+  * Run on remote syntax check on remote system via ssh
+  * Supports multiple workspace folders
+* Debugger
+  * Run, pause, step, next, return
+  * Support for coro threads
+  * Breakpoints
+  * Variable view, can switch to every stack frame or coro thread
+  * Set variable
+  * Watch variable
+  * Tooltips
+  * Evaluate perl code in debuggee, in context of every stack frame of coro thread
+  * Debug mutiple perl programm at once
+
 
 ## Requirements
 
@@ -35,6 +47,17 @@ This extension contributes the following settings:
 * `perl.perlInc`: array with paths to add to perl library path
 * `perl.fileFilter`: array for filtering perl file, defaults to [*.pm,*.pl]
 * `perl.ignoreDirs`: directories to ignore, defaults to [.vscode, .git, .svn]
+
+## Debugger Settings for launch.json
+
+* `type`: needs to be `perl`
+* `request`: only `launch` is supported (this is a restriction of perl itself)
+* `name`: name of this debug configuration
+* `program`: path to perl program to start
+* `stopOnEntry`: if true, program will stop on entry
+* `args`:   optional, array with arguments for perl program
+* `env`:    optional, object with environment settings 
+* `cwd`:    optional, change working directory
 
 ## Remote check
 

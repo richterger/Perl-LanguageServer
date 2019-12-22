@@ -155,7 +155,10 @@ sub on_stdout
     {
     my ($self, $data) = @_ ;
 
-    $self -> send_event ('output', { category => 'stdout', output => $data }) ;
+    foreach my $line (split /\r?\n/, $data)
+        {
+        $self -> send_event ('output', { category => 'stdout', output => $line . "\r\n" }) ;
+        }
     }
 
 # ---------------------------------------------------------------------------
@@ -164,7 +167,10 @@ sub on_stderr
     {
     my ($self, $data) = @_ ;
 
-    $self -> send_event ('output', { category => 'stderr', output => $data }) ;
+    foreach my $line (split /\r?\n/, $data)
+        {
+        $self -> send_event ('output', { category => 'stderr', output => $line . "\r\n" }) ;
+        }
     }
 
 # ---------------------------------------------------------------------------

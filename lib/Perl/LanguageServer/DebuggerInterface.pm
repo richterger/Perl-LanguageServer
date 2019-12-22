@@ -9,18 +9,20 @@ use strict ;
 use IO::Socket ;
 use JSON ;
 use PadWalker ;
+use Scalar::Util qw{blessed reftype looks_like_number};
 use Data::Dump qw{pp} ;
 use vars qw{@dbline %dbline $dbline} ;
 
 our $max_display = 5 ;
-our $debug = 1 ;
+our $debug = 0 ;
 our $session = $ENV{PLSDI_SESSION} || 1 ;
 our $socket ;
 our $json = JSON -> new -> utf8(1) -> ascii(1) ;
-our $evalresult ;
+our @evalresult ;
 our %postponed_breakpoints ;
 our $breakpoint_id = 1 ;
 our $loaded = 0 ;
+our $break_reason ;
 
 __PACKAGE__  -> register  ; 
 __PACKAGE__  -> init  ; 
@@ -94,27 +96,36 @@ sub get_var_eval
 
     my $prefix = $varsrc?'el:':'eg:' ;
     my $refexpr ;
+    my $pre ;
+    my $post ;
     $refexpr = $name ;
     my $ref = eval ($refexpr) ;
     if ($@)
         {
         $vars{'ERROR'} = [$@] ;
         }
-print STDERR "name=$name ref=$ref refref=", ref ($ref), "\n", pp($ref), "\n" ;
-    if (ref ($ref) eq 'ARRAY')
+        #print STDERR "name=$name ref=$ref refref=", ref ($ref), "reftype=", reftype ($ref), "\n", pp($ref), "\n" ;
+        if (ref ($ref) eq 'REF')
+            {
+            $ref = $$ref ;
+            #print STDERR "deref ----> ref val=$refexpr ref=$ref refref=", ref ($ref), "reftype=", reftype ($ref), "\n" ;
+            $pre = '${' ;
+            $post = '}' ;
+            }
+    if (reftype ($ref) eq 'ARRAY')
         {
         my $n = 0 ;
         foreach my $entry (@$ref)
             {
-            $vars{"$n"} = [\$entry, $prefix . '(' . $refexpr . ')->[' . $n . ']' ] ;
+            $vars{"$n"} = [\$entry, $prefix . $pre . '(' . $refexpr . ')' . $post . '->[' . $n . ']' ] ;
             $n++ ;
             }    
         }
-    elsif (ref ($ref) eq 'HASH')
+    elsif (reftype ($ref) eq 'HASH')
         {
         foreach my $entry (sort keys %$ref)
             {
-            $vars{"$entry"} = [\$ref -> {$entry}, $prefix . '(' . $refexpr . ')->{' . $entry . '}' ] ;
+            $vars{"$entry"} = [\$ref -> {$entry}, $prefix . $pre . '(' . $refexpr . ')' . $post . "->{'" . $entry . "'}" ] ;
             }    
         }
     else
@@ -131,17 +142,41 @@ sub get_locals
     {
     my ($self, $frame) = @_ ;
 
-    my $vars = PadWalker::peek_my ($frame) ;
+    my $vars  ;
     my %varsrc ;
-    foreach my $var (keys %$vars)
+    eval
         {
-        $varsrc{$var} = 
-            [
-            $vars->{$var},
-            "el:\$varsrc->{'$var'}"    
-            ] ;
-        }
+        $vars = PadWalker::peek_my ($frame) ;
+        foreach my $var (keys %$vars)
+            {
+            $varsrc{$var} = 
+                [
+                $vars->{$var},
+                "el:\$varsrc->{'$var'}"    
+                ] ;
+            }
+        } ;
+    logger ($@) if ($@) ;
     return (\%varsrc, $vars) ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub _eval_replace 
+    {
+    my ($___di_vars, $___di_sigil, $___di_var, $___di_suffix) = @_ ;
+
+    if ($___di_suffix)
+        {
+        return "\$___di_vars->{'\%$___di_var'}{" if ($___di_suffix eq '{' && exists $___di_vars->{"\%$___di_var"}) ;
+        return "\$___di_vars->{'\@$___di_var'}[" if (exists $___di_vars->{"\@$___di_var"});
+        }
+    else
+        {
+        return "$___di_sigil\{\$___di_vars->{'$___di_sigil$___di_var'}}" if (exists $___di_vars->{"$___di_sigil$___di_var"}) ;        
+        }
+
+    return "$___di_sigil$___di_var$___di_suffix" ;
     }
 
 # ---------------------------------------------------------------------------
@@ -150,16 +185,13 @@ sub get_eval_result
     {
     my ($self, $frame, $package, $expression) = @_;
  
-    my $vars = PadWalker::peek_my ($frame) ;
+    my $___di_vars = PadWalker::peek_my ($frame) ;
  
-    my $var_declare = "package $package ; no strict ; ";
-    for my $varname (keys %$vars) 
-        {
-        $var_declare .= "my $varname = " . pp(${$vars->{$varname}}) . ";";
-        }
-    my $code = "$var_declare; $expression";
+    $expression =~ s/([\%\@\$])(\w+)\s*([\[\{])?/_eval_replace($___di_vars, $1, $2, $3)/eg ;
+
+    my $code = "package $package ; no strict ; $expression";
     my %vars ;
-print STDERR "code = $code\n" ;
+    #print STDERR "code = $code\n" ;
 
     my @result = eval $code;
     if ($@)
@@ -168,20 +200,26 @@ print STDERR "code = $code\n" ;
         }
     else
         {
-print STDERR pp (\@result), "\n" ;
         if (@result < 2)
             {
-            $evalresult = \$result[0] ;    
+            if (ref ($result[0]) eq 'REF')
+                {
+                push @evalresult, $result[0] ;    
+                }
+            else
+                {
+                push @evalresult, \$result[0] ;    
+                }
             }
-        elsif ($expression =~ /^\s\%/)
+        elsif ($expression =~ /^\s*\\?\s*\%/)
             {
-            $evalresult = { @result } ;    
+            push @evalresult, { @result } ;    
             }    
         else
             {
-            $evalresult = \@result ;    
+            push @evalresult, \@result ;    
             }
-        $vars{'eval'} = [$evalresult, 'eg:$Perl::LanguageServer::DebuggerInterface::evalresult']
+        $vars{'eval'} = [$evalresult[-1], 'eg:$Perl::LanguageServer::DebuggerInterface::evalresult[' . $#evalresult . ']'] ;
         }
     
     return \%vars ;
@@ -193,7 +231,13 @@ print STDERR pp (\@result), "\n" ;
     {
     my ($self, $val) = @_ ;
 
-    return "$val" ;
+    return 'undef' if (!defined ($val)) ;
+    my $obj = '' ;
+    $obj = blessed ($val) . ' ' if (blessed ($val)) ;
+    return $obj . '[..]' if (ref ($val) eq 'ARRAY') ;
+    return $obj . '{..}' if (ref ($val) eq 'HASH') ;
+    my $isnum = looks_like_number ($val);
+    return $obj . ($isnum?$val:"'$val'") ;
     }
 
 # ---------------------------------------------------------------------------
@@ -208,31 +252,34 @@ sub get_vars
         my $val = $varsrc -> {$k}[0] ;
         my $ref = $varsrc -> {$k}[1] ;
         $key =~ s/([\0-\x1f])/'^'.chr(ord($1)+0x40)/eg ;
-print STDERR "k=$k val=$val ref=$ref refref=", ref ($val), "\n" ;
+        #print STDERR "k=$k val=$val ref=$ref refref=", ref ($val), "reftype=", reftype ($ref), "\n" ;
 
         if (ref ($val) eq 'REF')
             {
             $val = $$val ;
-print STDERR "ref val=$val ref=$ref refref=", ref ($val), "\n" ;
+            #print STDERR "deref ----> ref val=$val ref=$ref refref=", ref ($val), "reftype=", reftype ($ref), "\n" ;
             }
-        if (ref ($val) eq 'SCALAR') 
+        my $obj = '' ;
+        $obj = blessed ($val) . ' ' if (blessed ($val)) ;
+
+        if (reftype ($val) eq 'SCALAR') 
             {
             push @$vars,
                 {
                 name  => $key,
-                value => $self -> get_scalar ($$val),
+                value => $obj . $self -> get_scalar ($$val),
                 type  => 'Scalar',
                 } ;
             }
 
-        if (ref ($val) eq 'ARRAY') 
+        if (reftype ($val) eq 'ARRAY') 
             {
-            my $display = '[' ;
+            my $display = $obj . '[' ;
             my $n       = 1 ;
             foreach (@$val)
                 {
                 $display .= ',' if ($n > 1) ;
-                $display .= "$_" ;
+                $display .= $self -> get_scalar ($_) ;
                 if ($n++ >= $max_display)
                     {
                     $display .= ',...' ;
@@ -251,14 +298,14 @@ print STDERR "ref val=$val ref=$ref refref=", ref ($val), "\n" ;
                 } ;
             }
 
-        if (ref ($val) eq 'HASH') 
+        if (reftype ($val) eq 'HASH') 
             {
-            my $display = '{' ;
+            my $display = $obj . '{' ;
             my $n       = 1 ;
             foreach (sort keys %$val)
                 {
                 $display .= ',' if ($n > 1) ;
-                $display .= "$_->$val->{$_}" ;
+                $display .= "$_=>" . $self -> get_scalar ($val->{$_}) ;
                 if ($n++ >= $max_display / 2)
                     {
                     $display .= ',...' ;
@@ -291,19 +338,15 @@ print STDERR "ref val=$val ref=$ref refref=", ref ($val), "\n" ;
 
 # ---------------------------------------------------------------------------
 
-sub req_vars
+sub get_varsrc
     {
-    my ($class, $params) = @_ ;
+    my ($class, $frame_ref, $package, $type) = @_ ;
 
-    my $thread_ref  = $params -> {thread_ref} ;
-    my $frame_ref   = $params -> {frame_ref} ;
-    my $package     = $params -> {'package'} ;
-    my $type        = $params -> {type} ;
     my @vars ;
     my $varsrc ;
     if ($type eq 'l')
         {
-        ($varsrc) = $class -> get_locals($frame_ref+2) ;
+        ($varsrc) = $class -> get_locals($frame_ref+3) ;
         }
     elsif ($type eq 'g')
         {
@@ -320,12 +363,141 @@ sub req_vars
     elsif ($type =~ /^el:(.+)/)
         {
         my $name = $1 ;
-        my ($dummy, $varlocal) = $class -> get_locals($frame_ref+2) ;
+        my ($dummy, $varlocal) = $class -> get_locals($frame_ref+3) ;
         $varsrc = $class -> get_var_eval ($name, $varlocal) ;
         }
 
+    return $varsrc ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub req_vars
+    {
+    my ($class, $params) = @_ ;
+
+    my $thread_ref  = $params -> {thread_ref} ;
+    my $tid = defined ($Coro::current)?$Coro::current+0:1 ;
+    return { variables => [] } if ($thread_ref != $tid) ;
+
+    my $frame_ref   = $params -> {frame_ref} ;
+    my $package     = $params -> {'package'} ;
+    my $type        = $params -> {type} ;
+    my @vars ;
+
+    my $varsrc = $class -> get_varsrc ($frame_ref, $package, $type) ;
+
     $class -> get_vars ($varsrc, \@vars) ;
+
     return { variables => \@vars } ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub _set_var_expr
+    {
+    my ($class, $type, $setvar, $expr_ref) = @_ ;
+
+    if (!$type)
+        {
+        if ($setvar)
+            {
+            $$expr_ref = $setvar . '=' . $$expr_ref ;
+            }    
+        return ;
+        }
+
+    my $refexpr ;
+    if ($type =~ /^eg:(.+)/)
+        {
+        $refexpr = $1 ;
+        my $ref = eval ($refexpr) ;
+        return      
+            {
+            name => "ERROR",
+            value => $@,
+            } if ($@) ;
+        if (reftype ($ref) eq 'ARRAY')
+            {
+            $refexpr .= '[' . $setvar . ']' ;
+            } 
+        elsif (reftype ($ref) eq 'HASH')
+            {
+            $refexpr .= '{' . $setvar . '}' ;
+            } 
+        elsif (reftype ($ref) eq 'SCALAR')
+            {
+            $refexpr = '${' . $refexpr . '}' ;
+            }
+        else
+            {
+            return      
+                {
+                name => "ERROR",
+                value => "Cannot set variable if reference is of type " . reftype ($ref) ,
+                }  ;
+            } 
+        }
+    else
+        {
+        return      
+            {
+            name => "ERROR",
+            value => "Invalid type: $type",
+            }  ;
+        }
+
+    $$expr_ref = $refexpr . '=' . $$expr_ref ;
+
+    return ;
+    }
+
+
+# ---------------------------------------------------------------------------
+
+sub req_setvar
+    {
+    my ($class, $params) = @_ ;
+
+    my $thread_ref  = $params -> {thread_ref} ;
+    my $tid = defined ($Coro::current)?$Coro::current+0:1 ;
+    return undef if ($thread_ref != $tid) ;
+
+    my $frame_ref   = $params -> {frame_ref} ;
+    my $package     = $params -> {'package'} ;
+    my $expression  = $params -> {'expression'} ;
+    my $setvar      = $params -> {'setvar'} ;
+    my $type        = $params -> {'type'} ;
+    my @vars ;
+    my $resultsrc ;
+    my $varref ;
+    my $varsrc = $class -> get_varsrc ($frame_ref, $package, $type) ;
+    if (!exists $varsrc -> {$setvar})
+        {
+        return      
+            {
+            name => "ERROR",
+            value => "unknown variable: $setvar",
+            } ;
+        }
+    $varref = $varsrc -> {$setvar}[0] ;
+    eval
+        {
+        $resultsrc = $class -> get_eval_result ($frame_ref+2, $package, $expression) ;
+
+        $$varref = ${$resultsrc -> {eval}[0]} ;
+        } ;
+    return      
+        {
+        name => "ERROR",
+        value => $@,
+        } if ($@) ;
+
+    return
+        {
+        name => $setvar,
+        value => "$$varref",
+        } ;
     }
 
 # ---------------------------------------------------------------------------
@@ -335,15 +507,27 @@ sub req_evaluate
     my ($class, $params) = @_ ;
 
     my $thread_ref  = $params -> {thread_ref} ;
+    my $tid = defined ($Coro::current)?$Coro::current+0:1 ;
+    return undef if ($thread_ref != $tid) ;
+
     my $frame_ref   = $params -> {frame_ref} ;
     my $package     = $params -> {'package'} ;
     my $expression  = $params -> {'expression'} ;
     my @vars ;
     my $varsrc ;
 
-    $varsrc = $class -> get_eval_result ($frame_ref+2, $package, $expression) ;
+    eval
+        {
+        $varsrc = $class -> get_eval_result ($frame_ref+2, $package, $expression) ;
 
-    $class -> get_vars ($varsrc, \@vars) ;
+        $class -> get_vars ($varsrc, \@vars) ;
+        } ;
+    return      
+        {
+        name => "ERROR",
+        value => $@,
+        } if ($@) ;
+
     return $vars[0] ;
     }
 
@@ -372,14 +556,46 @@ sub req_threads
     return { threads => \@threads } ;
     }
 
+# ---------------------------------------------------------------------------
+
+
+sub find_coro 
+    {
+    my ($class, $pid) = @_;
+ 
+    return if (!defined &Coro::State::list) ;
+    
+    if (my ($coro) = grep ($_ == $pid, Coro::State::list())) 
+        {
+        return $coro ;
+        } 
+    else 
+        {
+        $class -> logger ("$pid: no such coroutine\n") ;
+        }
+    return ;
+    }
 
 # ---------------------------------------------------------------------------
 
 sub req_stack
     {
-    my ($class, $params) = @_ ;
+    my ($class, $params, $recurse) = @_ ;
 
     my $thread_ref   = $params -> {thread_ref} ;
+    my $tid = defined ($Coro::current)?$Coro::current+0:1 ;
+    if ($thread_ref != $tid && !$recurse)
+        {
+        my $coro  ;
+        $coro = $class -> find_coro ($thread_ref) ;
+        return { stackFrames => [] } if (!$coro) ;
+        my $ret ;
+        $coro -> call (sub {
+            $ret = $class -> req_stack ($params, 1) ;
+            }) ;
+        return $ret ;
+        }
+
     my $levels       = $params -> {levels} || 999 ;
     my $start_frame  = $params -> {start} || 0 ;
     $start_frame += 3 ;
@@ -419,10 +635,11 @@ sub req_stack
                 name        => $sub_name,
                 source      => { path => $filename },
                 line        => $line,
-                #column      => 0,
-                moduleId    => $package,
+                column      => 1,
+                #moduleId    => $package,
                 'package'   => $package,
                 } ;
+            $j-- if ($sub_name eq '(eval)') ;    
             push @stack, $frame ;
             }
         }
@@ -442,7 +659,7 @@ sub _set_breakpoint
     return (0, "Subroutine not found.") unless $location ;
     return (0) if (!$location) ;
     
-    for (my $line = $location; $line <= $location + 10 && $location < @DB::dbline; $line++)
+    for (my $line = $location; $line <= $location + 10 && $location < @dbline; $line++)
         {
         if ($dbline[$line] != 0)
             {
@@ -475,7 +692,6 @@ sub req_breakpoint
     
      
     local *dbline = "::_<$filename" if ($filename) ;
-
     if ($filename)
         {
         # Switch the magical hash temporarily.
@@ -564,6 +780,7 @@ sub req_continue
     {
     my ($class, $params) = @_ ;
 
+    @evalresult = () ;
     $class -> cont ;
 
     return ;
@@ -575,6 +792,7 @@ sub req_step_in
     {
     my ($class, $params) = @_ ;
 
+    @evalresult = () ;
     $class -> step ;
 
     return ;
@@ -586,6 +804,7 @@ sub req_step_out
     {
     my ($class, $params) = @_ ;
 
+    @evalresult = () ;
     $class -> ret (2) ;
 
     return ;
@@ -597,6 +816,7 @@ sub req_next
     {
     my ($class, $params) = @_ ;
 
+    @evalresult = () ;
     $class -> next ;
 
     return ;
@@ -630,7 +850,7 @@ sub _recv
     {
     my ($class) = @_ ;
 
-    $class -> logger ("wait for input\n") ;
+    $class -> logger ("wait for input\n") if ($debug) ;
 
     my $line ;
     my $cnt ;
@@ -676,8 +896,8 @@ sub _recv
         {
         die "to few data bytes" ;
         }    
-    $class -> logger ("read data=", $data, "\n") ;
-    $class -> logger ("read header=", "%header", "\n") ;
+    $class -> logger ("read data=", $data, "\n") if ($debug) ;
+    $class -> logger ("read header=", "%header", "\n") if ($debug) ;
 
     my $cmddata = $json -> decode ($data) ;
     my $cmd = 'req_' . $cmddata -> {command} ;
@@ -698,7 +918,8 @@ sub awaken
     my ($class) = @_ ;
     $class -> logger ("enter awaken\n") if ($debug) ;
 
-    $class -> _send ({ command => 'di_break', arguments => { session_id => $session, reason => 'pause'}}) ;
+    $break_reason = 'pause' ;
+    #$class -> _send ({ command => 'di_break', arguments => { session_id => $session, reason => 'pause'}}) ;
     }
 
 # ---------------------------------------------------------------------------
@@ -783,7 +1004,16 @@ sub cprestop
     my ($class) = @_ ;
     $class -> logger ("enter cprestop @_\n") if ($debug) ;
 
-    $class -> _send ({ command => 'di_break', arguments => { session_id => $session}}) ;
+    @evalresult = () ;
+    my $tid = defined ($Coro::current)?$Coro::current+0:1 ;
+    $class -> _send ({ command => 'di_break', 
+                       arguments => 
+                        { 
+                        thread_ref => $tid, 
+                        session_id => $session,
+                        ($break_reason?(reason => $break_reason):()),
+                        }}) ;
+    $break_reason = undef ;                        
     }
 
 # ---------------------------------------------------------------------------
@@ -792,7 +1022,6 @@ sub cpoststop
     {
     my ($class) = @_ ;
     $class -> logger ("enter cpoststop @_\n") if ($debug) ;
-
     }
 
 

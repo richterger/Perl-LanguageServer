@@ -1,5 +1,18 @@
 # Change Log
 
-0.0.1   Initial Version
-0.0.2   Fix quiting issue when starting Perl::LanguageServer, more fixes are in the Perl part
-0.9.0   Fix issues in the Perl part, make sure to update Perl::LanguageServer from cpan
+## 2.0.0    `2019-12-22`
+Add Perl debugger
+
+## 0.9.0   `2019-05-03`
+Fix issues in the Perl part, make sure to update Perl::LanguageServer from cpan
+
+## 0.0.3   `2018-09-08`
+Fix issue with not reading enougth from stdin, which caused LanguageServer to hang sometimes
+
+## 0.0.2  `2018-07-21` 
+Fix quiting issue when starting Perl::LanguageServer, more fixes are in the Perl part
+
+## 0.0.1  `2018-07-13`
+Initial Version
+
+

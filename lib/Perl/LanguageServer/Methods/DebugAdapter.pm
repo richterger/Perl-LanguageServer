@@ -48,6 +48,20 @@ has 'refcnt' =>
     default => 1,
     ) ; 
 
+has 'running' =>
+    (
+    isa => 'Int',
+    is  => 'rw',
+    default => 0,
+    ) ; 
+
+has 'in_temp_break' =>
+    (
+    isa => 'Int',
+    is  => 'rw',
+    default => 0,
+    ) ; 
+
 # ---------------------------------------------------------------------------
 
 sub getid
@@ -64,6 +78,25 @@ sub getid
     $refs -> {$ndx} = $refcnt+0 ;
     $refcnt++ ;
     return $self -> refcnt ($refcnt) - 1 ; # make sure there is no string value, so encode json encodes it as number
+    }
+
+# ---------------------------------------------------------------------------
+
+sub clear_non_thread_ids
+    {
+    my ($self) = @_ ;
+
+    my $refs = $self -> ref2id ;
+    my $id2refs = $self -> id2ref ;
+    my $id ;
+    foreach (keys %$refs)
+        {
+        if (/^0:/)
+            {
+            $id = delete $refs -> {$_} ;
+            delete $id2refs -> {$id} ;
+            }    
+        }
     }
 
 # ---------------------------------------------------------------------------
@@ -218,10 +251,60 @@ sub _dapreq_initialize
 
 # ---------------------------------------------------------------------------
 
+sub _check_not_running
+    {
+    my ($self, $workspace) = @_ ;
+
+    if ($self -> running)
+        {
+        die "Debuggee is running" ;
+        }
+    return ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub _temp_break
+    {
+    my ($self, $workspace) = @_ ;
+
+    my $running = $self -> running ;
+    return if (!$running) ;
+    my $cnt = 30 ;
+    $self -> in_temp_break (1) ;
+    $self -> _dapreq_pause ($workspace) ;  
+    while ($self -> running && $cnt-- > 0)
+        {
+print STDERR "running wait $cnt\n" ;
+        Coro::AnyEvent::sleep (0.1) ;    
+        }
+    $self -> _check_not_running ($workspace) ;
+    $running = 0 if (!$self -> in_temp_break) ;
+    $self -> in_temp_break (0) ;
+
+    return $running ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub _temp_cont
+    {
+    my ($self, $workspace, $old_running) = @_ ;
+
+    return if (!$old_running) ;
+    $self -> running (1) ;
+    $self -> send_request ('continue') ;
+    }
+
+
+# ---------------------------------------------------------------------------
+
 sub _set_breakpoints
     {
     my ($self, $workspace, $req, $location, $breakpoints, $source) = @_ ;
 
+    my $old_running = $self -> _temp_break ($workspace) ;
+print STDERR "old_running = $old_running\n" ;
     my @bp ;
     for (my $i; $i < @$breakpoints; $i++)
         {
@@ -247,6 +330,9 @@ sub _set_breakpoints
             source   => { path => $bp -> [5] },
             }
         }
+
+    $self -> _temp_cont ($workspace, $old_running) ;
+
     return { breakpoints => \@setbp } ;
     }
 
@@ -292,6 +378,8 @@ sub _dapreq_breakpointLocations
     {
     my ($self, $workspace, $req) = @_ ;
 
+    my $old_running = $self -> _temp_break ($workspace) ;
+
     my $source      = $req -> params -> {source} ;
     my $ret = $self -> send_request ('can_break', 
                                         { 
@@ -300,6 +388,7 @@ sub _dapreq_breakpointLocations
                                         ($source?(filename    => $source -> {path}):()),
                                         }) ;
 
+    $self -> _temp_cont ($workspace, $old_running) ;
 
     foreach (@{$ret -> {breakpoints}})
         {
@@ -315,6 +404,13 @@ sub _dapreq_configurationDone
     {
     my ($self, $workspace, $req) = @_ ;
 
+    if (!$self -> debugger_process -> stop_on_entry)
+        {
+        $self -> running (1) ;
+        $self -> send_request ('continue') ;
+        $self -> send_event ('continued', { allThreadsContinued => JSON::true() }) ;
+        }
+
     return {} ;
     }
 
@@ -324,6 +420,9 @@ sub _dapreq_launch
     {
     my ($self, $workspace, $req) = @_ ;
 
+    $self -> _check_not_running ($workspace) ;
+
+    $self -> running (1) ;
     my $proc = Perl::LanguageServer::DebuggerProcess -> new ($req -> params) ;
     $self -> debugger_process ($proc) ;
     $proc -> debug_adapter ($self) ;
@@ -349,6 +448,8 @@ sub _dapreq_threads
     {
     my ($self, $workspace, $req) = @_ ;
 
+    $self -> _check_not_running ($workspace) ;
+
     my $threads = $self -> send_request ('threads') ;
     foreach (@{$threads -> {threads}})
         {
@@ -364,6 +465,8 @@ sub _dapreq_stackTrace
     {
     my ($self, $workspace, $req) = @_ ;
 
+    $self -> _check_not_running ($workspace) ;
+
     my $thread_ref = $self -> id2ref -> {$req -> params -> {threadId}} -> {ref} ;
     my $frames = $self -> send_request ('stack', 
                                         { 
@@ -376,6 +479,7 @@ sub _dapreq_stackTrace
         {
         $_ -> {id} = $self -> getid ($req -> params -> {threadId}, $_ -> {frame_ref}, { thread_ref => $thread_ref, package => $_ -> {'package'} }) ;    
         $_ -> {line} += 0 ;
+        $_ -> {column} += 0 ;
         }
 
     return $frames ;
@@ -386,6 +490,8 @@ sub _dapreq_stackTrace
 sub _dapreq_scopes
     {
     my ($self, $workspace, $req) = @_ ;
+
+    $self -> _check_not_running ($workspace) ;
 
     my $ref        = $self -> id2ref -> {$req -> params -> {frameId}} ;
     my $frame_ref  = $ref -> {ref} ;
@@ -413,6 +519,8 @@ sub _dapreq_scopes
 sub _dapreq_variables
     {
     my ($self, $workspace, $req) = @_ ;
+
+    $self -> _check_not_running ($workspace) ;
 
     my $params     = $req -> params ;
     my $ref        = $self -> id2ref -> {$params -> {variablesReference}} ;
@@ -449,12 +557,52 @@ print STDERR Data::Dump::pp($self -> id2ref), "\n" ;
     return $variables ;
     }
 
+# ---------------------------------------------------------------------------
+
+sub _dapreq_setVariable
+    {
+    my ($self, $workspace, $req) = @_ ;
+
+    $self -> _check_not_running ($workspace) ;
+
+    my $params     = $req -> params ;
+    my $ref        = $self -> id2ref -> {$params -> {variablesReference}} ;
+    my $frame_ref  = $ref -> {frame_ref} ;
+    my $thread_ref = $ref -> {thread_ref} ;
+    my $package    = $ref -> {package} ;
+    my $type       = $ref -> {ref} ;
+    my $expr       = $params->{value} ;
+    my $setvar     = $params->{name} ;
+
+    my $result = $self -> send_request ('setvar', 
+                                        { 
+                                        thread_ref => $thread_ref,
+                                        frame_ref  => $frame_ref, 
+                                        'package'  => $package,
+                                        expression => $expr,
+                                        type       => $type,
+                                        setvar     => $setvar,
+                                        }) ;
+
+    $result -> {variablesReference} = $result -> {var_ref}?$self -> getid ($req -> params -> {variablesReference},
+                                                                    $result -> {var_ref},
+                                                                    { 
+                                                                    frame_ref  => $frame_ref, 
+                                                                    thread_ref => $thread_ref, 
+                                                                    'package'  => $package,
+                                                                    }):
+                                                0 ;    
+    return $result ;
+    }
+
 
 # ---------------------------------------------------------------------------
 
 sub _dapreq_evaluate
     {
     my ($self, $workspace, $req) = @_ ;
+
+    $self -> _check_not_running ($workspace) ;
 
     my $ref        = $self -> id2ref -> {$req -> params -> {frameId}} ;
     my $frame_ref  = $ref -> {ref} ;
@@ -522,7 +670,10 @@ sub _dapreq_continue
     {
     my ($self, $workspace, $req) = @_ ;
 
-    $self -> send_request ('continue', { thread_id => $req -> {threadId}}) ;
+    $self -> _check_not_running ($workspace) ;
+
+    $self -> running (1) ;
+    $self -> send_request ('continue', $req?{ thread_id => $req -> {threadId}}:undef) ;
     
     return {} ;
     }
@@ -533,6 +684,9 @@ sub _dapreq_stepIn
     {
     my ($self, $workspace, $req) = @_ ;
 
+    $self -> _check_not_running ($workspace) ;
+
+    $self -> running (1) ;
     $self -> send_request ('step_in', { thread_id => $req -> {threadId}}) ;
     
     return {} ;
@@ -544,6 +698,9 @@ sub _dapreq_stepOut
     {
     my ($self, $workspace, $req) = @_ ;
 
+    $self -> _check_not_running ($workspace) ;
+
+    $self -> running (1) ;
     $self -> send_request ('step_out', { thread_id => $req -> {threadId}}) ;
     
     return {} ;
@@ -555,40 +712,13 @@ sub _dapreq_next
     {
     my ($self, $workspace, $req) = @_ ;
 
+    $self -> _check_not_running ($workspace) ;
+
+    $self -> running (1) ;
     $self -> send_request ('next', { thread_id => $req -> {threadId}}) ;
     
     return {} ;
     }
 
-# ---------------------------------------------------------------------------
-
-sub _dapreq_continue3
-    {
-    my ($self, $workspace, $req) = @_ ;
-
-    my $threads = $self -> send_request ('continue') ;
-    
-    return {} ;
-    }
-
-# ---------------------------------------------------------------------------
-
-sub _dapreq_continue4
-    {
-    my ($self, $workspace, $req) = @_ ;
-
-    my $threads = $self -> send_request ('continue') ;
-    
-    return {} ;
-    }
-
-# ---------------------------------------------------------------------------
-
-sub _dapreq_launch4
-    {
-    my ($self, $workspace, $req) = @_ ;
-
-    return {} ;
-    }
 
 1 ;

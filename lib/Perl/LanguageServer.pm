@@ -64,7 +64,7 @@ our $exit ;
 our $workspace ;
 our $dev_tool ;
 our $debug1 = 1 ;
-our $debug2 = 1 ;
+our $debug2 = 0 ;
 
 
 has 'channel' =>
@@ -360,6 +360,7 @@ sub _run_tcp_server
         my $quit ;
         while (!$quit && !$exit)
             {
+            logger (undef, "tcp server start listen on port $listen_port\n") ;
             my $tcpcv = AnyEvent::CondVar -> new ;
             my $guard ;
             eval
@@ -398,18 +399,19 @@ sub _run_tcp_server
                 {
                 $guard = undef ;
                 logger (undef, $@) ;
-    $quit = 1 ;
-                # if (!$guard && ($@ =~ /Address already in use/))
-                #     {
-                #     # stop other server
-                #     tcp_connect '127.0.0.1', $listen_port, sub
-                #         {
-                #         my ($fh) = @_ ;
-                #         syswrite ($fh, "Content-Length: 0\r\n\r\n") if ($fh) ;
-                #         } ;        
-                #     }    
+                #$quit = 1 ;
+                if (!$guard && ($@ =~ /Address already in use/))
+                    {
+                    # stop other server
+                    tcp_connect '127.0.0.1', $listen_port, sub
+                        {
+                        my ($fh) = @_ ;
+                        syswrite ($fh, "Content-Length: 0\r\n\r\n") if ($fh) ;
+                        } ;        
+                    }    
                 $@ = undef ;
-                Coro::AnyEvent::sleep (2) ;
+                Coro::AnyEvent::sleep (1) ;
+                exit (1) ; # stop LS, vscode will restart it
                 }
             }
         }
