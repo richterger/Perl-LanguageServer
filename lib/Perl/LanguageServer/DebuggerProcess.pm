@@ -110,8 +110,9 @@ sub send_event
 
 sub lauch
     {
-    my ($self, $cmd) = @_ ;
+    my ($self, $workspace, $cmd) = @_ ;
 
+    my $fn = $workspace -> file_client2server ($self -> program) ;
     my $pid ;
     {
     local %ENV ;
@@ -123,7 +124,7 @@ sub lauch
     $ENV{PLSDI_REMOTE} = '127.0.0.1:' . $self -> debug_adapter -> listen_port ;
     $ENV{PERL5DB}      = 'BEGIN { require Perl::LanguageServer::DebuggerInterface }' ;
     $ENV{PLSDI_SESSION}= $self -> session_id ;
-    $pid = $self -> run_async ([$cmd, '-d', $self -> program, @{$self -> args}]) ;
+    $pid = $self -> run_async ([$cmd, '-d', $fn, @{$self -> args}]) ;
     }
 
     $self -> pid ($pid) ;

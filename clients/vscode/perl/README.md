@@ -10,8 +10,8 @@ Language Server and Debugger for Perl
   * Symbols in workspace/directory
   * Goto Definition
   * Find References
-  * Run on remote syntax check on remote system via ssh
   * Supports multiple workspace folders
+  * Run on remote system via ssh
 * Debugger
   * Run, pause, step, next, return
   * Support for coro threads
@@ -22,6 +22,7 @@ Language Server and Debugger for Perl
   * Tooltips
   * Evaluate perl code in debuggee, in context of every stack frame of coro thread
   * Debug mutiple perl programm at once
+  * Run on remote system via ssh
 
 
 ## Requirements
@@ -59,10 +60,10 @@ This extension contributes the following settings:
 * `env`:    optional, object with environment settings 
 * `cwd`:    optional, change working directory
 
-## Remote check
+## Remote check & debugging
 
 If you developing on a remote machine, you can instruct the Perl::LanguageServer to
-run on that remote machine, so the correct modules etc. are available for syntax check.
+run on that remote machine, so the correct modules etc. are available for syntax check and debugger is startet on the remote machine.
 Do do so set sshAddr and sshUser, preferably in your workspace configuration.
 
 Example:

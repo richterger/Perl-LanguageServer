@@ -178,6 +178,42 @@ sub uri_client2server
 
 # ---------------------------------------------------------------------------
 
+sub file_server2client
+    {
+    my ($self, $fn) = @_ ;
+
+    my $map = $self -> path_map ;
+    return $fn if (!$map) ;
+
+    foreach my $m (@$map)
+        {
+        #print STDERR "file_server2client $m->[2] -> $m->[3] : $fn\n" ;
+        last if ($fn =~ s/$m->[2]/$m->[3]/) ;
+        }
+
+    return $fn ;    
+    }
+
+# ---------------------------------------------------------------------------
+
+sub file_client2server
+    {
+    my ($self, $fn) = @_ ;
+
+    my $map = $self -> path_map ;
+    return $fn if (!$map) ;
+
+    foreach my $m (@$map)
+        {
+        #print STDERR "file_client2server $m->[3] -> $m->[2] : $fn\n" ;
+        last if ($fn =~ s/$m->[3]/$m->[2]/) ;
+        }
+
+    return $fn ;    
+    }
+
+# ---------------------------------------------------------------------------
+
 sub set_workspace_folders
     {
     my ($self, $workspace_folders) = @_ ;

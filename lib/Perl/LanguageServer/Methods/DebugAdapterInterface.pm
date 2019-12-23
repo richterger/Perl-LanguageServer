@@ -186,7 +186,7 @@ sub _dapreq_di_breakpoints
                             message  => $bp -> [3], 
                             line     => $bp -> [4]+0,
                             id       => $bp -> [6]+0,
-                            source   => { path => $bp -> [5] },
+                            source   => { path => $workspace -> file_server2client ($bp -> [5]) },
                             }
                         }) ;
         }

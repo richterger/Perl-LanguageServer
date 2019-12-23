@@ -27,6 +27,16 @@ sub _rpcnot_didChangeConfiguration
     my $map   = $req -> params -> {settings}{perl}{pathMap} ;
     if ($map)
         {
+        my $fn ;
+        foreach (@$map)
+            {
+            $fn = $_ -> [0] ;
+            $fn =~ s/^file:\/\/// ;
+            $_ -> [2] = $fn ;    
+            $fn = $_ -> [1] ;
+            $fn =~ s/^file:\/\/// ;
+            $_ -> [3] = $fn ;    
+            }
         $workspace -> path_map ($map) ;
         }
 

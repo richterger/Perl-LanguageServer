@@ -231,21 +231,6 @@ sub _dapreq_initialize
         supportsBreakpointLocationsRequest => JSON::true(),
         } ;
 
-    my $initialized_event =
-        {
-        type => 'event',
-        event => 'initialized'
-        } ;
-
-    # async
-    #     {
-    #     eval 
-    #         {
-    #         $self -> send_notification ($initialized_event) ;
-    #         } ;
-    #     print STDERR "not done $@\n" ;
-    #     } ;
-
     return $caps ;
     }
 
@@ -275,7 +260,6 @@ sub _temp_break
     $self -> _dapreq_pause ($workspace) ;  
     while ($self -> running && $cnt-- > 0)
         {
-print STDERR "running wait $cnt\n" ;
         Coro::AnyEvent::sleep (0.1) ;    
         }
     $self -> _check_not_running ($workspace) ;
@@ -304,7 +288,7 @@ sub _set_breakpoints
     my ($self, $workspace, $req, $location, $breakpoints, $source) = @_ ;
 
     my $old_running = $self -> _temp_break ($workspace) ;
-print STDERR "old_running = $old_running\n" ;
+
     my @bp ;
     for (my $i; $i < @$breakpoints; $i++)
         {
@@ -314,7 +298,7 @@ print STDERR "old_running = $old_running\n" ;
     my $ret = $self -> send_request ('breakpoint', 
                                         { 
                                         breakpoints => \@bp,
-                                        ($source?(filename    => $source -> {path}):()),
+                                        ($source?(filename    => $workspace -> file_client2server ($source -> {path})):()),
                                         }) ;
 
     my @setbp ;
@@ -327,7 +311,7 @@ print STDERR "old_running = $old_running\n" ;
             message  => $bp -> [3], 
             line     => $bp -> [4]+0,
             id       => $bp -> [6]+0,
-            source   => { path => $bp -> [5] },
+            source   => { path => $workspace -> file_server2client ($bp -> [5]) },
             }
         }
 
@@ -385,7 +369,7 @@ sub _dapreq_breakpointLocations
                                         { 
                                         line => $req -> params -> {line},
                                         end_line => $req -> params -> {endLine},
-                                        ($source?(filename    => $source -> {path}):()),
+                                        ($source?(filename    => $workspace -> file_client2server ($source -> {path})):()),
                                         }) ;
 
     $self -> _temp_cont ($workspace, $old_running) ;
@@ -427,7 +411,7 @@ sub _dapreq_launch
     $self -> debugger_process ($proc) ;
     $proc -> debug_adapter ($self) ;
     $debug_adapters{$proc -> session_id} = $self ;
-    $proc -> lauch ($workspace -> perlcmd) ;
+    $proc -> lauch ($workspace, $workspace -> perlcmd) ;
 
     return {} ;
     }
@@ -477,9 +461,10 @@ sub _dapreq_stackTrace
 
     foreach (@{$frames -> {stackFrames}})
         {
-        $_ -> {id} = $self -> getid ($req -> params -> {threadId}, $_ -> {frame_ref}, { thread_ref => $thread_ref, package => $_ -> {'package'} }) ;    
-        $_ -> {line} += 0 ;
+        $_ -> {id}      = $self -> getid ($req -> params -> {threadId}, $_ -> {frame_ref}, { thread_ref => $thread_ref, package => $_ -> {'package'} }) ;    
+        $_ -> {line}   += 0 ;
         $_ -> {column} += 0 ;
+        $_ -> {source}{path} = $workspace -> file_server2client ($_ -> {source}{path}) ;
         }
 
     return $frames ;

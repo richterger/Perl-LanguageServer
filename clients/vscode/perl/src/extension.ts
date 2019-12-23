@@ -5,6 +5,8 @@ import * as vscode from 'vscode';
 //import { workspace, ExtensionContext } from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 
+var debug_adapter_port = '13603' ;
+
 export function activate(context: vscode.ExtensionContext) {
 
 	let config = vscode.workspace.getConfiguration('perl') ;
@@ -17,7 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('extension "perl" is now active');
 	
 	let perlCmd : string  = config.get('perlCmd') || 'perl' ; 
-	let perlArgs : string[] = ['-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', '--port', '13603'] ;
+	let perlArgs : string[] = ['-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', '--port', debug_adapter_port] ;
 
 	let sshCmd : string       = config.get('sshCmd') || '' ; 
 	if (!sshCmd)
@@ -42,7 +44,7 @@ export function activate(context: vscode.ExtensionContext) {
 	if (sshAddr && sshUser)
 		{
 		serverCmd = sshCmd ;
-		sshArgs.push('-l', sshUser, sshAddr, perlCmd) ;
+		sshArgs.push('-l', sshUser, sshAddr, '-L' + debug_adapter_port + ':127.0.0.1:' + debug_adapter_port, perlCmd) ;
 		serverArgs = sshArgs.concat(perlArgs) ;
 		}
 	else
