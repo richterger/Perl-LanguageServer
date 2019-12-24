@@ -5,11 +5,14 @@
     "version": "2.0.0",
     "publisher": "richterger",
     "repository": "https://github.com/richterger/Perl-LanguageServer",
+    "license": "SEE LICENSE IN LICENSE",
     "engines": {
-        "vscode": "^1.23.0"
+        "vscode": "^1.30.0"
     },
     "categories": [
-        "Debuggers", "Programming Languages", "Linters"
+        "Debuggers",
+        "Programming Languages",
+        "Linters"
     ],
     "activationEvents": [
         "onLanguage:perl",
@@ -30,6 +33,11 @@
                     "type": "string",
                     "default": null,
                     "description": "ip address of remote system"
+                },
+                "perl.sshPort": {
+                    "type": "string",
+                    "default": null,
+                    "description": "optional, port for ssh to remote system"
                 },
                 "perl.sshUser": {
                     "type": "string",
@@ -75,20 +83,33 @@
                     "type": "array",
                     "default": null,
                     "description": "directories to ignore, defaults to .vscode, .git, .svn"
+                },
+                "perl.debugAdapterPort": {
+                    "type": "string",
+                    "default": "13603",
+                    "description": "port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a differnt port."
                 }
             }
         },
-        "breakpoints": [{ "language": "perl" }],
+        "breakpoints": [
+            {
+                "language": "perl"
+            }
+        ],
         "debuggers": [
             {
                 "type": "perl",
                 "label": "Perl Debug",
-                "languages": ["perl"],
+                "languages": [
+                    "perl"
+                ],
                 "program": "./out/dbgforward.js",
-                "runtime": "node",        
+                "runtime": "node",
                 "configurationAttributes": {
                     "launch": {
-                        "required": ["program"],
+                        "required": [
+                            "program"
+                        ],
                         "properties": {
                             "program": {
                                 "type": "string",
@@ -116,18 +137,17 @@
                                 "default": null
                             }
                         }
-                   
                     }
                 },
                 "initialConfigurations": [
                     {
-                      "type": "perl",
-                      "request": "launch",
-                      "name": "Perl-Debug",
-                      "program": "${workspaceFolder}/${relativeFile}",
-                      "stopOnEntry": true
+                        "type": "perl",
+                        "request": "launch",
+                        "name": "Perl-Debug",
+                        "program": "${workspaceFolder}/${relativeFile}",
+                        "stopOnEntry": true
                     }
-                  ]
+                ]
             }
         ]
     },
@@ -140,12 +160,12 @@
     },
     "devDependencies": {
         "@types/mocha": "^2.2.42",
-        "@types/node": "^7.0.67",
-        "tslint": "^5.8.0",
+        "@types/node": "^7.10.9",
+        "tslint": "^5.20.1",
         "typescript": "^2.9.2",
-        "vscode": "^1.1.6"
+        "vscode": "^1.1.36"
     },
     "dependencies": {
-        "vscode-languageclient": "^4.3.0"
+        "vscode-languageclient": "^4.4.2"
     }
 }
