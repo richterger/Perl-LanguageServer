@@ -214,6 +214,25 @@ sub file_client2server
 
 # ---------------------------------------------------------------------------
 
+sub add_path_mapping
+    {
+    my ($self, $fn_server, $fn_client) = @_ ;
+    my $map = $self -> path_map ;
+    $map = $self -> path_map ([]) if (!$map) ;
+
+
+    foreach my $m (@$map)
+        {
+        #print STDERR "add file_server2client $m->[2] -> $m->[3]\n" ;
+        return if ($fn_server eq $m->[2]) ;
+        }
+
+    unshift @$map, ['file://' . $fn_server, 'file://' . $fn_client, $fn_server, $fn_client] ;
+    return  ;    
+    }
+
+# ---------------------------------------------------------------------------
+
 sub set_workspace_folders
     {
     my ($self, $workspace_folders) = @_ ;

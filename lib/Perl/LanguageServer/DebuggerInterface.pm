@@ -560,7 +560,8 @@ use IO::Socket ;
 use JSON ;
 use PadWalker ;
 use Scalar::Util qw{blessed reftype looks_like_number};
-use Data::Dump qw{pp} ;
+#use Data::Dump qw{pp} ;
+use File::Basename ;
 use vars qw{@dbline %dbline $dbline} ;
 
 our $max_display = 5 ;
@@ -1222,6 +1223,52 @@ sub _set_breakpoint
     }
 
 # ---------------------------------------------------------------------------
+# abs path no dereference
+# copied from package Cwd::Ext and added directory argument
+sub abs_path_nd {   
+   my $abs_path = shift;
+   my $dir      = shift ;
+   return $abs_path if $abs_path=~m{^/$};
+    
+   unless( $abs_path=~/^\// ){
+      if ($dir) {
+          $abs_path = $dir."/$abs_path";
+      }
+      else {
+          require Cwd;
+          $abs_path = Cwd::cwd()."/$abs_path";
+      }
+   }
+     
+    my @elems = split m{/}, $abs_path;
+    my $ptr = 1;
+    while($ptr <= $#elems){
+        if($elems[$ptr] eq ''      ){
+            splice @elems, $ptr, 1;
+        }
+ 
+        elsif($elems[$ptr] eq '.'  ){
+            splice @elems, $ptr, 1;
+        }
+ 
+        elsif($elems[$ptr] eq '..' ){
+            if($ptr < 2){
+                splice @elems, $ptr, 1;
+            }
+            else {
+                $ptr--;
+                splice @elems, $ptr, 2;
+            }
+        }
+        else {
+            $ptr++;
+        }
+    }
+ 
+    $#elems ? join q{/}, @elems : q{/};
+}
+
+# ---------------------------------------------------------------------------
 
 sub req_breakpoint
     {
@@ -1229,23 +1276,36 @@ sub req_breakpoint
 
     my $breakpoints  = $params -> {breakpoints} ;
     my $filename     = $params -> {filename} ;
+    my $real_filename = $params -> {dbg_filename} || $filename ;
 
-    if ($filename && !defined $main::{'_<' . $filename})
-        {
-        $postponed_breakpoints{$filename} = $breakpoints ;
-        foreach my $bp (@$breakpoints)
-            {
-            $bp -> [6] = $breakpoint_id++ ; 
-            }
-        return { breakpoints => $breakpoints }
-        }
-    
-     
-    local *dbline = "::_<$filename" if ($filename) ;
     if ($filename)
         {
+        my %seen ;
+        while (!defined $main::{'_<' . $real_filename} && -l $real_filename)
+            {
+            my $dir = File::Basename::dirname ($real_filename) ;
+            $real_filename = readlink ($real_filename) ;
+            last if (!$real_filename) ;
+            $real_filename = abs_path_nd ($real_filename, $dir) ;
+            last if ($seen{$real_filename}++) ;
+            } 
+
+        if (!defined $main::{'_<' . $real_filename})
+            {
+            $postponed_breakpoints{$filename} = $breakpoints ;
+            foreach my $bp (@$breakpoints)
+                {
+                $bp -> [6] = $breakpoint_id++ ; 
+                }
+            return { breakpoints => $breakpoints }
+            }
+        }    
+     
+    local *dbline = "::_<$real_filename" if ($real_filename) ;
+    if ($real_filename)
+        {
         # Switch the magical hash temporarily.
-        local *DB::dbline = "::_<$filename";
+        local *DB::dbline = "::_<$real_filename";
         $class -> clr_breaks () ;
         }
     
@@ -1253,11 +1313,10 @@ sub req_breakpoint
         {
         my $line      = $bp -> [0] ;
         my $condition = $bp -> [1] ;
-        ($bp -> [2], $bp -> [3], $bp -> [4]) = $class -> _set_breakpoint ($line, $condition, $filename) ;
+        ($bp -> [2], $bp -> [3], $bp -> [4]) = $class -> _set_breakpoint ($line, $condition) ;
         $bp -> [5] = $filename ;
         }
-
-    return { breakpoints_set => 1, breakpoints => $breakpoints };
+    return { breakpoints_set => 1, breakpoints => $breakpoints, ($filename ne $real_filename?(real_filename => $real_filename, req_filename => $filename):()) };
     }
 
 # ---------------------------------------------------------------------------
@@ -1280,15 +1339,25 @@ package DB
         # Not a subroutine. Deal with the file.
         local *dbline = $arg ;
         my $filename = $dbline; 
+        my %seen ;
+        my $pp_filename = $filename ;
+        while (!exists $postponed_breakpoints{$pp_filename} && -l $pp_filename)
+            {
+            my $dir = File::Basename::dirname ($pp_filename) ;
+            $pp_filename = readlink ($pp_filename) ;
+            last if (!$pp_filename) ;
+            $pp_filename = Perl::LanguageServer::DebuggerInterface::abs_path_nd ($pp_filename, $dir) ;
+            last if ($seen{$pp_filename}++) ;
+            } 
 
         #Perl::LanguageServer::DebuggerInterface -> _send ({ command => 'di_loadedfile', arguments => { session_id => $session, reason => 'new', source => { path => $filename}}}) ;
 
-        if (exists $postponed_breakpoints{$filename})
+        if (exists $postponed_breakpoints{$pp_filename})
             {
-            my $ret = Perl::LanguageServer::DebuggerInterface -> req_breakpoint ({ breakpoints => $postponed_breakpoints{$filename}, filename => $filename }) ;
+            my $ret = Perl::LanguageServer::DebuggerInterface -> req_breakpoint ({ breakpoints => $postponed_breakpoints{$pp_filename}, filename => $pp_filename, dbg_filename => $filename }) ;
             if ($ret -> {breakpoints_set})
                 {
-                delete $postponed_breakpoints{$filename} ;
+                delete $postponed_breakpoints{$pp_filename} ;
                 Perl::LanguageServer::DebuggerInterface -> _send ({ command => 'di_breakpoints', 
                                                     arguments => { session_id => $session, %$ret}}) ;
                 }

@@ -301,6 +301,11 @@ sub _set_breakpoints
                                         ($source?(filename    => $workspace -> file_client2server ($source -> {path})):()),
                                         }) ;
 
+    if ($req -> params -> {real_filename})
+        {
+        $workspace -> add_path_mapping ($req -> params -> {real_filename}, $workspace -> file_server2client ($req -> params -> {req_filename}))
+        }
+
     my @setbp ;
     for (my $i; $i < @{$ret -> {breakpoints}}; $i++)
         {

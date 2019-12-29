@@ -110,7 +110,7 @@ sub _dapreq_di_break
 
     my $initialized = $self -> initialized ;
     my $reason      = $req -> params -> {reason} ;
-print STDERR "reason = $reason tempb = ", $debug_adapter -> in_temp_break, "\n" ;
+    #print STDERR "reason = $reason tempb = ", $debug_adapter -> in_temp_break, "\n" ;
     return if ($reason eq 'pause' && $debug_adapter -> in_temp_break) ;
     $debug_adapter -> in_temp_break (0) ;
 
@@ -174,6 +174,11 @@ sub _dapreq_di_breakpoints
     my ($self, $workspace, $req) = @_ ;
 
     $self -> log_prefix ('DAI') ;
+
+    if ($req -> params -> {real_filename})
+        {
+        $workspace -> add_path_mapping ($req -> params -> {real_filename}, $workspace -> file_server2client ($req -> params -> {req_filename}))
+        }
 
     foreach my $bp (@{$req -> params -> {breakpoints}})
         {
