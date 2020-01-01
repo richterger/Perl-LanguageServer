@@ -1,5 +1,7 @@
 package Perl::LanguageServer;
 
+use v5.18;
+
 use strict ;
 use Moose ;
 use Moose::Util qw( apply_all_roles );
@@ -23,7 +25,7 @@ no warnings 'uninitialized' ;
 
 =head1 NAME
 
-Perl::LanguageServer - Language Server for Perl
+Perl::LanguageServer - Language Server and Debug Protocol Adapter for Perl
 
 =head1 VERSION
 
@@ -36,23 +38,28 @@ our $VERSION = '2.0';
 
 =head1 SYNOPSIS
 
-This is a Language Server for Perl
+This is a Language Server and Debug Protocol Adapter for Perl
 
 It implements the Language Server Protocol which provides
 syntax-checking, symbol search, etc. Perl to various editors, for
 example Visual Stuido Code or Atom.
 
-https://microsoft.github.io/language-server-protocol/specification
+L<https://microsoft.github.io/language-server-protocol/specification>
 
-To use it with Visual Studio Code, install the extention "perl"
+It also implements the Debug Adapter Protocol, which allow debugging
+with various editors/includes
 
-This is an early version, but already working version.
+L<https://microsoft.github.io/debug-adapter-protocol/overview>
+
+To use both with Visual Studio Code, install the extention "perl"
+
 Any comments and patches are welcome.
 
 NOTE: This module uses Compiler::Lexer. The version on cpan (0.22) is buggy
-crashes from time to time. Please use the version from github 
-(https://github.com/goccy/p5-Compiler-Lexer) until
-a new version is published to cpan.
+crashes from time to time. For this reason a working version from github
+is bundled with this module and will be installed when you run Makefile.PL.
+
+L<https://github.com/goccy/p5-Compiler-Lexer>
 
 =cut
 
@@ -587,6 +594,9 @@ You can also look for information at:
 
 =over 4
 
+=item * Github:
+ L<https://github.com/richterger/Perl-LanguageServer>
+
 =item * RT: CPAN's request tracker (report bugs here)
 
 L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Perl-LanguageServer>
@@ -611,7 +621,7 @@ L<http://search.cpan.org/dist/Perl-LanguageServer/>
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2018 grichter.
+Copyright 2018-2020 grichter.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the the Artistic License (2.0). You may obtain a

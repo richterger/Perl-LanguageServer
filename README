@@ -35,6 +35,9 @@ For your convinence a working snapshot from github of Compiler::Lexer
 is included in this distribution and will be installed when you
 run Makefile.PL
 
+NOTE: Only tested with Perl 5.18 and newer. So in case you want to use
+is with older versions of Perl slight modifications might be necessary.
+
 To use it with Visual Studio Code, install the extention "perl"
 
 

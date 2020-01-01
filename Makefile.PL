@@ -1,4 +1,4 @@
-use 5.006;
+use v5.18;
 use strict;
 use warnings;
 use ExtUtils::MakeMaker;
