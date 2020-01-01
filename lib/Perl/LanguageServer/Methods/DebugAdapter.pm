@@ -138,7 +138,7 @@ sub _dapreq_initialize
         supportsConfigurationDoneRequest => JSON::true(),
 
         # The debug adapter supports function breakpoints.
-        supportsFunctionBreakpoints => JSON::true(),
+        supportsFunctionBreakpoints => JSON::false(),
 
         # The debug adapter supports conditional breakpoints.
         supportsConditionalBreakpoints => JSON::true(),
@@ -165,7 +165,7 @@ sub _dapreq_initialize
         supportsGotoTargetsRequest => JSON::false(),
 
         # The debug adapter supports the 'stepInTargets' request.
-        supportsStepInTargetsRequest => JSON::true(),
+        supportsStepInTargetsRequest => JSON::false(),
 
         # The debug adapter supports the 'completions' request.
         supportsCompletionsRequest => JSON::false(),
@@ -189,7 +189,7 @@ sub _dapreq_initialize
         supportsExceptionOptions => JSON::false(),
 
         # The debug adapter supports a 'format' attribute on the stackTraceRequest, variablesRequest, and evaluateRequest.
-        supportsValueFormattingOptions => JSON::true(),
+        supportsValueFormattingOptions => JSON::false(),
 
         # The debug adapter supports the 'exceptionInfo' request.
         supportsExceptionInfoRequest => JSON::false(),

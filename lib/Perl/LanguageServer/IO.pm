@@ -114,6 +114,7 @@ sub _write
             }    
         waitpid( $pid, 0 );
         $self -> logger ("@$cmd ended\n") ;
+        Coro::cede_notself () ;
         $self -> $on_exit ($?)  ;    
         } ;
     

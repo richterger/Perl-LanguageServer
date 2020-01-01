@@ -412,7 +412,7 @@ sub _find_subline {
   if ($from) {
     local *DB::dbline = "::_<$fname";
     ++$from while $DB::dbline[$from] == 0 && $from < $to;
-    return $from;
+    return wantarray?($from, $name, $fname):$from;
   }
   return undef;
 }
@@ -925,13 +925,23 @@ sub get_varsrc
 
 sub req_vars
     {
-    my ($class, $params) = @_ ;
+    my ($class, $params, $recurse) = @_ ;
 
     my $thread_ref  = $params -> {thread_ref} ;
     my $tid = defined ($Coro::current)?$Coro::current+0:1 ;
-    return { variables => [] } if ($thread_ref != $tid) ;
+    if ($thread_ref != $tid && !$recurse)
+        {
+        my $coro  ;
+        $coro = $class -> find_coro ($thread_ref) ;
+        return { variables => [] } if (!$coro) ;
+        my $ret ;
+        $coro -> call (sub {
+            $ret = $class -> req_vars ($params, $recurse + 1) ;
+            }) ;
+        return $ret ;
+        }
 
-    my $frame_ref   = $params -> {frame_ref} ;
+    my $frame_ref   = $params -> {frame_ref} - $recurse ;
     my $package     = $params -> {'package'} ;
     my $type        = $params -> {type} ;
     my @vars ;
@@ -1055,13 +1065,23 @@ sub req_setvar
 
 sub req_evaluate
     {
-    my ($class, $params) = @_ ;
+    my ($class, $params, $recurse) = @_ ;
 
     my $thread_ref  = $params -> {thread_ref} ;
     my $tid = defined ($Coro::current)?$Coro::current+0:1 ;
-    return undef if ($thread_ref != $tid) ;
+    if ($thread_ref != $tid && !$recurse)
+        {
+        my $coro  ;
+        $coro = $class -> find_coro ($thread_ref) ;
+        return undef if (!$coro) ;
+        my $ret ;
+        $coro -> call (sub {
+            $ret = $class -> req_evaluate ($params, $recurse + 1) ;
+            }) ;
+        return $ret ;
+        }
 
-    my $frame_ref   = $params -> {frame_ref} ;
+    my $frame_ref   = $params -> {frame_ref} - $recurse ;
     my $package     = $params -> {'package'} ;
     my $expression  = $params -> {'expression'} ;
     my @vars ;
@@ -1205,20 +1225,24 @@ sub _set_breakpoint
     my ($class, $location, $condition) = @_ ;
 
     $condition ||= '1';
-    $location = DB::_find_subline($location) if ($location =~ /\D/);
+    my $subname ;
+    my $filename ;
+    ($location, $subname, $filename) = DB::_find_subline($location) if ($location =~ /\D/);
 
     return (0, "Subroutine not found.") unless $location ;
     return (0) if (!$location) ;
     
+    local *dbline = "::_<$filename" if ($filename) ;
     for (my $line = $location; $line <= $location + 10 && $location < @dbline; $line++)
         {
         if ($dbline[$line] != 0)
             {
             $dbline{$line+0} =~ s/^[^\0]*/$condition/;
-            return (1, undef, $line) ;    
+            return (1, undef, $line, $filename) ;    
             }
         }
 
+    return (0, "Line $location for sub $subname is not breakable.") if ($subname) ;
     return (0, "Line $location is not breakable.") ;
     }
 
@@ -1307,14 +1331,15 @@ sub req_breakpoint
         # Switch the magical hash temporarily.
         local *DB::dbline = "::_<$real_filename";
         $class -> clr_breaks () ;
+        $class -> clr_actions () ;
         }
     
     foreach my $bp (@$breakpoints)
         {
         my $line      = $bp -> [0] ;
         my $condition = $bp -> [1] ;
-        ($bp -> [2], $bp -> [3], $bp -> [4]) = $class -> _set_breakpoint ($line, $condition) ;
-        $bp -> [5] = $filename ;
+        ($bp -> [2], $bp -> [3], $bp -> [4], $bp -> [5]) = $class -> _set_breakpoint ($line, $condition) ;
+        $bp -> [5] = $filename if ($filename) ;
         }
     return { breakpoints_set => 1, breakpoints => $breakpoints, ($filename ne $real_filename?(real_filename => $real_filename, req_filename => $filename):()) };
     }
