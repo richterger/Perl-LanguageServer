@@ -49,6 +49,12 @@ has 'stop_on_entry' =>
     is  => 'ro' 
     ) ; 
 
+has 'reload_modules' =>
+    (
+    isa => 'Bool',
+    is  => 'ro' 
+    ) ; 
+
 has 'session_id' =>
     (
     isa => 'Str',
@@ -81,6 +87,7 @@ sub BUILDARGS
     {
     my ($class, $args) = @_ ;
 
+    $args -> {reload_modules} = delete $args -> {reloadModules}?1:0 ;
     $args -> {stop_on_entry} = delete $args -> {stopOnEntry}?1:0 ;
     $args -> {session_id}    = delete $args -> {__sessionId} || $session_cnt ;
     $session_cnt++ ;
@@ -122,6 +129,7 @@ sub lauch
         }
     
     $ENV{PLSDI_REMOTE} = '127.0.0.1:' . $self -> debug_adapter -> listen_port ;
+    $ENV{PLSDI_OPTIONS} = $self -> reload_modules?'reload_modules':'' ;
     $ENV{PERL5DB}      = 'BEGIN { require Perl::LanguageServer::DebuggerInterface }' ;
     $ENV{PLSDI_SESSION}= $self -> session_id ;
     $pid = $self -> run_async ([$cmd, '-d', $fn, @{$self -> args}]) ;

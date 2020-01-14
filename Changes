@@ -1,7 +1,13 @@
 Revision history for Perl-LanguageServer
 
-2.0     22.12.2019
-        - Add Perl debugger
+2.0.1   14.01.2020
+        - Added support for reloading Perl module while debugging
+        - Make log level configurable
+        - Make sure debugging tooltips don't call functions
+        - Reparse cached symbols in case cache is broken
+
+2.0     01.01.2020
+        - Added Perl debugger
 
 0.9     03.5.2019
         - Fix issue with selecting text for find definition

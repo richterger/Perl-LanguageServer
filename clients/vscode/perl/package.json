@@ -2,7 +2,7 @@
     "name": "perl",
     "displayName": "Perl",
     "description": "Language Server and Debugger for Perl",
-    "version": "2.0.0",
+    "version": "2.0.1",
     "publisher": "richterger",
     "repository": "https://github.com/richterger/Perl-LanguageServer",
     "license": "SEE LICENSE IN LICENSE",
@@ -28,6 +28,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "enable/disable this extension"
+                },
+                "perl.logLevel": {
+                    "type": "integer",
+                    "default": 0,
+                    "description": "Log level 0-2"
                 },
                 "perl.sshAddr": {
                     "type": "string",
@@ -135,6 +140,11 @@
                                 "type": "array",
                                 "description": "optional, change working directory.",
                                 "default": null
+                            },
+                            "reloadModules": {
+                                "type": "boolean",
+                                "description": "Automatically reload changed Perl modules while debugging.",
+                                "default": true
                             }
                         }
                     }
@@ -145,7 +155,8 @@
                         "request": "launch",
                         "name": "Perl-Debug",
                         "program": "${workspaceFolder}/${relativeFile}",
-                        "stopOnEntry": true
+                        "stopOnEntry": true,
+                        "reloadModules": true
                     }
                 ]
             }

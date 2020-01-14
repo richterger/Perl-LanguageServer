@@ -119,6 +119,13 @@ sub _rpcnot_initialized
     {
     my ($self, $workspace, $req) = @_ ;
 
+    return if (!$Perl::LanguageServer::client_version) ;
+
+    if ($Perl::LanguageServer::client_version ne $Perl::LanguageServer::VERSION)
+        {
+        my $msg = "Version of IDE/Editor plugin is $Perl::LanguageServer::client_version\nVersion of Perl::LanguageServer is $Perl::LanguageServer::VERSION\nPlease make sure you run matching versions of the plugin and the Perl::LanguageServer module\nUse 'cpan Perl::LanguageServer' to install the newest version of the Perl::LanguageServer module\n" ;
+        $self -> logger ("\n$msg\n") ;
+        }
     return ;
     }
 

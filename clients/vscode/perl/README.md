@@ -23,6 +23,7 @@ Language Server and Debugger for Perl
   * Watch variable
   * Tooltips with variable values
   * Evaluate perl code in debuggee, in context of every stack frame of coro thread
+  * Automatically reload changed Perl modules while debugging
   * Debug mutiple perl programm at once
   * Run on remote system via ssh
 
@@ -52,6 +53,7 @@ This extension contributes the following settings:
 * `perl.fileFilter`: array for filtering perl file, defaults to [*.pm,*.pl]
 * `perl.ignoreDirs`: directories to ignore, defaults to [.vscode, .git, .svn]
 * `perl.debugAdapterPort`: port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a differnt port.
+* `perl.logLevel`: Log level 0-2.
 
 ## Debugger Settings for launch.json
 
@@ -63,6 +65,7 @@ This extension contributes the following settings:
 * `args`:   optional, array with arguments for perl program
 * `env`:    optional, object with environment settings 
 * `cwd`:    optional, change working directory
+* `reloadModules`: if true, automatically reload changed Perl modules while debugging
 
 ## Remote syntax check & debugging
 

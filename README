@@ -16,6 +16,8 @@ https://microsoft.github.io/debug-adapter-protocol/overview
 
 To use both with Visual Studio Code, install the extention "perl"
 
+https://marketplace.visualstudio.com/items?itemName=richterger.perl
+
 Any comments and patches are welcome.
 
 INSTALLATION

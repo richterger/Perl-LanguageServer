@@ -574,6 +574,7 @@ our %postponed_breakpoints ;
 our $breakpoint_id = 1 ;
 our $loaded = 0 ;
 our $break_reason ;
+our $refresh ;
 
 __PACKAGE__  -> register  ; 
 __PACKAGE__  -> init  ; 
@@ -1067,6 +1068,8 @@ sub req_evaluate
     {
     my ($class, $params, $recurse) = @_ ;
 
+    return undef if ($params -> {'context'} eq 'hover' && ($params -> {'expression'} !~ /^\s*\\?[\$\@\%]/)) ;
+
     my $thread_ref  = $params -> {thread_ref} ;
     my $tid = defined ($Coro::current)?$Coro::current+0:1 ;
     if ($thread_ref != $tid && !$recurse)
@@ -1302,6 +1305,8 @@ sub req_breakpoint
     my $filename     = $params -> {filename} ;
     my $real_filename = $params -> {dbg_filename} || $filename ;
 
+    Class::Refresh -> refresh if ($refresh) ;
+
     if ($filename)
         {
         my %seen ;
@@ -1402,6 +1407,8 @@ sub req_can_break
 
     return { breakpoints => [] } if ($filename && !defined $main::{'_<' . $filename}) ;
 
+    Class::Refresh -> refresh if ($refresh) ;
+
     # Switch the magical hash temporarily.
     local *dbline = "::_<$filename";
 
@@ -1424,6 +1431,8 @@ sub req_continue
     {
     my ($class, $params) = @_ ;
 
+    Class::Refresh -> refresh if ($refresh) ;
+
     @evalresult = () ;
     $class -> cont ;
 
@@ -1435,6 +1444,8 @@ sub req_continue
 sub req_step_in
     {
     my ($class, $params) = @_ ;
+
+    Class::Refresh -> refresh if ($refresh) ;
 
     @evalresult = () ;
     $class -> step ;
@@ -1448,6 +1459,8 @@ sub req_step_out
     {
     my ($class, $params) = @_ ;
 
+    Class::Refresh -> refresh if ($refresh) ;
+
     @evalresult = () ;
     $class -> ret (2) ;
 
@@ -1459,6 +1472,8 @@ sub req_step_out
 sub req_next
     {
     my ($class, $params) = @_ ;
+
+    Class::Refresh -> refresh if ($refresh) ;
 
     @evalresult = () ;
     $class -> next ;
@@ -1574,12 +1589,21 @@ sub init
 
     $class -> logger ("enter init\n") if ($debug) ;
 
-    my ($remote, $port) = split /:/, $ENV{PLSDI_REMOTE} ;
+    my $remote ;
+    my $port ;
+    ($remote, $port) = split /:/, $ENV{PLSDI_REMOTE} ;
 
     $socket = IO::Socket::INET->new(PeerAddr => $remote,
                                     PeerPort => $port,
                                     Proto    => 'tcp') 
             or die "Cannot connect to $remote:$port ($!)";
+
+    $refresh = ($ENV{PLSDI_OPTIONS} =~ /reload_modules/)?1:0 ;
+    if ($refresh) 
+        {
+        require Class::Refresh ;  
+        Class::Refresh -> refresh ;
+        }
 
     $class -> ready (1) ;
     }

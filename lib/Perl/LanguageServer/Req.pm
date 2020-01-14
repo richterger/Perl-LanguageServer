@@ -9,7 +9,7 @@ no warnings 'uninitialized' ;
 
 has 'id' =>
     (
-    isa => 'Maybe[Int]',
+    isa => 'Maybe[Str]',
     is  => 'ro' 
     ) ; 
 

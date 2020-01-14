@@ -1,7 +1,10 @@
 # Change Log
 
-## 2.0.0    `2019-12-22`
-Add Perl debugger
+## 2.0.1    `2020-01-14`
+Added support for reloading Perl module while debugging, make log level configurable, make sure tooltips don't call functions
+
+## 2.0.0    `2020-01-01`
+Added Perl debugger
 
 ## 0.9.0   `2019-05-03`
 Fix issues in the Perl part, make sure to update Perl::LanguageServer from cpan

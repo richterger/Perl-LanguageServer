@@ -89,17 +89,17 @@ sub check_perl_syntax
     require IPC::Open3 ;
     use Symbol 'gensym'; $err = gensym;
     my $pid = IPC::Open3::open3($wtr, $rdr, $err, $self -> perlcmd, '-c', @$inc) or die "Cannot run " . $self -> perlcmd ;
-    print STDERR "write start pid=$pid\n" ;
+    $self -> logger ("write start pid=$pid\n") if ($Perl::LanguageServer::debug2) ;
     syswrite ($wtr,  $text . "\n__END__\n") ;
-    print STDERR "close start\n" ;
+    $self -> logger ("close start\n") if ($Perl::LanguageServer::debug2) ; ;
     close ($wtr) ;
-    print STDERR "write done\n" ; 
+    $self -> logger ("write done\n") if ($Perl::LanguageServer::debug2) ; ; 
 
     my $out ;
     my $errout = join ('', <$err>) ;
     close $err ;
     close $rdr  ;
-    print STDERR "closed\n" ;
+    $self -> logger ("closed\n") if ($Perl::LanguageServer::debug2) ; ;
     waitpid( $pid, 0 );
     my $rc = $? ;
 
@@ -138,7 +138,7 @@ sub background_checker
         my ($uri, $text) = @$cmd ;
 
         $text = eval { Encode::encode ('utf-8', $text) ; } ;
-        print STDERR $@ if ($@) ;    
+        $self -> logger ($@) if ($@) ;    
     
         my $ret ;
         my $errout ;
@@ -147,7 +147,7 @@ sub background_checker
         my @inc ;
         @inc = map { ('-I', $_)} @$inc if ($inc) ;
 
-        print STDERR "start perl -c\n" ;
+        $self -> logger ("start perl -c\n") if ($Perl::LanguageServer::debug1) ; ;
         if ($^O =~ /Win/)
             {
             ($ret, $out, $errout) = $self -> run_open3 ($text, \@inc) ;
@@ -162,7 +162,7 @@ sub background_checker
             }
 
         my $rc = $ret >> 8 ;
-        print STDERR "perl -c rc=$rc out=$out errout=$errout\n" ;
+        $self -> logger ("perl -c rc=$rc out=$out errout=$errout\n") if ($Perl::LanguageServer::debug1) ; ;
 
         my %diags = ( map { $_ => [] } @{$self -> files -> {$uri}{diags} || ['-'] } ) ;
         if ($rc != 0)

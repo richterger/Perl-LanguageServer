@@ -332,9 +332,13 @@ sub _parse_perl_source_cached
             #print STDERR "load from cache\n" ;    
             my $cache ;
             aio_load ($cachepath, $cache) ;
-            my $vars = $Perl::LanguageServer::json -> decode ($cache) ;
-            $stats -> {loaded}++ ;
-            return $vars ;
+            my $vars = eval { $Perl::LanguageServer::json -> decode ($cache) ; } ;
+            if (!$@)
+                {
+                $stats -> {loaded}++ ;
+                return $vars ;
+                }
+            print "Loading of $cachepath failed, reparse file ($@)\n" ;    
             }
         }
 
@@ -420,7 +424,7 @@ sub background_parser
         }
 
     my $cnt = keys %{$self -> symbols} ;
-    print STDERR "initial parsing done, loaded $stats->{loaded} files, parsed $stats->{parsed} files, $cnt files\n" if ($cnt % 100 == 0) ;
+    print STDERR "initial parsing done, loaded $stats->{loaded} files, parsed $stats->{parsed} files, $cnt files\n" ;
 
     my $filefilter = $self -> file_filter_regex ;
 

@@ -29,11 +29,11 @@ Perl::LanguageServer - Language Server and Debug Protocol Adapter for Perl
 
 =head1 VERSION
 
-Version 2.0
+Version 2.0.1
 
 =cut
 
-our $VERSION = '2.0';
+our $VERSION = '2.0.1';
 
 
 =head1 SYNOPSIS
@@ -70,8 +70,9 @@ our %running_coros ;
 our $exit ;
 our $workspace ;
 our $dev_tool ;
-our $debug1 = 1 ;
+our $debug1 = 0 ;
 our $debug2 = 0 ;
+our $client_version ;
 
 
 has 'channel' =>
@@ -141,7 +142,7 @@ sub send_notification
     if ($debug2)
         {
         $wrdata =~ s/\r//g ;
-        $self -> logger ("<--- Notification: ", $wrdata, "\n") ;
+        $self -> logger ("<--- Notification: ", $wrdata, "\n") if ($debug1) ;
         }
     }
 
@@ -436,7 +437,12 @@ sub run
         {
         if ($opt eq '--debug')
             {
-            $debug2 = 1  ;    
+            $debug1 = $debug2 = 1  ;    
+            }
+        elsif ($opt eq '--log-level')
+            {
+            $debug1 = shift @ARGV  ;
+            $debug2 = $debug1 > 1?1:0 ;    
             }
         elsif ($opt eq '--port')
             {
@@ -449,6 +455,10 @@ sub run
         elsif ($opt eq '--heartbeat')
             {
             $heartbeat = 1  ;    
+            }
+        elsif ($opt eq '--version')
+            {
+            $client_version = shift @ARGV  ;    
             }
         }
 
