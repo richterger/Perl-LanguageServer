@@ -212,6 +212,8 @@ sub file_client2server
     my $map = $self -> path_map ;
     return $fn if (!$map) ;
 
+    $fn =~ s/\\/\//g ;
+
     foreach my $m (@$map)
         {
         #print STDERR "file_client2server $m->[3] -> $m->[2] : $fn\n" ;

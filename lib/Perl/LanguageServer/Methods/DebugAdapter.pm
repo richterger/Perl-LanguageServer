@@ -105,7 +105,7 @@ sub send_event
     {
     my ($self, $event, $body) = @_ ;
 
-    $self -> send_notification ({ type => 'event', event => $event, body => $body }) ;
+    $self -> send_notification ({ type => 'event', event => $event, body => $body }, $self) ;
     }
 
 # ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ sub _dapreq_initialize
     $Perl::LanguageServer::dev_tool    = Perl::LanguageServer::DevTool -> new ({ config => $req -> params }) ;
     $Perl::LanguageServer::workspace ||= Perl::LanguageServer::Workspace -> new ({ config =>{} }) ;
 
-    $self -> logger ('initialize debug adapter', dump ($req -> params),"\n") ;
+    #$self -> logger ('initialize debug adapter', dump ($req -> params),"\n") ;
 
     my $caps = 
         {
@@ -367,6 +367,9 @@ sub _dapreq_breakpointLocations
     {
     my ($self, $workspace, $req) = @_ ;
 
+    my $dai = $self -> debug_adapter_interface ;
+    return { breakpoints => [] } if (!$dai || !$dai -> initialized) ;
+
     my $old_running = $self -> _temp_break ($workspace) ;
 
     my $source      = $req -> params -> {source} ;
@@ -518,8 +521,8 @@ sub _dapreq_variables
     my $thread_ref = $ref -> {thread_ref} ;
     my $package    = $ref -> {package} ;
     my $type       = $ref -> {ref} ;
-use Data::Dump ;
-print STDERR Data::Dump::pp($self -> id2ref), "\n" ;
+    #use Data::Dump ;
+    #print STDERR Data::Dump::pp($self -> id2ref), "\n" ;
     my $variables = $self -> send_request ('vars', 
                                         { 
                                         thread_ref => $thread_ref,

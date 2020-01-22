@@ -20,6 +20,34 @@ https://marketplace.visualstudio.com/items?itemName=richterger.perl
 
 Any comments and patches are welcome.
 
+FEATURES
+
+* Language Server
+
+  * Syntax checking
+  * Symbols in file
+  * Symbols in workspace/directory
+  * Goto Definition
+  * Find References
+  * Supports multiple workspace folders
+  * Run on remote system via ssh
+
+* Debugger
+
+  * Run, pause, step, next, return
+  * Support for coro threads
+  * Breakpoints 
+  * Conditional breakpoints
+  * Breakpoints can be set while programm runs and for modules not yet loaded
+  * Variable view, can switch to every stack frame or coro thread
+  * Set variable
+  * Watch variable
+  * Tooltips with variable values
+  * Evaluate perl code in debuggee, in context of every stack frame of coro thread
+  * Automatically reload changed Perl modules while debugging
+  * Debug mutiple perl programm at once
+  * Run on remote system via ssh
+
 INSTALLATION
 
 To install this module, run the following commands:

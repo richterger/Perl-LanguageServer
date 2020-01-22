@@ -28,11 +28,17 @@ has 'debug_adapter' =>
     predicate => 'has_debug_adapter',
     ) ; 
 
-has 'channel' =>
+has 'cmd_queue' =>
     (
     is => 'ro',
     isa => 'Coro::Channel',
     default => sub { Coro::Channel -> new }    
+    ) ;
+
+has 'cmd_in_progress' =>
+    (
+    is => 'rw',
+    isa => 'Maybe[HashRef]',
     ) ;
 
 has 'initialized' =>
@@ -60,6 +66,23 @@ sub send_event
 
 # ---------------------------------------------------------------------------
 
+sub send_request
+    {
+    my ($self) = @_ ;
+
+    return if ($self -> cmd_in_progress) ;
+
+    my $channel = $self -> cmd_queue ;
+    return if ($channel -> size == 0) ;
+    my $req = $channel -> get () ;    
+    $self -> cmd_in_progress ($req) ;
+    $self -> send_notification ($req, $self, "<--- To debuggee: ") ;
+
+    return  ;
+    }
+
+# ---------------------------------------------------------------------------
+
 sub request
     {
     my ($self, $req) = @_ ;
@@ -69,10 +92,13 @@ sub request
 
     my $channels = $self -> responses ;
     local $channels -> {$seq} = Coro::Channel -> new ;
-    
-    $self -> send_notification ($req) ;
 
-    return $channels -> {$seq} -> get ;
+    my $channel = $self -> cmd_queue ;
+    $channel -> put ($req) ;    
+    $self -> send_request () ;   
+    my $ret = $channels -> {$seq} -> get ;
+    $self -> send_request () ;   
+    return $ret ;
     }
 
 # ---------------------------------------------------------------------------
@@ -82,10 +108,14 @@ sub _dapreq_di_response
     my ($self, $workspace, $req) = @_ ;
 
     my $seq = - $req -> id ;
+    my $cmd = $self -> cmd_in_progress ;
+    my $cmdseq = $cmd?$cmd -> {seq}:'<undef>' ;
     my $channels = $self -> responses ;
-    $self -> logger ("di_response seq = $seq channels = ", dump($channels), "\n") ;
+    $self -> logger ("di_response seq = $seq lastcmd seq = $cmdseq channels = ", dump([keys %$channels]), " queue size = ", $self -> cmd_queue -> size, "\n") ;
     return if (!exists $channels -> {$seq}) ;
     $channels -> {$seq} -> put ($req -> params) ;
+    $self -> cmd_in_progress (undef) ;
+    $self -> send_request () ;   
     return ;
     }
 
@@ -96,7 +126,8 @@ sub _dapreq_di_break
     my ($self, $workspace, $req) = @_ ;
 
     $self -> log_prefix ('DAI') ;
-
+    $self -> log_req_txt ('---> From debuggee: ') ;
+    
     my $debug_adapter = $Perl::LanguageServer::Methods::DebugAdapter::debug_adapters{$req -> params -> {session_id}} ;
     die "no debug_adapter for session " . $req -> params -> {session_id} if (!$debug_adapter) ;
     $debug_adapter -> running (0) ;
@@ -150,7 +181,7 @@ sub _dapreq_di_loadedfile
         die "no debug_adapter for session " . $req -> params -> {session_id} if (!$debug_adapter) ;
 
         $self -> logger ("session_id = " . $req -> params -> {session_id} . "\n") ;
-        $self -> logger ("debug_adapter = ", dump ($debug_adapter), "\n") ;
+        #$self -> logger ("debug_adapter = ", dump ($debug_adapter), "\n") ;
 
         $self -> debug_adapter ($debug_adapter) ;
         $self -> debugger_process ($debug_adapter -> debugger_process) ;

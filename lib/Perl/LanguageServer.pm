@@ -33,7 +33,7 @@ Version 2.0.1
 
 =cut
 
-our $VERSION = '2.0.1';
+our $VERSION = '2.0.2';
 
 
 =head1 SYNOPSIS
@@ -64,6 +64,7 @@ L<https://github.com/goccy/p5-Compiler-Lexer>
 =cut
 
 our $json = JSON -> new -> utf8(1) -> ascii(1) ;
+our $jsonpretty = JSON -> new -> utf8(1) -> ascii(1) -> pretty (1) ;
 
 our %running_reqs ;
 our %running_coros ;
@@ -116,13 +117,26 @@ has 'log_prefix' =>
     default => 'LS',
     ) ;
 
+has 'log_req_txt' =>
+    (
+    is => 'rw',
+    isa => 'Str',
+    default => '---> Request: ',
+    ) ;
+
 # ---------------------------------------------------------------------------
 
 sub logger
     {
     my $self = shift ;
+    my $src ;
+    if (!defined ($_[0]) || ref ($_[0]))
+        {
+        $src = shift ;
+        }
+    $src = $self if (!$src) ;
     
-    print STDERR $self?$self -> log_prefix . ': ':'', @_ ;    
+    print STDERR $src?$src -> log_prefix . ': ':'', @_ ;    
     }
 
 
@@ -130,8 +144,9 @@ sub logger
 
 sub send_notification 
     {
-    my ($self, $notification) = @_ ;
+    my ($self, $notification, $src, $txt) = @_ ;
 
+    $txt ||= "<--- Notification: " ;
     $notification -> {jsonrpc} = '2.0' ;       
     my $outdata = $json -> encode ($notification) ;
     my $guard = $self -> out_semaphore -> guard  ;
@@ -139,10 +154,10 @@ sub send_notification
     my $len  = length($outdata) ;
     my $wrdata = "Content-Length: $len\r\nContent-Type: application/vscode-jsonrpc; charset=utf-8\r\n\r\n$outdata" ;
     $self -> _write ($wrdata) ;
-    if ($debug2)
+    if ($debug1)
         {
         $wrdata =~ s/\r//g ;
-        $self -> logger ("<--- Notification: ", $wrdata, "\n") if ($debug1) ;
+        $self -> logger ($src, $txt, $jsonpretty -> encode ($notification), "\n") if ($debug1) ;
         }
     }
 
@@ -229,30 +244,33 @@ sub process_req
 
         my $rsp ;
         my $outdata ;
+        my $outjson ; 
         eval
             {
             $rsp = $self -> call_method ($reqdata, $req, $id) ;
             $id = undef if (!$rsp) ;
             if ($req -> is_dap)
                 {
-                $outdata = $json -> encode ({ request_seq => -$id, seq => -$id, command => $reqdata -> {command}, success => JSON::true, type => 'response', $rsp?(body => $rsp):()})  ;
+                $outjson = { request_seq => -$id, seq => -$id, command => $reqdata -> {command}, success => JSON::true, type => 'response', $rsp?(body => $rsp):()}  ;
                 }
             else
                 {    
-                $outdata = $json -> encode ({ id => $id, jsonrpc => '2.0', result => $rsp})  if ($rsp) ;
+                $outjson = { id => $id, jsonrpc => '2.0', result => $rsp}  if ($rsp) ;
                 }
+            $outdata = $json -> encode ($outjson) if ($outjson) ; 
             } ;
         if ($@)
             {
             $self -> logger ("ERROR: $@\n") ;
             if ($req -> is_dap)
                 {
-                $outdata = $json -> encode ({ request_seq => -$id, command => $reqdata -> {command}, success => JSON::false, message => "$@", , type => 'response'}) ;
+                $outjson = { request_seq => -$id, command => $reqdata -> {command}, success => JSON::false, message => "$@", , type => 'response'} ;
                 }
             else
                 {    
-                $outdata = $json -> encode ({ id => $id, jsonrpc => '2.0', error => { code => -32001, message => "$@" }}) ;
+                $outjson = { id => $id, jsonrpc => '2.0', error => { code => -32001, message => "$@" }} ;
                 }
+            $outdata = $json -> encode ($outjson) if ($outjson) ; 
             }
 
         if (defined($id))
@@ -270,10 +288,10 @@ sub process_req
                 $sum += $cnt ;
                 }
 
-            if ($debug2) 
+            if ($debug1) 
                 {
                 $wrdata =~ s/\r//g ;
-                $self -> logger ("<--- Response: ", $wrdata, "\n") ;
+                $self -> logger ("<--- Response: ", $jsonpretty -> encode ($outjson), "\n") ;
                 }
             }
         cede () ;
@@ -346,7 +364,7 @@ sub mainloop
         $reqdata = $json -> decode ($data) if ($data) ;
         if ($debug1) 
             {
-            $self -> logger ("---> Request: ", dump ($reqdata), "\n") ;
+            $self -> logger ($self -> log_req_txt, $jsonpretty -> encode ($reqdata), "\n") ;
             }
         my $id = $reqdata -> {type}?-$reqdata -> {seq}:$reqdata -> {id};
 
@@ -382,7 +400,7 @@ sub _run_tcp_server
                         eval
                             {
                             $fh = Coro::Handle::unblock ($fh) ;
-                            my $self = Perl::LanguageServer -> new ({out_fh => $fh, in_fh => $fh});
+                            my $self = Perl::LanguageServer -> new ({out_fh => $fh, in_fh => $fh, log_prefix => 'DAx'});
                             $self -> logger ("connect from $host:$port\n") ;
                             $self -> listen_port ($listen_port) ;
 

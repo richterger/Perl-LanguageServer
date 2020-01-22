@@ -155,6 +155,8 @@ sub signal
 
     return if (!$self -> pid) ;
 
+    $self -> logger ("Send signal $signal to debuggee\n") ;
+
     kill $signal, $self -> pid ;
     }
 

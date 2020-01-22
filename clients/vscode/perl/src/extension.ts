@@ -53,7 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
             {
             sshArgs.push(sshPortOption, sshPort) ;
             }
-		sshArgs.push('-l', sshUser, sshAddr, '-L' + debug_adapter_port + ':127.0.0.1:' + debug_adapter_port, perlCmd) ;
+		sshArgs.push('-l', sshUser, sshAddr, '-L', debug_adapter_port + ':127.0.0.1:' + debug_adapter_port, perlCmd) ;
 		serverArgs = sshArgs.concat(perlArgs) ;
 		}
 	else

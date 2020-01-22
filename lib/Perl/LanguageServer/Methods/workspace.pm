@@ -31,11 +31,13 @@ sub _rpcnot_didChangeConfiguration
         foreach (@$map)
             {
             $fn = $_ -> [0] ;
-            $fn =~ s/^file:\/\/// ;
-            $_ -> [2] = $fn ;    
+            $fn =~ s/^file:// ;
+            $fn =~ s/^\/\/\//\// ;
+            $_ -> [2] ||= $fn ;    
             $fn = $_ -> [1] ;
-            $fn =~ s/^file:\/\/// ;
-            $_ -> [3] = $fn ;    
+            $fn =~ s/^file:// ;
+            $fn =~ s/^\/\/\//\// ;
+            $_ -> [3] ||= $fn ;    
             }
         $workspace -> path_map ($map) ;
         }

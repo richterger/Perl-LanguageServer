@@ -228,6 +228,7 @@ sub ret {
   my $s = shift;
   my $i = shift;      # how many levels to get to DB sub
   $i = 0 unless defined $i;
+  $i -= $#stack-$i if ($#stack-$i < 0) ;
   $stack[$#stack-$i] |= 1;
   $DB::single = 0;
   $running = 1;
@@ -1404,13 +1405,24 @@ sub req_can_break
     my $line        = $params -> {line} ;
     my $end_line    = $params -> {end_line} || $line ;
     my $filename    = $params -> {filename} ;
+    my $real_filename = $filename ;
 
-    return { breakpoints => [] } if ($filename && !defined $main::{'_<' . $filename}) ;
+    my %seen ;
+    while (!defined $main::{'_<' . $real_filename} && -l $real_filename)
+        {
+        my $dir = File::Basename::dirname ($real_filename) ;
+        $real_filename = readlink ($real_filename) ;
+        last if (!$real_filename) ;
+        $real_filename = abs_path_nd ($real_filename, $dir) ;
+        last if ($seen{$real_filename}++) ;
+        } 
+
+    return { breakpoints => [] } if (!defined $main::{'_<' . $real_filename}) ;
 
     Class::Refresh -> refresh if ($refresh) ;
 
     # Switch the magical hash temporarily.
-    local *dbline = "::_<$filename";
+    local *dbline = "::_<$real_filename";
 
     my @bp ;
     for (my $i = $line; $i <= $end_line; $i++)
@@ -1589,6 +1601,13 @@ sub init
 
     $class -> logger ("enter init\n") if ($debug) ;
 
+    $refresh = ($ENV{PLSDI_OPTIONS} =~ /reload_modules/)?1:0 ;
+    if ($refresh) 
+        {
+        require Class::Refresh ;  
+        Class::Refresh -> refresh ;
+        }
+
     my $remote ;
     my $port ;
     ($remote, $port) = split /:/, $ENV{PLSDI_REMOTE} ;
@@ -1597,13 +1616,6 @@ sub init
                                     PeerPort => $port,
                                     Proto    => 'tcp') 
             or die "Cannot connect to $remote:$port ($!)";
-
-    $refresh = ($ENV{PLSDI_OPTIONS} =~ /reload_modules/)?1:0 ;
-    if ($refresh) 
-        {
-        require Class::Refresh ;  
-        Class::Refresh -> refresh ;
-        }
 
     $class -> ready (1) ;
     }

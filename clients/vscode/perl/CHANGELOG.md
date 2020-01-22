@@ -1,5 +1,10 @@
 # Change Log
 
+## 2.0.2    `2020-01-22`
+Plugin: Fix command line parameters for plink
+
+Perl::LanguageServer: Fix handling of multiple parallel request, improve symlink handling, add support for UNC paths in path mapping, improve logging for logLevel = 1
+
 ## 2.0.1    `2020-01-14`
 Added support for reloading Perl module while debugging, make log level configurable, make sure tooltips don't call functions
 

@@ -1,5 +1,11 @@
 Revision history for Perl-LanguageServer
 
+2.0.2   22.02.2020
+        - Fix handling of multiple parallel request
+        - Improve symlink handling
+        - Add support for UNC paths in path mapping
+        - Improve logging for logLevel = 1
+
 2.0.1   14.01.2020
         - Added support for reloading Perl module while debugging
         - Make log level configurable
