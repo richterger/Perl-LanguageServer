@@ -1,6 +1,6 @@
 Revision history for Perl-LanguageServer
 
-2.0.2   22.02.2020
+2.0.2   22.01.2020
         - Fix handling of multiple parallel request
         - Improve symlink handling
         - Add support for UNC paths in path mapping
