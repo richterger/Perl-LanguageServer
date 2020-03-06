@@ -5,6 +5,9 @@ Revision history for Perl-LanguageServer
         - showLocalSymbols
         - function names in breadcrump
         - Signature Help for function/method arguments
+        - Add Presentation on Perl Workshop 2020 to repos
+        - Remove Complier::Lexer from distribution since 
+          version is available on CPAN
 
 
 
