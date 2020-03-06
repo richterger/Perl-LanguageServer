@@ -1,5 +1,13 @@
 Revision history for Perl-LanguageServer
 
+2.1.0
+        - Improve Symbol Parser (fix parsing of anoymous subs)
+        - showLocalSymbols
+        - function names in breadcrump
+        - Signature Help for function/method arguments
+
+
+
 2.0.2   22.02.2020
         - Fix handling of multiple parallel request
         - Improve symlink handling

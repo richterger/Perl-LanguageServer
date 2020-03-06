@@ -83,6 +83,12 @@ has 'perlinc' =>
     is  => 'rw',
     ) ;
 
+has 'show_local_vars' =>
+    (
+    isa => 'Maybe[Bool]',
+    is  => 'rw',
+    ) ;
+
 
 has 'parser_channel' =>
     (

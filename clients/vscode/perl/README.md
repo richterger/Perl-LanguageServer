@@ -10,6 +10,7 @@ Language Server and Debugger for Perl
   * Symbols in workspace/directory
   * Goto Definition
   * Find References
+  * Call Signatures
   * Supports multiple workspace folders
   * Run on remote system via ssh
 * Debugger

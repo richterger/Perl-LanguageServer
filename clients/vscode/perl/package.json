@@ -2,12 +2,12 @@
     "name": "perl",
     "displayName": "Perl",
     "description": "Language Server and Debugger for Perl",
-    "version": "2.0.2",
+    "version": "2.1.0",
     "publisher": "richterger",
     "repository": "https://github.com/richterger/Perl-LanguageServer",
     "license": "SEE LICENSE IN LICENSE",
     "engines": {
-        "vscode": "^1.30.0"
+        "vscode": "^1.40.0"
     },
     "categories": [
         "Debuggers",
@@ -88,6 +88,11 @@
                     "type": "array",
                     "default": null,
                     "description": "directories to ignore, defaults to .vscode, .git, .svn"
+                },
+                "perl.showLocalVars": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "if true, show also local variables in symbol view"
                 },
                 "perl.debugAdapterPort": {
                     "type": "string",
@@ -173,10 +178,10 @@
         "@types/mocha": "^2.2.42",
         "@types/node": "^7.10.9",
         "tslint": "^5.20.1",
-        "typescript": "^2.9.2",
+        "typescript": "^3.7.5",
         "vscode": "^1.1.36"
     },
     "dependencies": {
-        "vscode-languageclient": "^4.4.2"
+        "vscode-languageclient": "^6.1.0"
     }
 }

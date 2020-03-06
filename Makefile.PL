@@ -6,6 +6,7 @@ use FindBin ;
 use File::Basename ;
 use Cwd;
 
+=pod
 my $mydir = getcwd;
 my $lexer_make = $FindBin::Bin . '/p5-Compiler-Lexer/Build.PL' ;
 my $lexer_inst = $FindBin::Bin . '/p5-Compiler-Lexer/Build' ;
@@ -28,6 +29,7 @@ if (-e $lexer_make)
         }
     chdir $mydir ;
     }
+=cut
 
 WriteMakefile(
     NAME             => 'Perl::LanguageServer',
@@ -55,6 +57,7 @@ WriteMakefile(
         'PadWalker'          => '0',
         'Scalar::Util'       => '0',
         'Class::Refresh'     => '0',
+        'Compiler-Lexer'     => '0.23',
     },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean => { FILES => 'Perl-LanguageServer-*' },

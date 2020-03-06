@@ -73,6 +73,8 @@ sub _rpcnot_didChangeConfiguration
 
     $workspace -> set_workspace_folders ($workspace -> config -> {workspaceFolders} ) ;
 
+    $workspace -> show_local_vars ($workspace -> config -> {showLocalVars} ) ;
+
     async
         {
         $workspace -> background_parser ($self) ;

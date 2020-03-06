@@ -2,6 +2,7 @@ package Perl::LanguageServer::Methods ;
 
 use Moose::Role ;
 use JSON ;
+use Data::Dump qw{pp} ;
 
 no warnings 'uninitialized' ;
 
@@ -12,6 +13,8 @@ sub _rpcreq_initialize
     my ($self, $workspace, $req) = @_ ;
 
     #print STDERR "Call initialize\n" ;
+    $self -> logger ("initialize ", $Perl::LanguageServer::jsonpretty -> encode ($req -> params), "\n")
+        if ($Perl::LanguageServer::debug1) ;
 
     $Perl::LanguageServer::workspace = Perl::LanguageServer::Workspace -> new ({ config => $req -> params }) ;
 
@@ -29,6 +32,10 @@ sub _rpcreq_initialize
 
         # The server provides signature help support.
 	    #signatureHelpProvider?: SignatureHelpOptions;
+        signatureHelpProvider =>
+            {
+            triggerCharacters => ['('],
+            },
 
         # The server provides goto definition support.
 	    #definitionProvider?: boolean;
@@ -82,6 +89,12 @@ sub _rpcreq_initialize
 
         # The server provides execute command support.
 	    #executeCommandProvider?: ExecuteCommandOptions;
+
+        # The server provides selection range support.
+        # @since 3.15.0
+        # selectionRangeProvider?: boolean | SelectionRangeOptions | SelectionRangeRegistrationOptions;
+
+        #selectionRangeProvider => JSON::true,
 
         # Workspace specific server capabilities
 	    workspace => {

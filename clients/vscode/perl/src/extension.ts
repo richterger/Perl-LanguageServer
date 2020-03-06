@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
     let debug_adapter_port : string = config.get('debugAdapterPort') || '13603' ; 
 	let perlCmd  : string           = config.get('perlCmd') || 'perl' ; 
     let logLevel : number           = config.get('logLevel') || 0 ;
-    let client_version : string     = "2.0.1" ;
+    let client_version : string     = "2.1.0" ;
     let perlArgs : string[]         = ['-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', 
                                                                  '--port', debug_adapter_port,
                                                                  '--log-level', logLevel.toString(),
