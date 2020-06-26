@@ -797,9 +797,9 @@ sub get_eval_result
 
 sub get_vars 
     {
-    my ($self, $varsrc, $vars) = @_ ;
+    my ($self, $varsrc, $vars, $array) = @_ ;
     
-    foreach my $k (sort keys %$varsrc)
+    foreach my $k (sort { $array?$a <=> $b:$a cmp $b } keys %$varsrc)
         {
         my $key = $k ;
         my $val = $varsrc -> {$k}[0] ;
@@ -946,11 +946,12 @@ sub req_vars
     my $frame_ref   = $params -> {frame_ref} - $recurse ;
     my $package     = $params -> {'package'} ;
     my $type        = $params -> {type} ;
+    my $filter      = $params -> {filter} ;
     my @vars ;
 
     my $varsrc = $class -> get_varsrc ($frame_ref, $package, $type) ;
 
-    $class -> get_vars ($varsrc, \@vars) ;
+    $class -> get_vars ($varsrc, \@vars, $filter) ;
 
     return { variables => \@vars } ;
     }
