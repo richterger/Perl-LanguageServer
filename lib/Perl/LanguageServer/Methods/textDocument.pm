@@ -243,6 +243,28 @@ sub _rpcreq_documentSymbol
 
 # ---------------------------------------------------------------------------
 
+sub _get_symbol
+    {
+    my ($self, $workspace, $req, $symbol, $name, $uri, $def_only, $vars) = @_ ;
+
+    if (exists $symbol -> {children})
+        {
+        foreach my $s (@{$symbol -> {children}})
+            {
+            $self -> _get_symbol ($workspace, $req, $s, $name, $uri, $def_only, $vars) ;   
+            last if (@$vars > 500) ;
+            }    
+        }
+
+    return if ($symbol -> {name} ne $name) ;
+    print STDERR "name=$name symbols = ", pp ($symbol), "\n" ;
+    return if ($def_only && !exists $symbol -> {defintion}) ;
+    my $line = $symbol -> {line} + 0 ;
+    push @$vars, { uri => $uri, range => { start => { line => $line, character => 0 }, end => { line => $line, character => 0 }}} ;
+    }
+
+# ---------------------------------------------------------------------------
+
 sub _get_symbols
     {
     my ($self, $workspace, $req, $def_only) = @_ ;
@@ -253,7 +275,7 @@ sub _get_symbols
     my $name = $self -> get_symbol_from_doc ($workspace, $uri, $pos) ;
 
     my $symbols = $workspace -> symbols ;
-    #print STDERR "symbols = ", dump ($symbols), "\n" ;
+    #print STDERR "name=$name symbols = ", pp ($symbols), "\n" ;
     my $line ;
     my @vars ;
 
@@ -263,17 +285,15 @@ sub _get_symbols
             {
             foreach my $symbol (@{$symbols->{$uri}})
                 {
-                next if ($symbol -> {name} ne $name) ;
-                next if ($def_only && !exists $symbol -> {defintion}) ;
-                $line = $symbol -> {line} ;
-                push @vars, { uri => $uri, range => { start => { line => $line, character => 0 }, end => { line => $line, character => 0 }}} ;
-                last if (@vars > 200) ;
+                $self -> _get_symbol ($workspace, $req, $symbol, $name, $uri, $def_only, \@vars) ;   
+                last if (@vars > 500) ;
                 }
             }
         }
 
     return \@vars ;
     }
+    
 # ---------------------------------------------------------------------------
 
 sub _rpcreq_definition
