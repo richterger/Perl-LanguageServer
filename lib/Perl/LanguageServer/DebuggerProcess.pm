@@ -32,9 +32,9 @@ has 'args' =>
 
 has 'env' =>
     (
-    isa => 'ArrayRef',
+    isa => 'HashRef',
     is  => 'ro',
-    default => sub { [] },
+    default => sub { {} },
     ) ; 
 
 has 'cwd' =>
@@ -87,6 +87,7 @@ sub BUILDARGS
     {
     my ($class, $args) = @_ ;
 
+    $args -> {env} = { @{$args -> {env}} } if (exists $args -> {env} && ref ($args -> {env}) eq 'ARRAY') ;
     $args -> {reload_modules} = delete $args -> {reloadModules}?1:0 ;
     $args -> {stop_on_entry} = delete $args -> {stopOnEntry}?1:0 ;
     $args -> {session_id}    = delete $args -> {__sessionId} || $session_cnt ;
@@ -123,7 +124,7 @@ sub lauch
     my $pid ;
     {
     local %ENV ;
-    foreach (@{$self -> env})
+    foreach (keys %{$self -> env})
         {
         $ENV{$_} = $self -> env -> {$_} ;    
         }
