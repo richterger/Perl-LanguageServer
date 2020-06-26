@@ -257,7 +257,7 @@ sub _get_symbol
         }
 
     return if ($symbol -> {name} ne $name) ;
-    print STDERR "name=$name symbols = ", pp ($symbol), "\n" ;
+    #print STDERR "name=$name symbols = ", pp ($symbol), "\n" ;
     return if ($def_only && !exists $symbol -> {defintion}) ;
     my $line = $symbol -> {line} + 0 ;
     push @$vars, { uri => $uri, range => { start => { line => $line, character => 0 }, end => { line => $line, character => 0 }}} ;
