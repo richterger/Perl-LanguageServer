@@ -128,12 +128,16 @@ sub lauch
         {
         $ENV{$_} = $self -> env -> {$_} ;    
         }
+
+    my $inc = $workspace -> perlinc ;
+    my @inc ;
+    @inc = map { ('-I', $_)} @$inc if ($inc) ;
     
     $ENV{PLSDI_REMOTE} = '127.0.0.1:' . $self -> debug_adapter -> listen_port ;
     $ENV{PLSDI_OPTIONS} = $self -> reload_modules?'reload_modules':'' ;
     $ENV{PERL5DB}      = 'BEGIN { require Perl::LanguageServer::DebuggerInterface }' ;
     $ENV{PLSDI_SESSION}= $self -> session_id ;
-    $pid = $self -> run_async ([$cmd, '-d', $fn, @{$self -> args}]) ;
+    $pid = $self -> run_async ([$cmd, @inc, '-d', $fn, @{$self -> args}]) ;
     }
 
     $self -> pid ($pid) ;
