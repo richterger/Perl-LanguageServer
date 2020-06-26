@@ -71,6 +71,11 @@ sub _rpcnot_didChangeConfiguration
 
     print STDERR "file_filter_regex = ", dump ( $workspace -> file_filter_regex), "\n" ;    
 
+    if (!exists ($workspace -> config -> {workspaceFolders}) || @{$workspace -> config -> {workspaceFolders}} == 0)
+        {
+        $workspace -> config -> {workspaceFolders} = [{ uri => $workspace -> config -> {rootUri} }] ;
+        }
+
     $workspace -> set_workspace_folders ($workspace -> config -> {workspaceFolders} ) ;
 
     $workspace -> show_local_vars ($workspace -> config -> {showLocalVars} ) ;
