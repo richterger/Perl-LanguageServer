@@ -57,7 +57,7 @@ sub _rpcnot_didChangeConfiguration
     if ($filter)
         {
         $filter = [$filter] if (!ref $filter) ;    
-        $workspace -> file_filter_regex ('(?:' . join ('|', map { "\\Q$_\\E" } @$filter ) . ')$') ;    
+        $workspace -> file_filter_regex ('(?:' . join ('|', map { quotemeta($_) } @$filter ) . ')$') ;    
         }
 
     print STDERR "file_filter_regex = ", dump ( $workspace -> file_filter_regex), "\n" ;    
