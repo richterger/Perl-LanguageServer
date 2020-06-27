@@ -43,11 +43,58 @@ use constant SymbolKindEvent => 24;
 use constant SymbolKindOperator => 25;
 use constant SymbolKindTypeParameter => 26;
 
+use constant CacheVersion => 3 ;
+
+
+# ---------------------------------------------------------------------------
+
+sub _get_docu
+    {
+    my ($self, $source, $line) = @_ ;
+
+    my @docu ;
+    my $in_pod ;
+    while ($line-- >= 0)
+        {
+        my $src = $source -> [$line] ;
+        if ($src =~ /^=cut/)
+            {
+            $in_pod = 1 ;
+            next ;
+            }
+
+        if ($in_pod)
+            {
+            last if ($src =~ /^=pod/) ;
+            next if ($src =~ /^=\w+\s*$/) ;
+            $src =~ s/^=item /* / ;
+            unshift @docu, $src ;
+            }
+        else
+            {    
+            next if ($src =~ /^\s*$/) ;
+            next if ($src =~ /^\s*#[-#+~= \t]+$/) ;
+            last if ($src !~ /^\s*#(.*?)\s*$/) ;
+            unshift @docu, $1 ;
+            }
+        }
+
+    shift @docu while (@docu && ($docu[0] =~ /^\s*$/)) ;
+    pop   @docu while (@docu && ($docu[-1] =~ /^\s*$/)) ;
+
+    return join ("\n", @docu) ;
+    }
+
+
+# ---------------------------------------------------------------------------
+
+
 sub parse_perl_source
     {
     my ($self, $uri, $source) = @_ ;    
 
     $source =~ s/\r//g ; #  Compiler::Lexer computes wrong line numbers with \r
+    my @source = split /\n/, $source ;
 
     my $lexer  = Compiler::Lexer->new();
     my $tokens = $lexer->tokenize($source);
@@ -67,9 +114,16 @@ sub parse_perl_source
     my $parent ;
     my $top ;
     my $add ;
+    my $func_param ;
+    my $token_ndx = -1 ;
+    my $brace_level = 0 ;
+    my @stack ;
+    my $beginchar = 0 ;
+    my $endchar = 0 ;
 
     foreach my $token (@$tokens)
         {
+        $token_ndx++ ;
         $token -> {data} =~ s/\r$// ;
         print STDERR "token=", dump ($token), "\n" if ($Perl::LanguageServer::debug3) ;
 
@@ -89,6 +143,7 @@ sub parse_perl_source
                     kind        => SymbolKindVariable,
                     containerName => $decl eq 'our'?$package:$func,     
                     ($decl?(defintion   => $decl):()),
+                    ($decl eq 'my'?(localvar => $decl):()),
                     } ; 
                 $add = $top -> [-1] ;
                 $token -> {line} = $declline if ($decl) ;
@@ -96,9 +151,25 @@ sub parse_perl_source
                 }
             when ('LeftBrace')
                 {
+                $brace_level++ ;
+                $decl = undef ;
                 if (@vars && $vars[-1]{kind} == SymbolKindVariable)
                     {
                     $vars[-1]{name} =~ s/^\$/%/ ;    
+                    }
+                }
+            when ('RightBrace')
+                {
+                $brace_level-- ;
+                if (@stack > 0 && $brace_level == $stack[-1]{brace_level})
+                    {
+                    my $stacktop = pop @stack ;
+                    $parent = $stacktop -> {parent} ;
+                    $func   = $stacktop -> {func} ;
+                    my $symbol = $stacktop -> {symbol} ;
+                    my $start_line = $symbol -> {range}{start}{line} // $symbol -> {line} ;
+                    $symbol ->  {range} = { start => { line => $start_line, character => 0 }, end => { line => $token -> {line}-1, character => 9999 }} 
+                        if (defined ($start_line)) ;
                     }
                 }
             when ('LeftBracket')
@@ -108,43 +179,100 @@ sub parse_perl_source
                     $vars[-1]{name} =~ s/^\$/@/ ;    
                     }
                 }
-            when ('Function')
+            when (['Function', 'Method'])
                 {
-                $top = \@vars ;
-                push @$top, 
+                if ($token -> {data} =~ /^\w/)
                     {
-                    name        => $token -> {data},
-                    kind        => SymbolKindFunction,
-                    containerName => $package,     
-                    ($decl?(defintion   => $decl):()),
-                    }  ;  
-                $add = $top -> [-1] ;
-                if ($decl)
-                    {
-                    $token -> {line} = $declline ;
-                    $func = $token -> {data} ;
-                    $parent = $vars[-1]{children} ||= [] ;
+                    $top = !$parent?\@vars:$parent ;
+                    push @$top, 
+                        {
+                        name        => $token -> {data},
+                        kind        => SymbolKindFunction,
+                        containerName => @stack?$func:$package,     
+                        ($decl?(defintion   => $decl):()),
+                        }  ;  
+                    $func_param = $add = $top -> [-1] ;
+                    if ($decl)
+                        {
+                        push @stack, 
+                            { 
+                            brace_level => $brace_level,
+                            parent      => $parent,
+                            func        => $func,
+                            'package'   => $package,
+                            symbol      => $add,
+                            } ;
+                        $token -> {line} = $declline ;
+                        $func = $token -> {data} ;
+                        $parent = $top -> [-1]{children} ||= [] ;
+                        }
+                    my $src = $source[$token -> {line}-1] ;
+                    my $i ;
+                    if ($src && ($i = index($src, $func) >= 0))
+                        {
+                        $beginchar = $i + 1 ;
+                        $endchar   = $i + 1 + length ($func) ;
+                        }
                     }
                 $decl = undef ;
                 }
-            when ('Method')
+            when ('ArgumentArray')
                 {
-                $top = \@vars ;
-                push @$top, 
+                if ($func_param)
                     {
-                    name        => $token -> {data},
-                    kind        => SymbolKindFunction,
-                    containerName => $package,     
-                    ($decl?(defintion   => $decl):()),
-                    }  ;  
-                $add = $top -> [-1] ;
-                if ($decl)
+                    my @params ;
+                    if ($tokens -> [$token_ndx - 1]{name} eq 'Assign' &&
+                        $tokens -> [$token_ndx - 2]{name} eq 'RightParenthesis')
+                        {
+                        for (my $i = $token_ndx - 3; $i >= 0; $i--)
+                            {
+                            next if ($tokens -> [$i]{name} eq 'Comma') ;
+                            last if ($tokens -> [$i]{name} !~ /Var$/) ;
+                            push @params, $tokens -> [$i]{data} ;
+                            }
+                        my $func_doc = $self -> _get_docu (\@source, $func_param -> {range}{start}{line} // $func_param -> {line}) ;
+                        my @parameters ;
+                        foreach my $p (reverse @params)
+                            {
+                            push @parameters, 
+                                {
+                                label => $p,    
+                                } ;
+                            }
+                        $func_param -> {detail} = '(' . join (',', reverse @params) . ')' ;
+                        $func_param -> {signature} =
+                            {
+                            label => $func_param -> {name} . $func_param -> {detail},
+                            documentation => $func_doc,
+                            parameters => \@parameters 
+                            } ;
+                        }                    
+                    $func_param = undef ;    
+                    }    
+                }
+            when ('Prototype')
+                {
+                if ($func_param)
                     {
-                    $token -> {line} = $declline ;
-                    $func = $token -> {data} ;
-                    $parent = $vars[-1]{children} ||= [] ;
-                    }
-                $decl = undef ;
+                    my @params = split /\s*,\s*/, $token -> {data} ;
+                    my $func_doc = $self -> _get_docu (\@source, $func_param -> {range}{start}{line} // $func_param -> {line}) ;
+                    my @parameters ;
+                    foreach my $p (@params)
+                        {
+                        push @parameters, 
+                            {
+                            label => $p,    
+                            } ;
+                        }
+                    $func_param -> {detail} = '(' . join (',', @params) . ')' ;
+                    $func_param -> {signature} =
+                        {
+                        label => $func_param -> {name} . $func_param -> {detail},
+                        documentation => $func_doc,
+                        parameters => \@parameters 
+                        } ;
+                    $func_param = undef ;    
+                    }    
                 }
             when (['Package', 'UseDecl'] )
                 {
@@ -297,7 +425,12 @@ sub parse_perl_source
                 }
             else
                 {    
-                $add ->  {location} = { uri => $uri, range => { start => { line => $token -> {line}-1, character => 0 }, end => { line => $token -> {line}-1, character => 0 }}} ;
+                #$add ->  {location} = { uri => $uri, range => { start => { line => $token -> {line}-1, character => 0 }, end => { line => $token -> {line}-1, character => 0 }}} ;
+                $add ->  {range} =         { start => { line => $token -> {line}-1, character => 0 },          
+                                             end   => { line => $token -> {line}-1, character => ($endchar?9999:0) }} ;
+                $add -> {selectionRange} = { start => { line => $token -> {line}-1, character => $beginchar }, 
+                                             end   => { line => $token -> {line}-1, character => $endchar }} ;
+                $beginchar = $endchar = 0 ;
                 }
             print STDERR "var=", dump ($add), "\n" if ($Perl::LanguageServer::debug3) ;
             $add = undef ;
@@ -332,20 +465,26 @@ sub _parse_perl_source_cached
             #print STDERR "load from cache\n" ;    
             my $cache ;
             aio_load ($cachepath, $cache) ;
-            my $vars = eval { $Perl::LanguageServer::json -> decode ($cache) ; } ;
-            if (!$@)
+            my $cache_data = eval { $Perl::LanguageServer::json -> decode ($cache) ; } ;
+            if ($@)
                 {
-                $stats -> {loaded}++ ;
-                return $vars ;
+                print "Loading of $cachepath failed, reparse file ($@)\n" ;
                 }
-            print "Loading of $cachepath failed, reparse file ($@)\n" ;    
+            elsif (ref ($cache_data) eq 'HASH')
+                {
+                if ($cache_data -> {version} == CacheVersion)
+                    {
+                    $stats -> {loaded}++ ;
+                    return $cache_data -> {vars} ;
+                    }
+                }
             }
         }
 
     my $vars = $self -> parse_perl_source ($uri, $source) ;
 
     my $ifh = aio_open ($cachepath, IO::AIO::O_WRONLY | IO::AIO::O_TRUNC | IO::AIO::O_CREAT, 0664) or die "open $cachepath failed ($!)" ;
-    aio_write ($ifh, undef, undef, $Perl::LanguageServer::json -> encode ($vars), 0) ;
+    aio_write ($ifh, undef, undef, $Perl::LanguageServer::json -> encode ({ version => CacheVersion, vars => $vars}), 0) ;
     aio_close ($ifh) ;
     $stats -> {parsed}++ ;
     
