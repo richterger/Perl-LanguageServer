@@ -69,7 +69,7 @@ sub _rpcnot_didChangeConfiguration
         $workspace -> ignore_dir ({ map { ( $_ => 1 ) } @$dirs }) ;    
         }
 
-    print STDERR "file_filter_regex = ", dump ( $workspace -> file_filter_regex), "\n" ;    
+    print STDERR "ignore_dir = ", dump ( $workspace -> ignore_dir), "\n" ;    
 
     if (!exists ($workspace -> config -> {workspaceFolders}) || @{$workspace -> config -> {workspaceFolders}} == 0)
         {
