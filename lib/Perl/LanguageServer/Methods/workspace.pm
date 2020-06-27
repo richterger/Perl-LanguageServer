@@ -18,9 +18,10 @@ sub _rpcnot_didChangeConfiguration
     #print STDERR "perl = ", dump ($req -> params -> {settings}{perl}), "\n" ;
 
     my $perlcmd = $req -> params -> {settings}{perl}{perlCmd} ;
-    if ($perlcmd) {
+    if ($perlcmd) 
+        {
         $workspace -> perlcmd ($perlcmd);
-    }
+        }
 
     print STDERR "perlcmd = ", dump ( $workspace -> perlcmd), "\n" ;
 
