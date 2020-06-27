@@ -101,6 +101,29 @@ Examples:
 	    ]
     ]
 
+## Syntax check & debugging inside a conatiner
+
+It's possible to use the ssh settings also for containers. The example below is for docker-compose but there's nothing prevent you from tuning it to do docker exec, kubectl exec, machinectl shell or whatnot.
+
+.vscode/settings.json
+
+    {
+    "perl": {
+        "enable": true,
+        "sshAddr": "dummy",
+        "sshUser": "dummy",
+        "sshCmd": "bin/shell-into-appserver.sh",
+        "sshWorkspaceRoot": "/home/code (directory in the container)",
+        "logLevel": 0,
+    }
+    }
+
+bin/shell-into-appserver.sh:
+
+    #!/usr/bin/env bash
+    COMMAND=$(echo "$@" | sed 's/^.*perl /perl /')
+    docker-compose exec -u "$UID" -T [SERVICE NAME] $COMMAND
+
 ## Known Issues
 
 Does not yet work on windows, due to issues with reading from stdin.
