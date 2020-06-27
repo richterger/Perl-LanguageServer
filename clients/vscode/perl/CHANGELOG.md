@@ -1,5 +1,21 @@
 # Change Log
 
+## 2.1.0    `27.06.2020`
+- Improve Symbol Parser (fix parsing of anoymous subs)
+- showLocalSymbols
+- function names in breadcrump
+- Signature Help for function/method arguments
+- Add Presentation on Perl Workshop 2020 to repos
+- Remove Complier::Lexer from distribution since 
+    version is available on CPAN
+- Make stdout unbuffered while debugging
+- Make debugger use perlInc setting
+- Fix fileFilter setting
+- Sort Arrays numerically in variables view of debugger
+- Use rootUri if workspaceFolders not given
+- Fix env config setting
+- Recongnice changes in config of perlCmd
+
 ## 2.0.2    `2020-01-22`
 Plugin: Fix command line parameters for plink
 

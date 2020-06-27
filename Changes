@@ -1,6 +1,6 @@
 Revision history for Perl-LanguageServer
 
-2.1.0
+2.1.0   27.06.2020
         - Improve Symbol Parser (fix parsing of anoymous subs)
         - showLocalSymbols
         - function names in breadcrump
@@ -8,8 +8,13 @@ Revision history for Perl-LanguageServer
         - Add Presentation on Perl Workshop 2020 to repos
         - Remove Complier::Lexer from distribution since 
           version is available on CPAN
-
-
+        - Make stdout unbuffered while debugging
+        - Make debugger use perlInc setting
+        - Fix fileFilter setting
+        - Sort Arrays numerically in variables view of debugger
+        - Use rootUri if workspaceFolders not given
+        - Fix env config setting
+        - Recongnice changes in config of perlCmd
 
 2.0.2   22.01.2020
         - Fix handling of multiple parallel request

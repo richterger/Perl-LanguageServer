@@ -57,14 +57,6 @@ To install this module, run the following commands:
 	make test
 	make install
 
-NOTE: This module uses Compiler::Lexer. The version on cpan (0.22) is
-buggy crashes from time to time. Please use the version from github 
-(https://github.com/goccy/p5-Compiler-Lexer) until
-a new version is published to cpan.
-For your convinence a working snapshot from github of Compiler::Lexer
-is included in this distribution and will be installed when you
-run Makefile.PL
-
 NOTE: Only tested with Perl 5.18 and newer. So in case you want to use
 is with older versions of Perl slight modifications might be necessary.
 
@@ -77,6 +69,10 @@ After installing, you can find documentation for this module with the
 perldoc command.
 
     perldoc Perl::LanguageServer
+
+Presentation on German Perl Workshop 2020:
+
+    https://github.com/richterger/Perl-LanguageServer/blob/master/docs/Perl-LanguageServer%20und%20Debugger%20f%C3%BCr%20Visual%20Studio%20Code%20u.a.%20Editoren%20-%20Perl%20Workshop%202020.pdf
 
 You can also look for information at:
 
