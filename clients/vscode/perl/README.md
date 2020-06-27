@@ -131,3 +131,9 @@ Does not yet work on windows, due to issues with reading from stdin.
 ## Release Notes
 
 see CHANGELOG.md
+
+## More Info
+
+Presentation on German Perl Workshop 2020:
+
+https://github.com/richterger/Perl-LanguageServer/blob/master/docs/Perl-LanguageServer%20und%20Debugger%20f%C3%BCr%20Visual%20Studio%20Code%20u.a.%20Editoren%20-%20Perl%20Workshop%202020.pdf
