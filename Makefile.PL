@@ -37,6 +37,16 @@ WriteMakefile(
     VERSION_FROM     => 'lib/Perl/LanguageServer.pm',
     ABSTRACT_FROM    => 'lib/Perl/LanguageServer.pm',
     LICENSE          => 'artistic_2',
+    META_MERGE       => {
+        'meta-spec'  => { version => 2 },
+        resources   => {
+            repository => {
+                type => 'git',
+                url => 'https://github.com/richterger/Perl-LanguageServer.git',
+                web => 'https://github.com/richterger/Perl-LanguageServer',
+            },
+        },
+    },
     PL_FILES         => {},
     MIN_PERL_VERSION => '5.014',
     CONFIGURE_REQUIRES => {
