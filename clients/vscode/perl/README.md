@@ -23,7 +23,7 @@ Language Server and Debugger for Perl
   * Set variable
   * Watch variable
   * Tooltips with variable values
-  * Evaluate perl code in debugger, in context of every stack frame of coro thread
+  * Evaluate perl code in debuggee, in context of every stack frame of coro thread
   * Automatically reload changed Perl modules while debugging
   * Debug multiple perl programs at once
   * Run on remote system via ssh
