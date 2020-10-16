@@ -15,24 +15,26 @@ export function activate(context: vscode.ExtensionContext) {
 
 	console.log('extension "perl" is now active');
 	
-    let debug_adapter_port : string = config.get('debugAdapterPort') || '13603' ; 
+	let debug_adapter_port : string = config.get('debugAdapterPort') || '13603' ; 
 	let perlCmd  : string           = config.get('perlCmd') || 'perl' ; 
-    let logLevel : number           = config.get('logLevel') || 0 ;
-    let client_version : string     = "2.1.0" ;
-    let perlArgs : string[]         = ['-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', 
-                                                                 '--port', debug_adapter_port,
-                                                                 '--log-level', logLevel.toString(),
-                                                                 '--version',   client_version] ;
+	let logLevel : number           = config.get('logLevel') || 0 ;
+	let client_version : string     = "2.1.0" ;
+	let perlInc  : string[]         = (config.get('perlInc') || []).map((dir: string) => "-I" + dir);
+	let perlArgs : string[]         = [...perlInc,
+		                               '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', 
+	                                                             '--port', debug_adapter_port,
+	                                                             '--log-level', logLevel.toString(),
+	                                                             '--version',   client_version] ;
 
-    let sshPortOption = '-p' ;
-    let sshCmd : string       = config.get('sshCmd') || '' ; 
+	let sshPortOption = '-p' ;
+	let sshCmd : string       = config.get('sshCmd') || '' ; 
 	if (!sshCmd)
 		{
 		if (/^win/.test(process.platform))
 			{
 			sshCmd        = 'plink' ;
-            sshPortOption = '-P' ;
-            }
+			sshPortOption = '-P' ;
+			}
 		else
 			{
 			sshCmd = 'ssh' ;
@@ -49,10 +51,10 @@ export function activate(context: vscode.ExtensionContext) {
 	if (sshAddr && sshUser)
 		{
 		serverCmd = sshCmd ;
-        if (sshPort)
-            {
-            sshArgs.push(sshPortOption, sshPort) ;
-            }
+		if (sshPort)
+			{
+			sshArgs.push(sshPortOption, sshPort) ;
+			}
 		sshArgs.push('-l', sshUser, sshAddr, '-L', debug_adapter_port + ':127.0.0.1:' + debug_adapter_port, perlCmd) ;
 		serverArgs = sshArgs.concat(perlArgs) ;
 		}
@@ -71,20 +73,20 @@ export function activate(context: vscode.ExtensionContext) {
 	*/
 
 
-    vscode.debug.registerDebugAdapterDescriptorFactory('perl', 
-        {
-        createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable) 
-            {
-            /*
-            console.log('start perl debug server on port ' + debug_adapter_port);
-            // make VS Code connect to debug server instead of launching debug adapter
-            return new vscode.DebugAdapterServer(parseInt(debug_adapter_port)) ;
-            */
-            executable.args.push (debug_adapter_port) ;
-            console.log ('start perl debug adapter: ' + executable.command + ' ' + executable.args.join (' '))  ;
-            return executable ;
-            }
-        });
+	vscode.debug.registerDebugAdapterDescriptorFactory('perl', 
+		{
+		createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable) 
+			{
+			/*
+			console.log('start perl debug server on port ' + debug_adapter_port);
+			// make VS Code connect to debug server instead of launching debug adapter
+			return new vscode.DebugAdapterServer(parseInt(debug_adapter_port)) ;
+			*/
+			executable.args.push (debug_adapter_port) ;
+			console.log ('start perl debug adapter: ' + executable.command + ' ' + executable.args.join (' '))  ;
+			return executable ;
+			}
+		});
 
 	console.log('cmd: ' + serverCmd + ' args: ' + serverArgs.join (' '));
 
