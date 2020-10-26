@@ -5,7 +5,7 @@ This is a Language Server and Debug Protocol Adapter for Perl
 
 It implements the Language Server Protocol which provides
 syntax-checking, symbol search, etc. Perl to various editors, for
-example Visual Stuido Code or Atom.
+example Visual Studio Code or Atom.
 
 https://microsoft.github.io/language-server-protocol/specification
 
