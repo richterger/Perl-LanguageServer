@@ -55,6 +55,7 @@ This extension contributes the following settings:
 * `perl.ignoreDirs`: directories to ignore, defaults to [.vscode, .git, .svn]
 * `perl.debugAdapterPort`: port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a differnt port.
 * `perl.logLevel`: Log level 0-2.
+* `perl.disableCache`: if true, the LanguageServer will not cache the result of parsing source files on disk, so it can be used within readonly directories"
 
 ## Debugger Settings for launch.json
 

@@ -94,6 +94,11 @@
                     "default": false,
                     "description": "if true, show also local variables in symbol view"
                 },
+                "perl.disableCache": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "if true, the LanguageServer will not cache the result of parsing source files on disk, so it can be used within readonly directories"
+                },
                 "perl.debugAdapterPort": {
                     "type": "string",
                     "default": "13603",

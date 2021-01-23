@@ -104,6 +104,12 @@ has 'state_dir' =>
     lazy_build => 1,
     ) ;
 
+has 'disable_cache' =>
+    (
+    isa => 'Maybe[Bool]',
+    is  => 'rw',
+    ) ;
+
 # ---------------------------------------------------------------------------
 
 sub logger
