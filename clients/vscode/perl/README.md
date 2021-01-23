@@ -79,30 +79,36 @@ To do so set sshAddr and sshUser, preferably in your workspace configuration.
 
 Example:
 
-    "sshAddr": "10.11.12.13",
-    "sshUser": "root"
+```json
+"sshAddr": "10.11.12.13",
+"sshUser": "root"
+```
 
 Also set sshWorkspaceRoot, so the local workspace path can be mapped to the remote one.
 
 Example: if your local path is \\10.11.12.13\share\path\to\ws and on the remote machine you have /path/to/ws
 
-    "sshWorkspaceRoot": "/path/to/ws"
+```json
+"sshWorkspaceRoot": "/path/to/ws"
+```
 
 The other possiblity is to provide a pathMap. This allows to have multiple mappings.
 
 Examples:
 
-    "sshpathMap": [
-        ['remote uri', 'local uri'],
-        ['remote uri', 'local uri']
-    ]
+```json
+"sshpathMap": [
+    ['remote uri', 'local uri'],
+    ['remote uri', 'local uri']
+]
 
-    "perl.pathMap": [
-		[
-		"file:///",
-		"file:///home/systems/mountpoint/"
-	    ]
+"perl.pathMap": [
+    [
+	"file:///",
+	"file:///home/systems/mountpoint/"
     ]
+]
+```
 
 ## Syntax check & debugging inside a conatiner
 
@@ -110,7 +116,8 @@ It's possible to use the ssh settings also for containers. The example below is 
 
 .vscode/settings.json
 
-    {
+```json
+{
     "perl": {
         "enable": true,
         "sshAddr": "dummy",
@@ -119,13 +126,16 @@ It's possible to use the ssh settings also for containers. The example below is 
         "sshWorkspaceRoot": "/home/code (directory in the container)",
         "logLevel": 0,
     }
-    }
+}
+```
 
 bin/shell-into-appserver.sh:
 
-    #!/usr/bin/env bash
-    COMMAND=$(echo "$@" | sed 's/^.*perl /perl /')
-    docker-compose exec -u "$UID" -T [SERVICE NAME] $COMMAND
+```bash
+#!/usr/bin/env bash
+COMMAND=$(echo "$@" | sed 's/^.*perl /perl /')
+docker-compose exec -u "$UID" -T [SERVICE NAME] $COMMAND
+```
 
 ## Known Issues
 
