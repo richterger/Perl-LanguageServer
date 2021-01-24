@@ -2,7 +2,7 @@
     "name": "perl",
     "displayName": "Perl",
     "description": "Language Server and Debugger for Perl",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "publisher": "richterger",
     "repository": "https://github.com/richterger/Perl-LanguageServer",
     "license": "SEE LICENSE IN LICENSE",
@@ -34,6 +34,10 @@
                     "default": 0,
                     "description": "Log level 0-2"
                 },
+                "perl.logFile": {
+                    "type": "string",
+                    "default": null,
+                    "description": "If set, log output is written to the given logfile, insetad of displaying it in the vscode output pane. Log output is always appended so you are responsible for rotating the file.",
                 "perl.sshAddr": {
                     "type": "string",
                     "default": null,

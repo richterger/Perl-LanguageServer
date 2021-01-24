@@ -57,6 +57,7 @@ This extension contributes the following settings:
 * `perl.debugAdapterPort`: port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a different port.
 * `perl.showLocalVars`: if true, show also local variables in symbol view
 * `perl.logLevel`: Log level 0-2.
+* `perl.logFile`: If set, log output is written to the given logfile, instead of displaying it in the vscode output pane. Log output is always appended. Only use during debugging of LanguageServer itself.
 * `perl.disableCache`: if true, the LanguageServer will not cache the result of parsing source files on disk, so it can be used within readonly directories"
 
 ## Debugger Settings for launch.json

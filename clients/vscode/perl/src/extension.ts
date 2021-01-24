@@ -20,12 +20,16 @@ export function activate(context: vscode.ExtensionContext) {
     let perlArgs        : string[]   = config.get('perlArgs') || [] ;
     let perlInc         : string[]   = config.get('perlInc') || [] ;    
     let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + dir);    
+	let logFile         : string     = config.get('logFile') || '' ; 
     let logLevel        : number     = config.get('logLevel') || 0 ;
-    let client_version  : string     = "2.1.0" ;
-    let perlArgsOpt     : string[]   = [...perlIncOpt, ...perlArgs, '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', 
-                                                                 '--port', debug_adapter_port,
-                                                                 '--log-level', logLevel.toString(),
-                                                                 '--version',   client_version] ;
+    let client_version  : string     = "2.2.0" ;
+    let perlArgsOpt     : string[]   = [...perlIncOpt, 
+                                        ...perlArgs, 
+                                        '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', 
+                                        '--port', debug_adapter_port,
+                                        '--log-level', logLevel.toString(),
+                                        '--log-file',  logFile,
+                                        '--version',   client_version] ;
 
     let sshPortOption = '-p' ;
     let sshCmd : string       = config.get('sshCmd') || '' ; 
@@ -64,15 +68,6 @@ export function activate(context: vscode.ExtensionContext) {
 		serverCmd  = perlCmd ;
 		serverArgs = perlArgsOpt ;	
 		}	
-
-	/*
-	var envStr = '' ;
-	let env = config.get('perl_lang.env') || [] ;
-	for (var element in env) {
-		envStr += ' ' + element+ "='" + env[element] + "'"	;
-	}
-	*/
-
 
     vscode.debug.registerDebugAdapterDescriptorFactory('perl', 
         {

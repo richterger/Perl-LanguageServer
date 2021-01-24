@@ -29,11 +29,11 @@ Perl::LanguageServer - Language Server and Debug Protocol Adapter for Perl
 
 =head1 VERSION
 
-Version 2.1.0
+Version 2.2.0
 
 =cut
 
-our $VERSION = '2.1.0';
+our $VERSION = '2.2.0';
 
 
 =head1 SYNOPSIS
@@ -67,6 +67,7 @@ our $workspace ;
 our $dev_tool ;
 our $debug1 = 0 ;
 our $debug2 = 0 ;
+our $log_file ;
 our $client_version ;
 our $reqseq = 1_000_000_000 ;
 
@@ -131,10 +132,16 @@ sub logger
         }
     $src = $self if (!$src) ;
     
-    #print STDERR $src?$src -> log_prefix . ': ':'', @_ ;    
-    open my $fh, '>>', '/tmp/LanguageServer.log' ;
-    print $fh $src?$src -> log_prefix . ': ':'', @_ ;    
-    close $fh ;
+    if ($log_file)
+        {
+        open my $fh, '>>', $log_file or warn "$log_file : $!" ;
+        print $fh $src?$src -> log_prefix . ': ':'', @_ ;    
+        close $fh ;
+        }
+    else
+        {
+        print STDERR $src?$src -> log_prefix . ': ':'', @_ ;    
+        }
     }
 
 
@@ -462,6 +469,10 @@ sub run
             $debug1 = shift @ARGV  ;
             $debug2 = $debug1 > 1?1:0 ;    
             }
+        elsif ($opt eq '--log-file')
+            {
+            $log_file = shift @ARGV ;
+            }
         elsif ($opt eq '--port')
             {
             $listen_port = shift @ARGV  ;    
@@ -484,7 +495,7 @@ sub run
     
     my $cv = AnyEvent::CondVar -> new ;
 
-   if ($heartbeat)
+   if ($heartbeat || $debug2)
         {
         async
             {
