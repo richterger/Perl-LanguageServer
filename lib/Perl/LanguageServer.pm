@@ -55,12 +55,6 @@ To use both with Visual Studio Code, install the extention "perl"
 
 Any comments and patches are welcome.
 
-NOTE: This module uses Compiler::Lexer. The version on cpan (0.22) is buggy
-crashes from time to time. For this reason a working version from github
-is bundled with this module and will be installed when you run Makefile.PL.
-
-L<https://github.com/goccy/p5-Compiler-Lexer>
-
 =cut
 
 our $json = JSON -> new -> utf8(1) -> ascii(1) ;
