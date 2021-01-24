@@ -7,7 +7,7 @@
     "repository": "https://github.com/richterger/Perl-LanguageServer",
     "license": "SEE LICENSE IN LICENSE",
     "engines": {
-        "vscode": "^1.40.0"
+        "vscode": "^1.50.0"
     },
     "categories": [
         "Debuggers",
@@ -37,7 +37,8 @@
                 "perl.logFile": {
                     "type": "string",
                     "default": null,
-                    "description": "If set, log output is written to the given logfile, insetad of displaying it in the vscode output pane. Log output is always appended so you are responsible for rotating the file.",
+                    "description": "If set, log output is written to the given logfile, insetad of displaying it in the vscode output pane. Log output is always appended so you are responsible for rotating the file."
+                },
                 "perl.sshAddr": {
                     "type": "string",
                     "default": null,
@@ -178,19 +179,15 @@
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
-        "compile": "tsc -p ./",
-        "watch": "tsc -watch -p ./",
-        "postinstall": "node ./node_modules/vscode/bin/install",
-        "test": "npm run compile && node ./node_modules/vscode/bin/test"
+        "compile": "tsc -b",
+        "watch": "tsc -b -w"
     },
     "devDependencies": {
-        "@types/mocha": "^2.2.42",
-        "@types/node": "^7.10.9",
-        "tslint": "^5.20.1",
-        "typescript": "^3.7.5",
-        "vscode": "^1.1.36"
-    },
-    "dependencies": {
-        "vscode-languageclient": "^6.1.0"
+        "@types/mocha": "^8.0.3",
+        "mocha": "^8.1.1",
+        "@types/node": "^12.12.0",
+        "eslint": "^6.4.0",
+        "@typescript-eslint/parser": "^2.3.0",
+        "typescript": "^4.0.2"
     }
 }
