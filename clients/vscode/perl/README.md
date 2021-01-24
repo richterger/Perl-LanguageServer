@@ -18,20 +18,20 @@ Language Server and Debugger for Perl
   * Support for coro threads
   * Breakpoints 
   * Conditional breakpoints
-  * Breakpoints can be set while programm runs and for modules not yet loaded
+  * Breakpoints can be set while program runs and for modules not yet loaded
   * Variable view, can switch to every stack frame or coro thread
   * Set variable
   * Watch variable
   * Tooltips with variable values
   * Evaluate perl code in debuggee, in context of every stack frame of coro thread
   * Automatically reload changed Perl modules while debugging
-  * Debug mutiple perl programm at once
+  * Debug multiple perl programs at once
   * Run on remote system via ssh
 
 
 ## Requirements
 
-You need to install the perl module Perl::LanguageServer to make this extention working,
+You need to install the perl module Perl::LanguageServer to make this extension work,
 e.g. run "cpan Perl::LanguageServer" on your target system.
 
 Please make sure to always run the newest version of Perl::LanguageServer as well.
@@ -54,7 +54,7 @@ This extension contributes the following settings:
 * `perl.perlInc`: array with paths to add to perl library path.  This setting is used by the syntax checker, the parser and for the debugee. It is NOT used to find the LanguageServer itself (use perlArgs : [ \"-I/incpath\"] for non default path of LanguageServer)
 * `perl.fileFilter`: array for filtering perl file, defaults to [*.pm,*.pl]
 * `perl.ignoreDirs`: directories to ignore, defaults to [.vscode, .git, .svn]
-* `perl.debugAdapterPort`: port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a differnt port.
+* `perl.debugAdapterPort`: port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a different port.
 * `perl.showLocalVars`: if true, show also local variables in symbol view
 * `perl.logLevel`: Log level 0-2.
 * `perl.disableCache`: if true, the LanguageServer will not cache the result of parsing source files on disk, so it can be used within readonly directories"
@@ -74,7 +74,7 @@ This extension contributes the following settings:
 ## Remote syntax check & debugging
 
 If you developing on a remote machine, you can instruct the Perl::LanguageServer to
-run on that remote machine, so the correct modules etc. are available for syntax check and debugger is startet on the remote machine.
+run on that remote machine, so the correct modules etc. are available for syntax check and debugger is started on the remote machine.
 To do so set sshAddr and sshUser, preferably in your workspace configuration.
 
 Example:
@@ -92,7 +92,7 @@ Example: if your local path is \\10.11.12.13\share\path\to\ws and on the remote 
 "sshWorkspaceRoot": "/path/to/ws"
 ```
 
-The other possiblity is to provide a pathMap. This allows to have multiple mappings.
+The other possibility is to provide a pathMap. This allows to have multiple mappings.
 
 Examples:
 
@@ -110,7 +110,7 @@ Examples:
 ]
 ```
 
-## Syntax check & debugging inside a conatiner
+## Syntax check & debugging inside a container
 
 It's possible to use the ssh settings also for containers. The example below is for docker-compose but there's nothing prevent you from tuning it to do docker exec, kubectl exec, machinectl shell or whatnot.
 
@@ -137,6 +137,26 @@ COMMAND=$(echo "$@" | sed 's/^.*perl /perl /')
 docker-compose exec -u "$UID" -T [SERVICE NAME] $COMMAND
 ```
 
+## Carton support
+
+If you are using [Carton](https://metacpan.org/pod/Carton) to manage dependencies, add the full path to the Carton `lib` dir to your workspace settings file at `.vscode/settings.json`. For example:
+
+### Linux
+
+```json
+{
+  "perl.perlInc": ["/home/myusername/projects/myprojectname/local/lib/perl5"]
+}
+```
+
+### Mac
+
+```json
+{
+  "perl.perlInc": ["/Users/myusername/projects/myprojectname/local/lib/perl5"]
+}
+```
+
 ## Known Issues
 
 Does not yet work on windows, due to issues with reading from stdin.
@@ -147,6 +167,6 @@ see CHANGELOG.md
 
 ## More Info
 
-Presentation on German Perl Workshop 2020:
+Presentation at German Perl Workshop 2020:
 
 https://github.com/richterger/Perl-LanguageServer/blob/master/docs/Perl-LanguageServer%20und%20Debugger%20f%C3%BCr%20Visual%20Studio%20Code%20u.a.%20Editoren%20-%20Perl%20Workshop%202020.pdf
