@@ -77,7 +77,7 @@
                 "perl.perlInc": {
                     "type": "array",
                     "default": null,
-                    "description": "array with paths to add to perl library path. This setting is used by the syntax checker, the parser and for the debugee. It is NOT used to find the LanguageServer itself (use perlArgs : [ \"-I/incpath\"] for non default path of LanguageServer)"
+                    "description": "array with paths to add to perl library path. This setting is used by the syntax checker and for the debugee and also for the LanguageServer itself."
                 },
                 "perl.fileFilter": {
                     "type": "array",

@@ -48,10 +48,10 @@ This extension contributes the following settings:
 * `perl.sshCmd`: defaults to ssh on unix and plink on windows
 * `perl.sshWorkspaceRoot`: path of the workspace root on remote system
 * `perl.perlCmd`: defaults to perl
-* `perl.perlArgs`: arguments passed to the perl interpreter that starts the LanguageServer
+* `perl.perlArgs`: additional arguments passed to the perl interpreter that starts the LanguageServer
 * `perl.sshArgs`: optional arguments for ssh
 * `perl.pathMap`: mapping of local to remote paths
-* `perl.perlInc`: array with paths to add to perl library path.  This setting is used by the syntax checker, the parser and for the debugee. It is NOT used to find the LanguageServer itself (use perlArgs : [ \"-I/incpath\"] for non default path of LanguageServer)
+* `perl.perlInc`: array with paths to add to perl library path. This setting is used by the syntax checker and for the debugee and also for the LanguageServer itself.
 * `perl.fileFilter`: array for filtering perl file, defaults to [*.pm,*.pl]
 * `perl.ignoreDirs`: directories to ignore, defaults to [.vscode, .git, .svn]
 * `perl.debugAdapterPort`: port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a different port.

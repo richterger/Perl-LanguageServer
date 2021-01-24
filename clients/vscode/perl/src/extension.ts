@@ -15,12 +15,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 	console.log('extension "perl" is now active');
 	
-    let debug_adapter_port : string = config.get('debugAdapterPort') || '13603' ; 
-	let perlCmd  : string           = config.get('perlCmd') || 'perl' ; 
-    let perlArgs : string[]         = config.get('perlArgs') || [] ;
-    let logLevel : number           = config.get('logLevel') || 0 ;
-    let client_version : string     = "2.1.0" ;
-    let perlArgs2 : string[]         = [perlArgs, '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', 
+    let debug_adapter_port : string  = config.get('debugAdapterPort') || '13603' ; 
+	let perlCmd         : string     = config.get('perlCmd') || 'perl' ; 
+    let perlArgs        : string[]   = config.get('perlArgs') || [] ;
+    let perlInc         : string[]   = config.get('perlInc') || [] ;    
+    let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + dir);    
+    let logLevel        : number     = config.get('logLevel') || 0 ;
+    let client_version  : string     = "2.1.0" ;
+    let perlArgsOpt     : string[]   = [...perlIncOpt, ...perlArgs, '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', 
                                                                  '--port', debug_adapter_port,
                                                                  '--log-level', logLevel.toString(),
                                                                  '--version',   client_version] ;
@@ -55,12 +57,12 @@ export function activate(context: vscode.ExtensionContext) {
             sshArgs.push(sshPortOption, sshPort) ;
             }
 		sshArgs.push('-l', sshUser, sshAddr, '-L', debug_adapter_port + ':127.0.0.1:' + debug_adapter_port, perlCmd) ;
-		serverArgs = sshArgs.concat(perlArgs2) ;
+		serverArgs = sshArgs.concat(perlArgsOpt) ;
 		}
 	else
 		{
 		serverCmd  = perlCmd ;
-		serverArgs = perlArgs2 ;	
+		serverArgs = perlArgsOpt ;	
 		}	
 
 	/*
