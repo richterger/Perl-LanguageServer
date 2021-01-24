@@ -147,7 +147,7 @@
                                 "default": null
                             },
                             "cwd": {
-                                "type": "array",
+                                "type": "string",
                                 "description": "optional, change working directory before launching the debugee.",
                                 "default": null
                             },
