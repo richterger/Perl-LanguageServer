@@ -74,6 +74,7 @@ our $dev_tool ;
 our $debug1 = 0 ;
 our $debug2 = 0 ;
 our $client_version ;
+our $reqseq = 1_000_000_000 ;
 
 
 has 'channel' =>
@@ -136,7 +137,10 @@ sub logger
         }
     $src = $self if (!$src) ;
     
-    print STDERR $src?$src -> log_prefix . ': ':'', @_ ;    
+    #print STDERR $src?$src -> log_prefix . ': ':'', @_ ;    
+    open my $fh, '>>', '/tmp/LanguageServer.log' ;
+    print $fh $src?$src -> log_prefix . ': ':'', @_ ;    
+    close $fh ;
     }
 
 
@@ -186,7 +190,7 @@ sub call_method
         }
     else
         {
-        die "Unknown methd $method" ;    
+        die "Unknown method $method" ;    
         }
     $module = $req -> type eq 'dbgint'?'DebugAdapterInterface':'DebugAdapter' if ($req -> is_dap) ;    
 
@@ -227,12 +231,15 @@ sub process_req
     {
     my ($self, $id, $reqdata) = @_ ;
 
-    $running_coros{$id} = async
+    my $xid = $id ;
+    $xid ||= $reqseq++ ;
+    $running_coros{$xid} = async
         {
         my $req_guard = Guard::guard 
             { 
-            delete $running_reqs{$id} ;
-            delete $running_coros{$id} ;
+            $self -> logger ("done handle_req id=$xid\n") if ($debug1) ;
+            delete $running_reqs{$xid} ;
+            delete $running_coros{$xid} ;
             };
 
         my $type   = $reqdata -> {type} ;
@@ -240,7 +247,7 @@ sub process_req
         $type      = defined ($id)?'request':'notification' if (!$type) ;
         $self -> logger ("handle_req id=$id\n") if ($debug1) ;
         my $req = Perl::LanguageServer::Req  -> new ({ id => $id, is_dap => $is_dap, type => $type, params => $is_dap?$reqdata -> {arguments} || {}:$reqdata -> {params}}) ;
-        $running_reqs{$id} = $req ;
+        $running_reqs{$xid} = $req ;
 
         my $rsp ;
         my $outdata ;
@@ -294,7 +301,6 @@ sub process_req
                 $self -> logger ("<--- Response: ", $jsonpretty -> encode ($outjson), "\n") ;
                 }
             }
-        cede () ;
         } ;
     }
 
@@ -491,8 +497,8 @@ sub run
             my $i = 0 ;
             while (1)
                 {
-                print STDERR "#####$i\n" ;
-                Coro::AnyEvent::sleep (3) ;
+                logger (undef, "##### $i #####\n running: " . dump (\%running_reqs) . " coros: " . dump (\%running_coros), "\n") ;
+                Coro::AnyEvent::sleep (10) ;
                 $i++ ;
                 }
             } ;

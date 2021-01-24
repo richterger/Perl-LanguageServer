@@ -77,7 +77,7 @@
                 "perl.perlInc": {
                     "type": "array",
                     "default": null,
-                    "description": "array with paths to add to perl library path"
+                    "description": "array with paths to add to perl library path. This setting is used by the syntax checker, the parser and for the debugee. It is NOT used to find the LanguageServer itself (use perlArgs : [ \"-I/incpath\"] for non default path of LanguageServer)"
                 },
                 "perl.fileFilter": {
                     "type": "array",
@@ -93,6 +93,11 @@
                     "type": "boolean",
                     "default": false,
                     "description": "if true, show also local variables in symbol view"
+                },
+                "perl.disableCache": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "if true, the LanguageServer will not cache the result of parsing source files on disk, so it can be used within readonly directories"
                 },
                 "perl.debugAdapterPort": {
                     "type": "string",
@@ -137,13 +142,13 @@
                                 "default": null
                             },
                             "env": {
-                                "type": "array",
+                                "type": "object",
                                 "description": "optional, object with environment settings.",
                                 "default": null
                             },
                             "cwd": {
                                 "type": "array",
-                                "description": "optional, change working directory.",
+                                "description": "optional, change working directory before launching the debugee.",
                                 "default": null
                             },
                             "reloadModules": {

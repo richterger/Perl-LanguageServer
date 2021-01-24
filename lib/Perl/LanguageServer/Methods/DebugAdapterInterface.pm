@@ -10,7 +10,7 @@ use Perl::LanguageServer::DebuggerProcess ;
 
 no warnings 'uninitialized' ;
 
-our $reqseq = 1 ;
+our $reqseq = 1_000_000_000 ;
 
 # ---------------------------------------------------------------------------
 

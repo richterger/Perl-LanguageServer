@@ -91,7 +91,7 @@ sub _get_docu
 
 sub parse_perl_source
     {
-    my ($self, $uri, $source) = @_ ;    
+    my ($self, $uri, $source, $server) = @_ ;    
 
     $source =~ s/\r//g ; #  Compiler::Lexer computes wrong line numbers with \r
     my @source = split /\n/, $source ;
@@ -101,7 +101,7 @@ sub parse_perl_source
     
     cede () ;
 
-    #print STDERR dump ($tokens), "\n" ;
+    #$server -> logger (dump ($tokens) . "\n") ;
 
     #my $modules = $lexer->get_used_modules($script);
 
@@ -125,7 +125,7 @@ sub parse_perl_source
         {
         $token_ndx++ ;
         $token -> {data} =~ s/\r$// ;
-        print STDERR "token=", dump ($token), "\n" if ($Perl::LanguageServer::debug3) ;
+        $server -> logger ("token=", dump ($token), "\n") if ($Perl::LanguageServer::debug3) ;
 
         given ($token -> {name})
             {
@@ -432,12 +432,12 @@ sub parse_perl_source
                                              end   => { line => $token -> {line}-1, character => $endchar }} ;
                 $beginchar = $endchar = 0 ;
                 }
-            print STDERR "var=", dump ($add), "\n" if ($Perl::LanguageServer::debug3) ;
+            $server -> logger ("var=", dump ($add), "\n") if ($Perl::LanguageServer::debug3) ;
             $add = undef ;
             }
         }
 
-    print STDERR dump (\@vars), "\n" if ($Perl::LanguageServer::debug3) ;
+    $server -> logger (dump (\@vars), "\n") if ($Perl::LanguageServer::debug3) ;
 
     return wantarray?(\@vars, $tokens):\@vars ;
     }
@@ -447,45 +447,53 @@ sub parse_perl_source
 
 sub _parse_perl_source_cached
     {
-    my ($self, $uri, $source, $path, $stats) = @_ ;    
+    my ($self, $uri, $source, $path, $stats, $server) = @_ ;    
 
-    my $cachepath = $self -> state_dir .'/' . $path ;
-    $self -> mkpath (dirname ($cachepath)) ;
-
-    #print STDERR "$path -> cachepath=$cachepath\n" ;
-    aio_stat ($cachepath) ;
-    if (-e _)
+    my $cachepath ;
+    if (!$self -> disable_cache)
         {
-        my $mtime_cache = -M _ ;
-        aio_stat ($path) ;
-        my $mtime_src = -M _ ;
-        #print STDERR "cache = $mtime_cache src = $mtime_src\n" ;
-        if ($mtime_src > $mtime_cache)
+        $cachepath = $self -> state_dir .'/' . $path ;
+        $self -> mkpath (dirname ($cachepath)) ;
+
+        #$server -> logger ("$path -> cachepath=$cachepath\n") ;
+        aio_stat ($cachepath) ;
+        if (-e _)
             {
-            #print STDERR "load from cache\n" ;    
-            my $cache ;
-            aio_load ($cachepath, $cache) ;
-            my $cache_data = eval { $Perl::LanguageServer::json -> decode ($cache) ; } ;
-            if ($@)
+            my $mtime_cache = -M _ ;
+            aio_stat ($path) ;
+            my $mtime_src = -M _ ;
+            #$server -> logger ("cache = $mtime_cache src = $mtime_src\n") ;
+            if ($mtime_src > $mtime_cache)
                 {
-                print "Loading of $cachepath failed, reparse file ($@)\n" ;
-                }
-            elsif (ref ($cache_data) eq 'HASH')
-                {
-                if ($cache_data -> {version} == CacheVersion)
+                #$server -> logger ("load from cache\n") ;    
+                my $cache ;
+                aio_load ($cachepath, $cache) ;
+                my $cache_data = eval { $Perl::LanguageServer::json -> decode ($cache) ; } ;
+                if ($@)
                     {
-                    $stats -> {loaded}++ ;
-                    return $cache_data -> {vars} ;
+                    $self -> logger ("Loading of $cachepath failed, reparse file ($@)\n") ;
+                    }
+                elsif (ref ($cache_data) eq 'HASH')
+                    {
+                    if ($cache_data -> {version} == CacheVersion)
+                        {
+                        $stats -> {loaded}++ ;
+                        return $cache_data -> {vars} ;
+                        }
                     }
                 }
             }
         }
 
-    my $vars = $self -> parse_perl_source ($uri, $source) ;
+    my $vars = $self -> parse_perl_source ($uri, $source, $server) ;
 
-    my $ifh = aio_open ($cachepath, IO::AIO::O_WRONLY | IO::AIO::O_TRUNC | IO::AIO::O_CREAT, 0664) or die "open $cachepath failed ($!)" ;
-    aio_write ($ifh, undef, undef, $Perl::LanguageServer::json -> encode ({ version => CacheVersion, vars => $vars}), 0) ;
-    aio_close ($ifh) ;
+    if ($cachepath)
+        {
+        my $ifh = aio_open ($cachepath, IO::AIO::O_WRONLY | IO::AIO::O_TRUNC | IO::AIO::O_CREAT, 0664) or die "open $cachepath failed ($!)" ;
+        aio_write ($ifh, undef, undef, $Perl::LanguageServer::json -> encode ({ version => CacheVersion, vars => $vars}), 0) ;
+        aio_close ($ifh) ;
+        }
+        
     $stats -> {parsed}++ ;
     
     return $vars ;
@@ -528,12 +536,12 @@ sub _parse_dir
             aio_load ($fn, $text) ;
 
             $uri = $self -> uri_server2client ('file://' . $fn) ;
-            #print STDERR "parse $fn -> $uri\n" ;
-            $file_vars = $self -> _parse_perl_source_cached (undef, $text, $fn, $stats) ;
+            #$server -> logger ("parse $fn -> $uri\n") ;
+            $file_vars = $self -> _parse_perl_source_cached (undef, $text, $fn, $stats, $server) ;
             $vars -> {$uri} =  $file_vars ;
-            #print STDERR "done $fn\n" ;
+            #$server -> logger ("done $fn\n") ;
             my $cnt = keys %$vars ;
-            print STDERR "loaded $stats->{loaded} files, parsed $stats->{parsed} files, $cnt files\n" if ($cnt % 100 == 0) ;
+            $server -> logger ("loaded $stats->{loaded} files, parsed $stats->{parsed} files, $cnt files\n") if ($cnt % 100 == 0) ;
             }
         }
     
@@ -552,7 +560,7 @@ sub background_parser
     
     $channel = $self -> parser_channel (Coro::Channel -> new) ;
     my $folders = $self -> folders ;
-    print STDERR "background_parser folders = ", dump ($folders), "\n" ;
+    $server -> logger ("background_parser folders = ", dump ($folders), "\n") ;
     %{$self -> symbols} = () ;
 
     my $stats = {} ;
@@ -563,7 +571,7 @@ sub background_parser
         }
 
     my $cnt = keys %{$self -> symbols} ;
-    print STDERR "initial parsing done, loaded $stats->{loaded} files, parsed $stats->{parsed} files, $cnt files\n" ;
+    $server -> logger ("initial parsing done, loaded $stats->{loaded} files, parsed $stats->{parsed} files, $cnt files\n") ;
 
     my $filefilter = $self -> file_filter_regex ;
 
@@ -577,12 +585,12 @@ sub background_parser
         my $text ;
         aio_load ($fn, $text) ;
 
-        print STDERR "parse $fn -> $uri\n" ;
-        my $file_vars = $self -> _parse_perl_source_cached (undef, $text, $fn, {}) ;
+        $server -> logger ("parse $fn -> $uri\n") ;
+        my $file_vars = $self -> _parse_perl_source_cached (undef, $text, $fn, {}, $server) ;
         $self -> symbols -> {$uri} =  $file_vars ;
         }
 
-    print STDERR "background_parser quit\n" ;
+    $server -> logger ("background_parser quit\n") ;
     }    
 
 

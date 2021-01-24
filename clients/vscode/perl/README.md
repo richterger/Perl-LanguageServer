@@ -48,13 +48,16 @@ This extension contributes the following settings:
 * `perl.sshCmd`: defaults to ssh on unix and plink on windows
 * `perl.sshWorkspaceRoot`: path of the workspace root on remote system
 * `perl.perlCmd`: defaults to perl
+* `perl.perlArgs`: arguments passed to the perl interpreter that starts the LanguageServer
 * `perl.sshArgs`: optional arguments for ssh
 * `perl.pathMap`: mapping of local to remote paths
-* `perl.perlInc`: array with paths to add to perl library path
+* `perl.perlInc`: array with paths to add to perl library path.  This setting is used by the syntax checker, the parser and for the debugee. It is NOT used to find the LanguageServer itself (use perlArgs : [ \"-I/incpath\"] for non default path of LanguageServer)
 * `perl.fileFilter`: array for filtering perl file, defaults to [*.pm,*.pl]
 * `perl.ignoreDirs`: directories to ignore, defaults to [.vscode, .git, .svn]
 * `perl.debugAdapterPort`: port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a different port.
+* `perl.showLocalVars`: if true, show also local variables in symbol view
 * `perl.logLevel`: Log level 0-2.
+* `perl.disableCache`: if true, the LanguageServer will not cache the result of parsing source files on disk, so it can be used within readonly directories"
 
 ## Debugger Settings for launch.json
 
@@ -65,7 +68,7 @@ This extension contributes the following settings:
 * `stopOnEntry`: if true, program will stop on entry
 * `args`:   optional, array with arguments for perl program
 * `env`:    optional, object with environment settings 
-* `cwd`:    optional, change working directory
+* `cwd`:    optional, change working directory before launching the debugee
 * `reloadModules`: if true, automatically reload changed Perl modules while debugging
 
 ## Remote syntax check & debugging
@@ -76,30 +79,36 @@ To do so set sshAddr and sshUser, preferably in your workspace configuration.
 
 Example:
 
-    "sshAddr": "10.11.12.13",
-    "sshUser": "root"
+```json
+"sshAddr": "10.11.12.13",
+"sshUser": "root"
+```
 
 Also set sshWorkspaceRoot, so the local workspace path can be mapped to the remote one.
 
 Example: if your local path is \\10.11.12.13\share\path\to\ws and on the remote machine you have /path/to/ws
 
-    "sshWorkspaceRoot": "/path/to/ws"
+```json
+"sshWorkspaceRoot": "/path/to/ws"
+```
 
 The other possibility is to provide a pathMap. This allows to have multiple mappings.
 
 Examples:
 
-    "sshpathMap": [
-        ['remote uri', 'local uri'],
-        ['remote uri', 'local uri']
-    ]
+```json
+"sshpathMap": [
+    ['remote uri', 'local uri'],
+    ['remote uri', 'local uri']
+]
 
-    "perl.pathMap": [
-		[
-		"file:///",
-		"file:///home/systems/mountpoint/"
-	    ]
+"perl.pathMap": [
+    [
+	"file:///",
+	"file:///home/systems/mountpoint/"
     ]
+]
+```
 
 ## Syntax check & debugging inside a container
 
@@ -107,7 +116,8 @@ It's possible to use the ssh settings also for containers. The example below is 
 
 .vscode/settings.json
 
-    {
+```json
+{
     "perl": {
         "enable": true,
         "sshAddr": "dummy",
@@ -116,13 +126,16 @@ It's possible to use the ssh settings also for containers. The example below is 
         "sshWorkspaceRoot": "/home/code (directory in the container)",
         "logLevel": 0,
     }
-    }
+}
+```
 
 bin/shell-into-appserver.sh:
 
-    #!/usr/bin/env bash
-    COMMAND=$(echo "$@" | sed 's/^.*perl /perl /')
-    docker-compose exec -u "$UID" -T [SERVICE NAME] $COMMAND
+```bash
+#!/usr/bin/env bash
+COMMAND=$(echo "$@" | sed 's/^.*perl /perl /')
+docker-compose exec -u "$UID" -T [SERVICE NAME] $COMMAND
+```
 
 ## Carton support
 

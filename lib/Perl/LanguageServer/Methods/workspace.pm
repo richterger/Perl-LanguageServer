@@ -15,15 +15,7 @@ sub _rpcnot_didChangeConfiguration
     {
     my ($self, $workspace, $req) = @_ ;
 
-    #print STDERR "perl = ", dump ($req -> params -> {settings}{perl}), "\n" ;
-
-    my $perlcmd = $req -> params -> {settings}{perl}{perlCmd} ;
-    if ($perlcmd) 
-        {
-        $workspace -> perlcmd ($perlcmd);
-        }
-
-    print STDERR "perlcmd = ", dump ( $workspace -> perlcmd), "\n" ;
+    $self -> logger ("perl = ", dump ($req -> params -> {settings}{perl}), "\n") ;
 
     my $uri   = $req -> params -> {settings}{perl}{sshWorkspaceRoot} ;
     if ($uri)
@@ -50,7 +42,7 @@ sub _rpcnot_didChangeConfiguration
         $workspace -> path_map ($map) ;
         }
 
-    print STDERR "path_map = ", dump ( $workspace -> path_map), "\n" ;    
+    $self -> logger ("path_map = ", dump ( $workspace -> path_map), "\n") ;    
 
     my $inc   = $req -> params -> {settings}{perl}{perlInc} ;
     if ($inc)
@@ -59,7 +51,7 @@ sub _rpcnot_didChangeConfiguration
         $workspace -> perlinc ($inc) ;    
         }
 
-    print STDERR "perlinc = ", dump ( $workspace -> perlinc), "\n" ;    
+    $self -> logger ("perlinc = ", dump ( $workspace -> perlinc), "\n") ;    
 
     my $filter   = $req -> params -> {settings}{perl}{fileFilter} ;
     if ($filter)
@@ -68,7 +60,7 @@ sub _rpcnot_didChangeConfiguration
         $workspace -> file_filter_regex ('(?:' . join ('|', map { quotemeta($_) } @$filter ) . ')$') ;    
         }
 
-    print STDERR "file_filter_regex = ", dump ( $workspace -> file_filter_regex), "\n" ;    
+    $self -> logger ("file_filter_regex = ", dump ( $workspace -> file_filter_regex), "\n") ;    
 
     my $dirs   = $req -> params -> {settings}{perl}{ignoreDirs} ;
     if ($dirs)
@@ -77,7 +69,7 @@ sub _rpcnot_didChangeConfiguration
         $workspace -> ignore_dir ({ map { ( $_ => 1 ) } @$dirs }) ;    
         }
 
-    print STDERR "ignore_dir = ", dump ( $workspace -> ignore_dir), "\n" ;    
+    $self -> logger ("ignore_dir = ", dump ( $workspace -> ignore_dir), "\n") ;    
 
     if (!exists ($workspace -> config -> {workspaceFolders}) || @{$workspace -> config -> {workspaceFolders}} == 0)
         {
@@ -86,7 +78,8 @@ sub _rpcnot_didChangeConfiguration
 
     $workspace -> set_workspace_folders ($workspace -> config -> {workspaceFolders} ) ;
 
-    $workspace -> show_local_vars ($workspace -> config -> {showLocalVars} ) ;
+    $workspace -> show_local_vars ($workspace -> config -> {showLocalVars}) ;
+    $workspace -> disable_cache   ($workspace -> config -> {disableCache}) ;
 
     async
         {
@@ -140,7 +133,7 @@ sub _rpcreq_symbol
 
     my $query = $req -> params -> {query} || '.' ;
     my $symbols = $workspace -> symbols ;
-    #print STDERR "symbols = ", dump ($symbols), "\n" ;
+    #$self -> logger ("symbols = ", dump ($symbols), "\n") ;
     my $line ;
     my @vars ;
 
