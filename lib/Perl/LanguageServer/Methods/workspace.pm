@@ -71,7 +71,7 @@ sub _rpcnot_didChangeConfiguration
 
     $self -> logger ("ignore_dir = ", dump ( $workspace -> ignore_dir), "\n") ;    
 
-    if (!exists ($workspace -> config -> {workspaceFolders}) || @{$workspace -> config -> {workspaceFolders}} == 0)
+    if (!exists ($workspace -> config -> {workspaceFolders}) || @{$workspace -> config -> {workspaceFolders} // []} == 0)
         {
         $workspace -> config -> {workspaceFolders} = [{ uri => $workspace -> config -> {rootUri} }] ;
         }
