@@ -43,7 +43,7 @@ use constant SymbolKindEvent => 24;
 use constant SymbolKindOperator => 25;
 use constant SymbolKindTypeParameter => 26;
 
-use constant CacheVersion => 3 ;
+use constant CacheVersion => 4 ;
 
 
 # ---------------------------------------------------------------------------
@@ -126,6 +126,12 @@ sub parse_perl_source
         $token_ndx++ ;
         $token -> {data} =~ s/\r$// ;
         $server -> logger ("token=", dump ($token), "\n") if ($Perl::LanguageServer::debug3) ;
+
+        if (exists $state{method_mod} && $token -> {name} eq 'RawString')
+            {
+            $token -> {name} = 'Function' ;
+            delete $state{method_mod} ;
+            }
 
         given ($token -> {name})
             {
@@ -316,6 +322,12 @@ sub parse_perl_source
                 elsif ($token -> {data} ~~ ['has', 'class_has'])
                     {
                     $state{has} = 1 ;
+                    }
+                elsif ($token -> {data} ~~ ['around', 'before', 'after'])
+                    {
+                    $state{method_mod} = 1 ;
+                    $decl = $token -> {data}, 
+                    $declline = $token -> {line} ;   
                     }
                 elsif ($token -> {data} =~ /^[a-z_][a-z0-9_]+$/i)
                     {
