@@ -1,6 +1,29 @@
 # Change Log
 
-## 2.1.0    `27.06.2020`
+## 2.2.0    `2021-02-07`
+- Parser now supports Moose method modifieres before, after and around, 
+  so they can be used in symbol view and within reference search
+- Add logFile config option
+- Add perlArgs config option to pass options to Perl interpreter. Add some documentation for config options.
+- Add disableCache config option to make LanguageServer usable with readonly directories.
+- updated dependencies package.json & package-lock.json
+
+- Fix deep recursion in SymbolView/Parser which was caused by function prototypes.
+  Solves also #65
+- Fix duplicate req id's that caused cleanup of still
+  running threads which in turn caused the LanguageServer to hang
+- Prevent dereferencing an undefined value (#63) [Heiko Jansen]
+- Fix datatype of cwd config options (#47)
+- Use perlInc setting also for LanguageServer itself (based ony pull request #54 from ALANVF)
+
+- Fix spelling in documentation (#56) [Christopher Chavez]
+- Remove notice about Compiler::Lexer 0.22 bugs (#55) [Christopher Chavez]
+- README: Typo and grammar fixes. Add Carton lib path instructions. (#40) [szTheory]
+- README: Markdown code block formatting (#42) [szTheory]
+- Makefile.PL: add META_MERGE with GitHub info (#32) [Christopher Chavez]
+- search.cpan.org retired, replace with metacpan.org (#31) [Christopher Chavez]
+
+## 2.1.0    `2020-06-27`
 - Improve Symbol Parser (fix parsing of anoymous subs)
 - showLocalSymbols
 - function names in breadcrump
