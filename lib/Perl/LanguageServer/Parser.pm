@@ -158,9 +158,9 @@ sub parse_perl_source
                     $vars[-1]{name} =~ s/^\$/%/ ;    
                     }
                 }
-            when ('RightBrace')
+            when (['RightBrace', 'SemiColon'])
                 {
-                $brace_level-- ;
+                $brace_level-- if ($token -> {name} eq 'RightBrace') ;
                 if (@stack > 0 && $brace_level == $stack[-1]{brace_level})
                     {
                     my $stacktop = pop @stack ;
@@ -171,6 +171,11 @@ sub parse_perl_source
                     $symbol ->  {range} = { start => { line => $start_line, character => 0 }, end => { line => $token -> {line}-1, character => 9999 }} 
                         if (defined ($start_line)) ;
                     }
+                if ($token -> {name} eq 'SemiColon')
+                    {
+                    $decl = undef ;
+                    continue ;    
+                    }    
                 }
             when ('LeftBracket')
                 {
@@ -359,7 +364,7 @@ sub parse_perl_source
                 {
                 # make sure it is not matched below
                 }
-            when (['SemiColon', 'Assign'])
+            when ('Assign')
                 {
                 $decl = undef ;
                 continue ;    
