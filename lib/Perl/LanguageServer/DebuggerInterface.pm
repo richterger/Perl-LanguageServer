@@ -782,15 +782,20 @@ sub get_eval_result
 
  sub get_scalar 
     {
-    my ($self, $val) = @_ ;
+    my $ret = eval
+        {
+        my ($self, $val) = @_ ;
 
-    return 'undef' if (!defined ($val)) ;
-    my $obj = '' ;
-    $obj = blessed ($val) . ' ' if (blessed ($val)) ;
-    return $obj . '[..]' if (ref ($val) eq 'ARRAY') ;
-    return $obj . '{..}' if (ref ($val) eq 'HASH') ;
-    my $isnum = looks_like_number ($val);
-    return $obj . ($isnum?$val:"'$val'") ;
+        return 'undef' if (!defined ($val)) ;
+        my $obj = '' ;
+        $obj = blessed ($val) . ' ' if (blessed ($val)) ;
+        return $obj . '[..]' if (ref ($val) eq 'ARRAY') ;
+        return $obj . '{..}' if (ref ($val) eq 'HASH') ;
+        my $isnum = looks_like_number ($val);
+        $obj . ($isnum?$val:"'$val'") ;
+        } ;
+    return $@ if ($@) ;
+    return $ret ;
     }
 
 # ---------------------------------------------------------------------------
@@ -951,7 +956,11 @@ sub req_vars
 
     my $varsrc = $class -> get_varsrc ($frame_ref, $package, $type) ;
 
-    $class -> get_vars ($varsrc, \@vars, $filter) ;
+    eval
+        {
+        $class -> get_vars ($varsrc, \@vars, $filter) ;
+        } ;
+    print STDERR $@ if ($@) ;
 
     return { variables => \@vars } ;
     }
