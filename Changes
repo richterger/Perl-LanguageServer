@@ -1,6 +1,6 @@
 Revision history for Perl-LanguageServer
 
-2.2.0   07.02.2021
+2.2.0   21.02.2021
         - Parser now supports Moose method modifieres before, after and around, 
           so they can be used in symbol view and within reference search
         - Support Format Document and Format Selection via perltidy

@@ -1,6 +1,6 @@
 # Change Log
 
-## 2.2.0    `2021-02-07`
+## 2.2.0    `2021-02-21`
 - Parser now supports Moose method modifieres before, after and around, 
   so they can be used in symbol view and within reference search
 - Support Format Document and Format Selection via perltidy
