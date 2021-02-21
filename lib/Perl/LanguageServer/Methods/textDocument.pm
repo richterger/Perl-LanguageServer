@@ -5,6 +5,7 @@ use Moose::Role ;
 use Coro ;
 use Coro::AIO ;
 use Data::Dump qw{pp} ;
+use AnyEvent::Util ;
 
 no warnings 'uninitialized' ;
 
@@ -129,8 +130,11 @@ sub _rpcnot_didOpen
     my $files = $workspace -> files ;
     my $uri   = $req -> params -> {textDocument}{uri} ;
     my $text  = $req -> params -> {textDocument}{text} ;
+    my $vers  = $req -> params -> {textDocument}{version} ;
     $files -> {$uri}{text} = $text ;
+    $files -> {$uri}{version} = $vers ;
     delete $files -> {$uri}{vars} ;
+    delete $files -> {$uri}{messages} if ($files -> {$uri}{messages_version} < $vers);
 
     $workspace -> check_perl_syntax ($workspace, $uri, $text) ;
 
@@ -146,9 +150,12 @@ sub _rpcnot_didChange
     my $files = $workspace -> files ;
     my $uri   = $req -> params -> {textDocument}{uri} ;
     my $text  = $req -> params -> {contentChanges}[0]{text} ;
+    my $vers  = $req -> params -> {textDocument}{version} ;
 
     $files -> {$uri}{text} = $text ;
+    $files -> {$uri}{version} = $vers ;
     delete $files -> {$uri}{vars} ;
+    delete $files -> {$uri}{messages} if ($files -> {$uri}{messages_version} < $vers);
 
     $workspace -> check_perl_syntax ($workspace, $uri, $text) ;
 
@@ -164,7 +171,9 @@ sub _rpcnot_didClose
     my $files = $workspace -> files ;
     my $uri   = $req -> params -> {textDocument}{uri} ;
     delete $files -> {$uri}{text} ;
+    delete $files -> {$uri}{version} ;
     delete $files -> {$uri}{vars} ;
+    delete $files -> {$uri}{messages} ;
 
     return ;
     }
@@ -370,13 +379,109 @@ sub _rpcreq_selectionRange
 
     my $pos = $req -> params -> {position} ;
     my $uri = $req -> params -> {textDocument}{uri} ;
-    $self -> logger (pp($req -> params)) ;
+    #$self -> logger (pp($req -> params)) ;
 
     my ($symbol, $offset) = $self -> get_symbol_from_doc ($workspace, $uri, $pos) ;
 
     $self -> logger ("sym = $symbol, $offset") ;
 
     return {} ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub _rpcreq_rangeFormatting
+    {
+    my ($self, $workspace, $req) = @_ ;
+
+
+    my $uri   = $req -> params -> {textDocument}{uri} ;
+    my $range = $req -> params -> {range} ;
+    #$workspace -> parser_channel -> put (['save', $uri]) ;
+    $self -> logger (pp($req -> params)) ;
+
+    #FormattingOptions 
+	# Size of a tab in spaces.
+	#tabSize: uinteger;
+	# Prefer spaces over tabs.
+	#insertSpaces: boolean;
+    # Trim trailing whitespace on a line.
+	#trimTrailingWhitespace?: boolean;
+    # Insert a newline character at the end of the file if one does not exist.
+	# insertFinalNewline?: boolean;
+    #trimFinalNewlines?: boolean;
+
+    my $ret ;
+    my $out ;
+    my $errout ;
+
+    my $files = $workspace -> files ;
+    my $text  = $files -> {$uri}{text} ;
+
+    my $start = $range -> {start}{line} ;
+    my $end   = $range -> {end}{line} ;
+    my $char  = $range -> {end}{character} ;
+    $end-- if ($end > 0 && $char == 0) ;
+    my $lines = $end - $start + 1 ;
+
+    $text =~ /(?:.*?\n){$start}((?:.*?\n){$lines})/ ;
+    my $range_text = $1 ;
+    $range_text =~ s/\n$// ;
+    if ($range_text eq '')
+        {
+        $text =~ /(?:.*?\n){$start}(.+)/s ;
+        $range_text = $1 ;
+        $range_text =~ s/\n$// ;
+        }
+    $self -> logger ('perltidy text: <' . $range_text . ">\n") if ($Perl::LanguageServer::debug2) ;
+    
+    return [] if ($range_text eq '') ;
+
+    $self -> logger ("start perltidy $uri from line $start to $end\n") if ($Perl::LanguageServer::debug1) ;
+    if ($^O =~ /Win/)
+        {
+        ($ret, $out, $errout) = $workspace -> run_open3 ($range_text, []) ;
+        }
+    else
+        {
+        $ret = run_cmd (['perltidy', '-st', '-se'],
+            "<", \$range_text,
+            ">", \$out,
+            "2>", \$errout)
+            -> recv ;
+        }
+
+    my $rc = $ret >> 8 ;
+    $self -> logger ("perltidy rc=$rc errout=$errout\n") if ($Perl::LanguageServer::debug1) ; ;
+
+    my @messages ;
+    if ($rc != 0)
+        {
+        my $line ;
+        my @lines = split /\n/, $errout ;
+        my $lineno = 0 ;
+        my $filename ;
+        my $msg ;
+        my $severity = 2 ; 
+        foreach $line (@lines)
+            {
+            next if ($line !~ /^(.+?):(\d+):(.+)/) ;
+
+            $filename = $1 eq '<stdin>'?'-':$1 ;
+            $lineno   = $2 ;
+            $msg      = $3 ;
+            push @messages, [$filename, $lineno, $severity, $msg] if ($lineno && $msg) ;
+            }
+        }
+    $workspace -> add_diagnostic_messages ($self, $uri, 'perltidy', \@messages, $files -> {$uri}{version} + 1) ;
+
+    # make sure range is numeric
+    $range -> {start}{line} += 0 ;
+    $range -> {start}{character} = 0 ;
+    $range -> {end}{line} += $range -> {end}{character} > 0?1:0 ;
+    $range -> {end}{character} = 0 ;
+
+    return [ { newText => $out, range => $range } ] ;
     }
 
 # ---------------------------------------------------------------------------

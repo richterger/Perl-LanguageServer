@@ -164,7 +164,7 @@ sub background_checker
         my $rc = $ret >> 8 ;
         $self -> logger ("perl -c rc=$rc out=$out errout=$errout\n") if ($Perl::LanguageServer::debug1) ; ;
 
-        my %diags = ( map { $_ => [] } @{$self -> files -> {$uri}{diags} || ['-'] } ) ;
+        my @messages ;
         if ($rc != 0)
             {
             my $line ;
@@ -173,6 +173,7 @@ sub background_checker
             my $filename ;
             my $lastline = 1 ;
             my $msg ;
+            my $severity = 1 ;
             foreach $line (@lines)
                 {
                 $line =~ s/\s*$// ;
@@ -185,46 +186,15 @@ sub background_checker
                 $msg .= $line ;
                 if ($lineno)
                     {
-                    if ($msg)
-                        {    
-                        my $diag =
-                            {
-                            #   range: Range;
-                            #	severity?: number;
-                            #	code?: number | string;
-                            #   source?: string;
-                            #   message: string;
-                            #   relatedInformation?: DiagnosticRelatedInformation[];
-                            range => { start => { line => $lineno-1, character => 0 }, end => { line => $lineno+0, character => 0 }},
-                            message => $msg,
-                            } ;
-                        $diags{$filename} ||= [] ;
-                        push @{$diags{$filename}}, $diag ;
-                        }
+                    push @messages, [$filename, $lineno, $severity, $msg] if ($msg) ;
                     $lastline = $lineno ;
                     $lineno = 0 ;
                     $msg    = '' ;
                     }    
                 }
             }
-        $self -> files -> {$uri}{diags} = [keys %diags] ;
-        my $files = $self -> files ;
-        foreach my $filename (keys %diags)
-            {
-            my $fnuri = !$filename || $filename eq '-'?$uri:$self -> uri_server2client ('file://' . $filename) ;
-            my $result =
-                {
-                method => 'textDocument/publishDiagnostics',
-                params => 
-                    {
-                    uri => $fnuri,
-                    diagnostics => $diags{$filename},
-                    },
-                } ;
-            #$self -> files -> {$fnuri}{diags} = $diags{$filename} ;
 
-            $server -> send_notification ($result) ;
-            }
+        $self -> add_diagnostic_messages ($server, $uri, 'perl syntax', \@messages) ;
         }
     }
 

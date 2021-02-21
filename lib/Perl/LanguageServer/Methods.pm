@@ -70,9 +70,11 @@ sub _rpcreq_initialize
 
         # The server provides document formatting.
 	    #documentFormattingProvider?: boolean;
+	    #documentFormattingProvider => JSON::true,
 
         # The server provides document range formatting.
 	    #documentRangeFormattingProvider?: boolean;
+	    documentRangeFormattingProvider => JSON::true,
 
         # The server provides document formatting on typing.
 	    #documentOnTypeFormattingProvider?: DocumentOnTypeFormattingOptions;

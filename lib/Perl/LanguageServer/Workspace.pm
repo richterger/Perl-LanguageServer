@@ -267,10 +267,111 @@ sub set_workspace_folders
         
         $folders -> {$ws -> {uri}} = substr ($dir, 7) ;    
         }
-
-
     }
 
+# ---------------------------------------------------------------------------
+
+sub add_diagnostic_messages
+    {
+    my ($self, $server, $uri, $source, $messages, $version) = @_ ;
+
+    my $files = $self -> files ;
+    $files -> {$uri}{messages}{$source} = $messages ;
+    $files -> {$uri}{messages_version}  = $version if (defined ($version));
+
+    # make sure all old messages associated with this uri are cleaned up
+    my %diags = ( map { $_ => [] } @{$files -> {$uri}{diags} || ['-'] } ) ;
+    foreach my $src (keys %{$files -> {$uri}{messages}})
+        {
+        my $msgs = $files -> {$uri}{messages}{$src} ;
+        if ($msgs && @$msgs)
+            {
+            my $line ;
+            my $lineno = 0 ;
+            my $filename ;
+            my $lastline = 1 ;
+            my $msg ;
+            my $severity ;
+            foreach $line (@$msgs)
+                {
+                ($filename, $lineno, $severity, $msg) = @$line ;
+                if ($lineno)
+                    {
+                    if ($msg)
+                        {    
+                        my $diag =
+                            {
+                            #   range: Range;
+                            #	severity?: DiagnosticSeverity;
+                            #	code?: number | string;
+                            #   codeDescription?: CodeDescription;
+                            #   source?: string;
+                            #   message: string;
+                            #   tags?: DiagnosticTag[];
+                            #   relatedInformation?: DiagnosticRelatedInformation[];
+                            #   data?: unknown;
+
+                            # DiagnosticSeverity 
+                            # const Error: 1 = 1;
+                            # const Warning: 2 = 2;
+                            # const Information: 3 = 3;
+                            # const Hint: 4 = 4;
+
+                            # DiagnosticTag 
+                            #  * Clients are allowed to render diagnostics with this tag faded out
+                            #  * instead of having an error squiggle.
+                            # export const Unnecessary: 1 = 1;
+                            #  * Clients are allowed to rendered diagnostics with this tag strike through.
+                            # export const Deprecated: 2 = 2;
+
+                            # DiagnosticRelatedInformation
+                            #  * Represents a related message and source code location for a diagnostic.
+                            #  * This should be used to point to code locations that cause or are related to
+                            #  * a diagnostics, e.g when duplicating a symbol in a scope.
+                            #
+                            # 	 * The location of this related diagnostic information.
+                            # 	location: Location;
+                            # 	 * The message of this related diagnostic information.
+                            # 	message: string;
+
+                            range => { start => { line => $lineno-1, character => 0 }, end => { line => $lineno+0, character => 0 }},
+                            ($severity?(severity => $severity + 0):()),
+                            message => $msg,
+                            source  => $src,
+                            } ;
+                        $diags{$filename} ||= [] ;
+                        push @{$diags{$filename}}, $diag ;
+                        }
+                    $lastline = $lineno ;
+                    $lineno = 0 ;
+                    $msg    = '' ;
+                    }    
+                }
+            }
+        }
+    $files -> {$uri}{diags} = [keys %diags] ;
+
+    foreach my $filename (keys %diags)
+        {
+        foreach my $filename (keys %diags)
+            {
+            my $fnuri = !$filename || $filename eq '-'?$uri:$self -> uri_server2client ('file://' . $filename) ;
+            my $result =
+                {
+                method => 'textDocument/publishDiagnostics',
+                params => 
+                    {
+                    uri => $fnuri,
+                    diagnostics => $diags{$filename},
+                    },
+                } ;
+
+            $server -> send_notification ($result) ;
+            }
+        }
+    }
+
+# ---------------------------------------------------------------------------
 
 
 1 ;
