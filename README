@@ -30,6 +30,7 @@ FEATURES
   * Goto Definition
   * Find References
   * Supports multiple workspace folders
+  * Document and selection formatting via perltidy
   * Run on remote system via ssh
 
 * Debugger
