@@ -420,7 +420,12 @@ sub _run_tcp_server
                             close ($fh) ;
                             $fh = undef ;
                             }
-                        $tcpcv -> send if ($quit || $exit);
+                        if ($quit || $exit)
+                            {
+                            $tcpcv -> send ;
+                            IO::AIO::reinit () ; # stop AIO requests
+                            exit (1) ;
+                            }
                         } ;
                     } ;
                 } ;
@@ -443,7 +448,8 @@ sub _run_tcp_server
                         } ;        
                     }    
                 $@ = undef ;
-                Coro::AnyEvent::sleep (1) ;
+                Coro::AnyEvent::sleep (2) ;
+                IO::AIO::reinit () ; # stop AIO requests
                 exit (1) ; # stop LS, vscode will restart it
                 }
             }
