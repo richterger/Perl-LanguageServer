@@ -3,6 +3,7 @@
 ## 2.2.0    `2021-02-07`
 - Parser now supports Moose method modifieres before, after and around, 
   so they can be used in symbol view and within reference search
+- Support Format Document and Format Selection via perltidy
 - Add logFile config option
 - Add perlArgs config option to pass options to Perl interpreter. Add some documentation for config options.
 - Add disableCache config option to make LanguageServer usable with readonly directories.
@@ -15,6 +16,8 @@
 - Prevent dereferencing an undefined value (#63) [Heiko Jansen]
 - Fix datatype of cwd config options (#47)
 - Use perlInc setting also for LanguageServer itself (based ony pull request #54 from ALANVF)
+- Catch Exceptions during display of variables inside debugger
+- Fix detecting duplicate LanguageServer processes
 
 - Fix spelling in documentation (#56) [Christopher Chavez]
 - Remove notice about Compiler::Lexer 0.22 bugs (#55) [Christopher Chavez]

@@ -12,6 +12,7 @@ Language Server and Debugger for Perl
   * Find References
   * Call Signatures
   * Supports multiple workspace folders
+  * Document and selection formatting via perltidy
   * Run on remote system via ssh
 * Debugger
   * Run, pause, step, next, return
