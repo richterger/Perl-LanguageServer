@@ -37,7 +37,7 @@
                 "perl.logFile": {
                     "type": "string",
                     "default": null,
-                    "description": "If set, log output is written to the given logfile, insetad of displaying it in the vscode output pane. Log output is always appended so you are responsible for rotating the file."
+                    "description": "If set, log output is written to the given logfile, instead of displaying it in the vscode output pane. Log output is always appended so you are responsible for rotating the file."
                 },
                 "perl.sshAddr": {
                     "type": "string",
@@ -107,7 +107,7 @@
                 "perl.debugAdapterPort": {
                     "type": "string",
                     "default": "13603",
-                    "description": "port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a differnt port."
+                    "description": "port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a different port."
                 }
             }
         },
