@@ -501,20 +501,21 @@ sub run
     
     my $cv = AnyEvent::CondVar -> new ;
 
-   if ($heartbeat || $debug2)
+    async
         {
-        async
+        my $i = 0 ;
+        while (1)
             {
-            my $i = 0 ;
-            while (1)
+            if ($heartbeat || $debug2)
                 {
                 logger (undef, "##### $i #####\n running: " . dump (\%running_reqs) . " coros: " . dump (\%running_coros), "\n") ;
-                Coro::AnyEvent::sleep (10) ;
                 $i++ ;
                 }
-            } ;
-        }
-   
+
+            Coro::AnyEvent::sleep (10) ;
+            }
+        } ;
+
     if (!$no_stdio)
         {
         async
