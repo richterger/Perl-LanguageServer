@@ -1588,7 +1588,7 @@ sub _recv
         $class -> _send ({ command => 'di_response', seq => $cmddata -> {seq}, arguments => $result}) ;
         return ;
         }
-    die "unknow cmd $cmd" ;    
+    die "unknown cmd $cmd" ;    
     }
 
 
