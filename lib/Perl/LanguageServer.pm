@@ -247,7 +247,7 @@ sub process_req
         my $is_dap = $type?1:0 ;
         $type      = defined ($id)?'request':'notification' if (!$type) ;
         $self -> logger ("handle_req id=$id\n") if ($debug1) ;
-        my $req = Perl::LanguageServer::Req  -> new ({ id => $id, is_dap => $is_dap, type => $type, params => $is_dap?$reqdata -> {arguments} || {}:$reqdata -> {params}}) ;
+        my $req = Perl::LanguageServer::Req  -> new ({ id => $id, is_dap => $is_dap, type => $type, params => $is_dap?$reqdata -> {arguments} || {}:$reqdata -> {params} || {}}) ;
         $running_reqs{$xid} = $req ;
 
         my $rsp ;
@@ -322,12 +322,15 @@ sub mainloop
         header:
         while (1)
             {
-            $self -> logger ("start aio read\n")  if ($debug2) ;
-            $cnt = $self -> _read (\$buffer, 8192, length ($buffer), undef, 1) ;
-            $self -> logger ("end aio read cnt=$cnt\n")  if ($debug2) ;
-            die "read_error reading headers ($!)" if ($cnt < 0) ;
-            return if ($cnt == 0) ;
-
+            $self -> logger ("start aio read, buffer len = " . length ($buffer) . "\n")  if ($debug2) ;
+            if ($loop)
+                {
+                $cnt = $self -> _read (\$buffer, 8192, length ($buffer), undef, 1) ;
+                $self -> logger ("end aio read cnt=$cnt, buffer len = " . length ($buffer) . "\n")  if ($debug2) ;
+                die "read_error reading headers ($!)" if ($cnt < 0) ;
+                return if ($cnt == 0) ;
+                }
+                
             while ($buffer =~ s/^(.*?)\R//)
                 {
                 $line = $1 ;    
