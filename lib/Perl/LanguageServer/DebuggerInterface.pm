@@ -936,7 +936,7 @@ sub req_vars
 
     my $thread_ref  = $params -> {thread_ref} ;
     my $tid = defined ($Coro::current)?$Coro::current+0:1 ;
-    if ($thread_ref != $tid && !$recurse)
+    if ($thread_ref != $tid && !$recurse && ($params -> {type} !~ /^eg:/))
         {
         my $coro  ;
         $coro = $class -> find_coro ($thread_ref) ;
