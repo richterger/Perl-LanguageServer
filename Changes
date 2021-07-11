@@ -1,5 +1,21 @@
 Revision history for Perl-LanguageServer
 
+
+2.3.0
+
+        - Arguments section in Variable lists now @ARGV and @_ during debugging
+        - @_ is now correctly evaluated inside of debugger console
+        - $#foo is now correctly evaluated inside of debugger console
+
+        - Fix: Debugger outputted invalid thread reference causes "no such coroutine" message, 
+          so watchs and code from the debug console is not expanded properly
+        - Fix: LanguageServer hangs when multiple request send at once from VSCode to LanguageServer
+        - Fix: cwd parameter for debugger in launch.json had no effect
+        - Fix: Correctly handle paths with drive letters on windows
+        - Disable syntax check on windows, because it blocks the whole process when running on windows, 
+          until handling of childs processes is fixed
+
+
 2.2.0   21.02.2021
         - Parser now supports Moose method modifieres before, after and around, 
           so they can be used in symbol view and within reference search
