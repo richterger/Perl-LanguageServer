@@ -142,7 +142,7 @@ sub _rpcreq_symbol
         foreach my $symbol (@{$symbols->{$uri}})
             {
             next if ($symbol -> {name} !~ /$query/) ;
-            next if (!exists $symbol -> {defintion}) ;
+            next if (!exists $symbol -> {definition}) ;
             $line = $symbol -> {line} ;
             push @vars, { %$symbol, location => { uri => $uri, range => { start => { line => $line, character => 0 }, end => { line => $line, character => 0 }}} } ;
             last if (@vars > 200) ;

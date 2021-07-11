@@ -51,7 +51,7 @@ with various editors/includes
 
 L<https://microsoft.github.io/debug-adapter-protocol/overview>
 
-To use both with Visual Studio Code, install the extention "perl"
+To use both with Visual Studio Code, install the extension "perl"
 
 Any comments and patches are welcome.
 
@@ -219,7 +219,7 @@ sub call_method
         $perlmethod = (defined($id)?'_rpcreq_':'_rpcnot_') . $name ;
         }
     $self -> logger ("method=$perlmethod\n") if ($debug1) ;
-    die "Unknow perlmethod $perlmethod" if (!$self -> can ($perlmethod)) ;
+    die "Unknown perlmethod $perlmethod" if (!$self -> can ($perlmethod)) ;
 
 no strict ;
     return $self -> $perlmethod ($workspace, $req) ;
@@ -649,17 +649,13 @@ You can also look for information at:
 
 L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Perl-LanguageServer>
 
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/Perl-LanguageServer>
-
 =item * CPAN Ratings
 
 L<http://cpanratings.perl.org/d/Perl-LanguageServer>
 
-=item * Search CPAN
+=item * MetaCPAN
 
-L<http://search.cpan.org/dist/Perl-LanguageServer/>
+L<https://metacpan.org/release/Perl-LanguageServer>
 
 =back
 

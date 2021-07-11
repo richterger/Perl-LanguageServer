@@ -148,7 +148,7 @@ sub parse_perl_source
                     name        => $token -> {data},
                     kind        => SymbolKindVariable,
                     containerName => $decl eq 'our'?$package:$func,     
-                    ($decl?(defintion   => $decl):()),
+                    ($decl?(definition   => $decl):()),
                     ($decl eq 'my'?(localvar => $decl):()),
                     } ; 
                 $add = $top -> [-1] ;
@@ -200,7 +200,7 @@ sub parse_perl_source
                         name        => $token -> {data},
                         kind        => SymbolKindFunction,
                         containerName => @stack?$func:$package,     
-                        ($decl?(defintion   => $decl):()),
+                        ($decl?(definition   => $decl):()),
                         }  ;  
                     $func_param = $add = $top -> [-1] ;
                     if ($decl)
@@ -304,7 +304,7 @@ sub parse_perl_source
                         name        => $token -> {data},
                         kind        => SymbolKindConstant,
                         containerName => $package,     
-                        defintion   => 1,
+                        definition   => 1,
                         } ;    
                     $add = $top -> [-1] ;
                     }
@@ -350,7 +350,7 @@ sub parse_perl_source
                         name        => $token -> {data},
                         kind        => SymbolKindProperty,
                         containerName => $package,     
-                        defintion   => 1,
+                        definition   => 1,
                         } ;
                     $add = $top -> [-1] ;
                     }
@@ -398,8 +398,8 @@ sub parse_perl_source
                                 name        => $package,
                                 kind        => SymbolKindModule,
                                 #containerName => join ('::', @{$state{ns}}),
-                                #($def?(defintion   => $def):()),
-                                defintion => 1,
+                                #($def?(definition   => $def):()),
+                                definition => 1,
                                 } ;   
                             $add = $top -> [-1] ;
                             }
@@ -412,7 +412,7 @@ sub parse_perl_source
                                 name        => $name,
                                 kind        => SymbolKindModule,
                                 containerName => join ('::', @{$state{ns}}),
-                                ($def?(defintion   => $def):()),
+                                ($def?(definition   => $def):()),
                                 } ;   
                             $add = $top -> [-1] ;
                             }

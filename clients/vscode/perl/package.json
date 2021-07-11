@@ -82,7 +82,7 @@
                 "perl.perlInc": {
                     "type": "array",
                     "default": null,
-                    "description": "array with paths to add to perl library path. This setting is used by the syntax checker and for the debugee and also for the LanguageServer itself. perl.perlInc should be absolute paths."
+                    "description": "array with paths to add to perl library path. This setting is used by the syntax checker and for the debuggee and also for the LanguageServer itself. perl.perlInc should be absolute paths."
                 },
                 "perl.fileFilter": {
                     "type": "array",
@@ -153,7 +153,7 @@
                             },
                             "cwd": {
                                 "type": "string",
-                                "description": "optional, change working directory before launching the debugee.",
+                                "description": "optional, change working directory before launching the debuggee.",
                                 "default": null
                             },
                             "reloadModules": {

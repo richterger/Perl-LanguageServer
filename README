@@ -14,7 +14,7 @@ with various editors/includes
 
 https://microsoft.github.io/debug-adapter-protocol/overview
 
-To use both with Visual Studio Code, install the extention "perl"
+To use both with Visual Studio Code, install the extension "perl"
 
 https://marketplace.visualstudio.com/items?itemName=richterger.perl
 
@@ -46,7 +46,7 @@ FEATURES
   * Tooltips with variable values
   * Evaluate perl code in debuggee, in context of every stack frame of coro thread
   * Automatically reload changed Perl modules while debugging
-  * Debug mutiple perl programm at once
+  * Debug multiple perl programm at once
   * Run on remote system via ssh
 
 INSTALLATION
@@ -61,7 +61,7 @@ To install this module, run the following commands:
 NOTE: Only tested with Perl 5.18 and newer. So in case you want to use
 is with older versions of Perl slight modifications might be necessary.
 
-To use it with Visual Studio Code, install the extention "perl"
+To use it with Visual Studio Code, install the extension "perl"
 
 
 SUPPORT AND DOCUMENTATION
@@ -82,9 +82,6 @@ You can also look for information at:
 
     RT, CPAN's request tracker (report bugs here)
         http://rt.cpan.org/NoAuth/Bugs.html?Dist=Perl-LanguageServer
-
-    AnnoCPAN, Annotated CPAN documentation
-        http://annocpan.org/dist/Perl-LanguageServer
 
     CPAN Ratings
         http://cpanratings.perl.org/d/Perl-LanguageServer
