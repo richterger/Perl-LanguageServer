@@ -619,6 +619,7 @@ use strict ;
     
     while (($key, $val) = each (%stab)) 
         {
+        next if ($key eq '_') ;
         next if ($key =~ /^_</) ;
         next if ($key =~ /::$/) ;
         next if ($key eq 'stab') ;
@@ -643,11 +644,13 @@ use strict ;
 
 sub get_var_eval 
     {
-    my ($self, $name, $varsrc) = @_ ;
+    my ($self, $name, $varsrc, $prefix) = @_ ;
 
+    # use Data::Dump qw{pp} ;
+    # print STDERR "eval ", pp([$name, $varsrc]), "\n" ;
     my %vars ;
 
-    my $prefix = $varsrc?'el:':'eg:' ;
+    $prefix ||= $varsrc?'el:':'eg:' ;
     my $refexpr ;
     my $pre ;
     my $post ;
@@ -657,14 +660,14 @@ sub get_var_eval
         {
         $vars{'ERROR'} = [$@] ;
         }
-        #print STDERR "name=$name ref=$ref refref=", ref ($ref), "reftype=", reftype ($ref), "\n", pp($ref), "\n" ;
-        if (ref ($ref) eq 'REF')
-            {
-            $ref = $$ref ;
-            #print STDERR "deref ----> ref val=$refexpr ref=$ref refref=", ref ($ref), "reftype=", reftype ($ref), "\n" ;
-            $pre = '${' ;
-            $post = '}' ;
-            }
+    #print STDERR "name=$name ref=$ref refref=", ref ($ref), "reftype=", reftype ($ref), "\n", pp($ref), "\n" ;
+    if (ref ($ref) eq 'REF')
+        {
+        $ref = $$ref ;
+        #print STDERR "deref ----> ref val=$refexpr ref=$ref refref=", ref ($ref), "reftype=", reftype ($ref), "\n" ;
+        $pre = '${' ;
+        $post = '}' ;
+        }
     if (reftype ($ref) eq 'ARRAY')
         {
         my $n = 0 ;
@@ -691,6 +694,24 @@ sub get_var_eval
 
 # ---------------------------------------------------------------------------
 
+sub get_arguments 
+    {
+    my ($self, $frame) = @_ ;
+
+    my $vars  ;
+    my %varsrc ;
+    eval
+        {
+        my @args = _get_caller_args ($frame+2) ;
+        $varsrc{"\@_"} =    [\@args, "ea:\$varsrc->{'\@_'}[0]"] ;
+        $varsrc{"\@ARGV"} = [\@main::ARGV, 'eg:\\@main::ARGV'] ;
+        } ;
+    $self -> logger ($@) if ($@) ;
+    return (\%varsrc) ;
+    }
+
+# ---------------------------------------------------------------------------
+
 sub get_locals 
     {
     my ($self, $frame) = @_ ;
@@ -709,16 +730,46 @@ sub get_locals
                 ] ;
             }
         } ;
-    logger ($@) if ($@) ;
+    $self -> logger ($@) if ($@) ;
     return (\%varsrc, $vars) ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub _get_caller_args
+    {
+    my ($caller) = @_ ;
+
+    local @DB::args ;
+
+    my @caller_args ;
+        {
+        package DB;
+
+        my @call_info = caller ($caller) ;
+        #use Data::Dump qw{pp} ;
+        #print STDERR "db::args after caller $caller ", pp(\@DB::args), "\n" ;
+        @caller_args = @DB::args ;
+        }
+
+    return @caller_args ;
     }
 
 # ---------------------------------------------------------------------------
 
 sub _eval_replace 
     {
-    my ($___di_vars, $___di_sigil, $___di_var, $___di_suffix) = @_ ;
+    my ($___di_vars, $___di_sigil, $___di_var, $___di_suffix, $___di_frame) = @_ ;
 
+    #print STDERR "sigil = $___di_sigil var = $___di_var suffix = $___di_suffix\n" ;
+
+    if ($___di_var eq '_')
+        {
+        my @args = _get_caller_args ($___di_frame + 3) ;
+        $___di_vars -> {'@_'} = \@args ;
+        }
+    #use Data::Dump qw{pp} ;
+    #print STDERR "vars ", pp ($___di_vars),"\n" ;
     if ($___di_suffix)
         {
         return "\$___di_vars->{'\%$___di_var'}{" if ($___di_suffix eq '{' && exists $___di_vars->{"\%$___di_var"}) ;
@@ -726,6 +777,8 @@ sub _eval_replace
         }
     else
         {
+        return "\$\#\{\$___di_vars->{'\@$1'}}" if (($___di_var =~ /^#(.+)/) && exists $___di_vars->{"\@$1"}) ;        
+        #print STDERR "v = $___di_var  1 = $1\n" ;
         return "$___di_sigil\{\$___di_vars->{'$___di_sigil$___di_var'}}" if (exists $___di_vars->{"$___di_sigil$___di_var"}) ;        
         }
 
@@ -740,11 +793,12 @@ sub get_eval_result
  
     my $___di_vars = PadWalker::peek_my ($frame) ;
  
-    $expression =~ s/([\%\@\$])(\w+)\s*([\[\{])?/_eval_replace($___di_vars, $1, $2, $3)/eg ;
+    $expression =~ s/([\%\@\$])(#?\w+)\s*([\[\{])?/_eval_replace($___di_vars, $1, $2, $3, $frame)/eg ;
 
     my $code = "package $package ; no strict ; $expression";
     my %vars ;
-    #print STDERR "code = $code\n" ;
+    #print STDERR "frame=$frame code = $code\n" ;
+
 
     my @result = eval $code;
     if ($@)
@@ -906,6 +960,10 @@ sub get_varsrc
         {
         ($varsrc) = $class -> get_locals($frame_ref+3) ;
         }
+    elsif ($type eq 'a')
+        {
+        ($varsrc) = $class -> get_arguments($frame_ref+3) ;
+        }
     elsif ($type eq 'g')
         {
         $varsrc = $class -> get_globals($package) ;
@@ -924,7 +982,15 @@ sub get_varsrc
         my ($dummy, $varlocal) = $class -> get_locals($frame_ref+3) ;
         $varsrc = $class -> get_var_eval ($name, $varlocal) ;
         }
+    elsif ($type =~ /^ea:(.+)/)
+        {
+        my $name = $1 ;
+        my ($args, $varlocal) = $class -> get_arguments($frame_ref+3) ;
+        $varsrc = $class -> get_var_eval ($name, $args, 'ea:') ;
+        }
 
+    use Data::Dump qw{pp} ;
+    #print STDERR "vars ", pp ($varsrc),"\n" ;
     return $varsrc ;
     }
 
@@ -960,7 +1026,7 @@ sub req_vars
         {
         $class -> get_vars ($varsrc, \@vars, $filter) ;
         } ;
-    print STDERR $@ if ($@) ;
+    $class -> logger ($@) if ($@) ;
 
     return { variables => \@vars } ;
     }
