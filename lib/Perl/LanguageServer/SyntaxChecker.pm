@@ -78,6 +78,85 @@ sub check_perl_syntax
 
 # ---------------------------------------------------------------------------
 
+ sub run_win32
+    {
+    my ($self, $text, $inc) = @_ ;
+
+
+    return (0, undef, undef) ; # disable for now on windows
+
+    my $infile  = $self -> infile ;
+    my $outfile = $self -> outfile ;
+
+    print STDERR "infile=$infile outfile=$outfile\n" ;
+    my $ifh = aio_open ($infile, IO::AIO::O_WRONLY | IO::AIO::O_TRUNC | IO::AIO::O_CREAT, 0600) or die "open $infile failed ($!)" ;
+    aio_write ($ifh, undef, undef, $text, 0) ;
+    aio_close ($ifh) ;
+
+    print STDERR "run ", $self -> perlcmd . " -c  @$inc $infile 2> $outfile", "\n" ;
+
+    # use Win32::Process ;
+
+    # my $cmd = $self -> perlcmd . " -c  @$inc $infile" ;
+
+    # print STDERR $cmd, "\n" ;
+
+    # my $ProcessObj ;
+    my $rc ;
+    # Win32::Process::Create($ProcessObj,
+                    
+    #                     $self -> perlcmd,
+    #                     $cmd,  
+    #                     0,
+    #                     NORMAL_PRIORITY_CLASS,
+    #                     ".");
+
+    # print STDERR "wait\n" ;
+
+    # $ProcessObj->Wait(5000) ;
+
+    print STDERR "done\n" ;
+
+    my $errout ;
+    my $out ;
+    aio_load ($outfile, $errout) ;
+    print STDERR "errout = $errout\n" ;
+
+    return ($rc, $out, $errout) ;
+    }
+
+
+# ---------------------------------------------------------------------------
+
+ sub run_system
+    {
+    my ($self, $text, $inc) = @_ ;
+
+    my $infile  = $self -> infile ;
+    my $outfile = $self -> outfile ;
+
+    local $SIG{CHLD} = 'DEFAULT' ;
+    local $SIG{PIPE} = 'DEFAULT' ;
+
+    print STDERR "infile=$infile outfile=$outfile\n" ;
+    my $ifh = aio_open ($infile, IO::AIO::O_WRONLY | IO::AIO::O_TRUNC | IO::AIO::O_CREAT, 0600) or die "open $infile failed ($!)" ;
+    aio_write ($ifh, undef, undef, $text, 0) ;
+    aio_close ($ifh) ;
+
+    print STDERR "run ", $self -> perlcmd . " -c  @$inc $infile 2> $outfile", "\n" ;
+    my $rc = system ($self -> perlcmd . " -c  @$inc $infile 2> $outfile") ;
+    print STDERR "done\n" ;
+
+    my $errout ;
+    my $out ;
+    aio_load ($outfile, $errout) ;
+    print STDERR "errout = $errout\n" ;
+
+    return ($rc, $out, $errout) ;
+    }
+
+# ---------------------------------------------------------------------------
+
  sub run_open3
     {
     my ($self, $text, $inc) = @_ ;
@@ -88,6 +167,7 @@ sub check_perl_syntax
 
     require IPC::Open3 ;
     use Symbol 'gensym'; $err = gensym;
+    $self -> logger ("open3\n") if ($Perl::LanguageServer::debug2) ;
     my $pid = IPC::Open3::open3($wtr, $rdr, $err, $self -> perlcmd, '-c', @$inc) or die "Cannot run " . $self -> perlcmd ;
     $self -> logger ("write start pid=$pid\n") if ($Perl::LanguageServer::debug2) ;
     syswrite ($wtr,  $text . "\n__END__\n") ;
@@ -147,10 +227,11 @@ sub background_checker
         my @inc ;
         @inc = map { ('-I', $_)} @$inc if ($inc) ;
 
-        $self -> logger ("start perl -c\n") if ($Perl::LanguageServer::debug1) ; ;
+        $self -> logger ("start perl -c for $uri\n") if ($Perl::LanguageServer::debug1) ; ;
         if ($^O =~ /Win/)
             {
-            ($ret, $out, $errout) = $self -> run_open3 ($text, \@inc) ;
+#            ($ret, $out, $errout) = $self -> run_open3 ($text, \@inc) ;
+            ($ret, $out, $errout) = $self -> run_win32 ($text, \@inc) ;
             }
         else
             {
