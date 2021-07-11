@@ -469,7 +469,9 @@ sub _parse_perl_source_cached
     my $cachepath ;
     if (!$self -> disable_cache)
         {
-        $cachepath = $self -> state_dir .'/' . $path ;
+        my $escpath = $path ;
+        $escpath =~ s/:/%3A/ ;
+        $cachepath = $self -> state_dir .'/' . $escpath ;
         $self -> mkpath (dirname ($cachepath)) ;
 
         #$server -> logger ("$path -> cachepath=$cachepath\n") ;

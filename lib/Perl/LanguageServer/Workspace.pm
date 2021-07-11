@@ -142,6 +142,7 @@ sub _build_state_dir
 
     my $root = $self -> config -> {rootUri} || 'file:///tmp' ;
     my $rootpath = substr ($self -> uri_client2server ($root), 7) ;
+    $rootpath =~ s#^/(\w)%3A/#$1:/# ;
     $rootpath .= '/.vscode/perl-lang' ;
     print STDERR "state_dir = $rootpath\n" ;
     $self -> mkpath ($rootpath) ;
@@ -263,9 +264,11 @@ sub set_workspace_folders
     my $folders = $self -> folders ;
     foreach my $ws (@$workspace_folders)
         {
-        my $dir = $self -> uri_client2server ($ws -> {uri}) ;
+        my $diruri = $self -> uri_client2server ($ws -> {uri}) ;
         
-        $folders -> {$ws -> {uri}} = substr ($dir, 7) ;    
+        my $dir = substr ($diruri, 7) ;    
+        $dir =~ s#^/(\w)%3A/#$1:/# ;
+        $folders -> {$ws -> {uri}} = $dir ; 
         }
     }
 
