@@ -116,7 +116,7 @@ sub send_event
 
 # ---------------------------------------------------------------------------
 
-sub lauch
+sub launch
     {
     my ($self, $workspace, $cmd) = @_ ;
 

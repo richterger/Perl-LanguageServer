@@ -419,7 +419,7 @@ sub _dapreq_launch
     $self -> debugger_process ($proc) ;
     $proc -> debug_adapter ($self) ;
     $debug_adapters{$proc -> session_id} = $self ;
-    $proc -> lauch ($workspace, $workspace -> perlcmd) ;
+    $proc -> launch ($workspace, $workspace -> perlcmd) ;
 
     return {} ;
     }

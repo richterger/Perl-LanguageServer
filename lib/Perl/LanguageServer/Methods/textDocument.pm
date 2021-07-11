@@ -197,7 +197,7 @@ sub _filter_children
     my @vars ;
     foreach my $v (@$children)
         {
-        if (exists $v -> {defintion} && (!exists $v -> {localvar} || $show_local_vars))
+        if (exists $v -> {definition} && (!exists $v -> {localvar} || $show_local_vars))
             {
             if (exists $v -> {children})
                 {
@@ -234,7 +234,7 @@ sub _rpcreq_documentSymbol
     my @vars ;
     foreach my $v (@$vars)
         {
-        if (exists $v -> {defintion} && (!exists $v -> {localvar} || $show_local_vars))
+        if (exists $v -> {definition} && (!exists $v -> {localvar} || $show_local_vars))
             {
             if (exists $v -> {children})
                 {
@@ -267,7 +267,7 @@ sub _get_symbol
 
     return if ($symbol -> {name} ne $name) ;
     #print STDERR "name=$name symbols = ", pp ($symbol), "\n" ;
-    return if ($def_only && !exists $symbol -> {defintion}) ;
+    return if ($def_only && !exists $symbol -> {definition}) ;
     my $line = $symbol -> {line} + 0 ;
     push @$vars, { uri => $uri, range => { start => { line => $line, character => 0 }, end => { line => $line, character => 0 }}} ;
     }
@@ -351,7 +351,7 @@ sub _rpcreq_signatureHelp
         foreach my $symbol (@{$symbols->{$uri}})
             {
             next if ($symbol -> {name} ne $name) ;
-            next if (!exists $symbol -> {defintion}) ;
+            next if (!exists $symbol -> {definition}) ;
             next if (!exists $symbol -> {signature}) ;
 
             push @vars, $symbol -> {signature} ;

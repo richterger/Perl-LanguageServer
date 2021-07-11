@@ -15,7 +15,7 @@
   running threads which in turn caused the LanguageServer to hang
 - Prevent dereferencing an undefined value (#63) [Heiko Jansen]
 - Fix datatype of cwd config options (#47)
-- Use perlInc setting also for LanguageServer itself (based ony pull request #54 from ALANVF)
+- Use perlInc setting also for LanguageServer itself (based only pull request #54 from ALANVF)
 - Catch Exceptions during display of variables inside debugger
 - Fix detecting duplicate LanguageServer processes
 
@@ -27,12 +27,12 @@
 - search.cpan.org retired, replace with metacpan.org (#31) [Christopher Chavez]
 
 ## 2.1.0    `2020-06-27`
-- Improve Symbol Parser (fix parsing of anoymous subs)
+- Improve Symbol Parser (fix parsing of anonymous subs)
 - showLocalSymbols
 - function names in breadcrump
 - Signature Help for function/method arguments
 - Add Presentation on Perl Workshop 2020 to repos
-- Remove Complier::Lexer from distribution since 
+- Remove Compiler::Lexer from distribution since 
     version is available on CPAN
 - Make stdout unbuffered while debugging
 - Make debugger use perlInc setting
@@ -57,10 +57,10 @@ Added Perl debugger
 Fix issues in the Perl part, make sure to update Perl::LanguageServer from cpan
 
 ## 0.0.3   `2018-09-08`
-Fix issue with not reading enougth from stdin, which caused LanguageServer to hang sometimes
+Fix issue with not reading enough from stdin, which caused LanguageServer to hang sometimes
 
 ## 0.0.2  `2018-07-21` 
-Fix quiting issue when starting Perl::LanguageServer, more fixes are in the Perl part
+Fix quitting issue when starting Perl::LanguageServer, more fixes are in the Perl part
 
 ## 0.0.1  `2018-07-13`
 Initial Version

@@ -51,7 +51,7 @@ with various editors/includes
 
 L<https://microsoft.github.io/debug-adapter-protocol/overview>
 
-To use both with Visual Studio Code, install the extention "perl"
+To use both with Visual Studio Code, install the extension "perl"
 
 Any comments and patches are welcome.
 
@@ -219,7 +219,7 @@ sub call_method
         $perlmethod = (defined($id)?'_rpcreq_':'_rpcnot_') . $name ;
         }
     $self -> logger ("method=$perlmethod\n") if ($debug1) ;
-    die "Unknow perlmethod $perlmethod" if (!$self -> can ($perlmethod)) ;
+    die "Unknown perlmethod $perlmethod" if (!$self -> can ($perlmethod)) ;
 
 no strict ;
     return $self -> $perlmethod ($workspace, $req) ;

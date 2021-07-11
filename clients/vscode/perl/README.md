@@ -52,7 +52,7 @@ This extension contributes the following settings:
 * `perl.perlArgs`: additional arguments passed to the perl interpreter that starts the LanguageServer
 * `perl.sshArgs`: optional arguments for ssh
 * `perl.pathMap`: mapping of local to remote paths
-* `perl.perlInc`: array with paths to add to perl library path. This setting is used by the syntax checker and for the debugee and also for the LanguageServer itself.
+* `perl.perlInc`: array with paths to add to perl library path. This setting is used by the syntax checker and for the debuggee and also for the LanguageServer itself.
 * `perl.fileFilter`: array for filtering perl file, defaults to [*.pm,*.pl]
 * `perl.ignoreDirs`: directories to ignore, defaults to [.vscode, .git, .svn]
 * `perl.debugAdapterPort`: port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a different port.
@@ -70,7 +70,7 @@ This extension contributes the following settings:
 * `stopOnEntry`: if true, program will stop on entry
 * `args`:   optional, array with arguments for perl program
 * `env`:    optional, object with environment settings 
-* `cwd`:    optional, change working directory before launching the debugee
+* `cwd`:    optional, change working directory before launching the debuggee
 * `reloadModules`: if true, automatically reload changed Perl modules while debugging
 
 ## Remote syntax check & debugging
