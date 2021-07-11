@@ -649,17 +649,13 @@ You can also look for information at:
 
 L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Perl-LanguageServer>
 
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/Perl-LanguageServer>
-
 =item * CPAN Ratings
 
 L<http://cpanratings.perl.org/d/Perl-LanguageServer>
 
-=item * Search CPAN
+=item * MetaCPAN
 
-L<http://search.cpan.org/dist/Perl-LanguageServer/>
+L<https://metacpan.org/release/Perl-LanguageServer>
 
 =back
 
