@@ -43,7 +43,7 @@ use constant SymbolKindEvent => 24;
 use constant SymbolKindOperator => 25;
 use constant SymbolKindTypeParameter => 26;
 
-use constant CacheVersion => 4 ;
+use constant CacheVersion => 5 ;
 
 
 # ---------------------------------------------------------------------------
