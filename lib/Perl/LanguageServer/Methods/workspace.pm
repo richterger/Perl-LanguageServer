@@ -15,7 +15,30 @@ sub _rpcnot_didChangeConfiguration
     {
     my ($self, $workspace, $req) = @_ ;
 
+    my $log_file   = $req -> params -> {settings}{perl}{logFile} ;
+    if ($log_file)
+        {
+        $Perl::LanguageServer::log_file = $log_file;
+        $self -> logger ("log_file = $log_file\n") ;
+        }
+
     $self -> logger ("perl = ", dump ($req -> params -> {settings}{perl}), "\n") ;
+
+    my $log_level   = $req -> params -> {settings}{perl}{logLevel} ;
+    if (defined $log_level && length $log_level)
+        {
+        my $int_log_level = 0+$log_level;
+        if ($int_log_level >= 0 && $int_log_level <= 2)
+            {
+            $Perl::LanguageServer::debug1 = $int_log_level;
+            $Perl::LanguageServer::debug2 = $int_log_level > 1?1:0;
+            $self -> logger ("log_level = $int_log_level\n") ;
+            }
+        else
+            {
+            $self -> logger ("log_level: unexpected value ($log_level)\n") ;
+            }
+        }
 
     my $uri   = $req -> params -> {settings}{perl}{sshWorkspaceRoot} ;
     if ($uri)
