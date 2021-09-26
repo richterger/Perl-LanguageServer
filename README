@@ -80,15 +80,13 @@ You can also look for information at:
     Github:
         https://github.com/richterger/Perl-LanguageServer
 
-    RT, CPAN's request tracker (report bugs here)
-        http://rt.cpan.org/NoAuth/Bugs.html?Dist=Perl-LanguageServer
-
     CPAN Ratings
         http://cpanratings.perl.org/d/Perl-LanguageServer
 
     MetaCPAN
         https://metacpan.org/release/Perl-LanguageServer
 
+For reporting bugs please use GitHub issues.
 
 LICENSE AND COPYRIGHT
 

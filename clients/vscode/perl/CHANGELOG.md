@@ -1,5 +1,25 @@
 # Change Log
 
+## 2.3.0   `26.09.2021`
+
+- Arguments section in Variable lists now @ARGV and @_ during debugging (#105)
+- @_ is now correctly evaluated inside of debugger console
+- $#foo is now correctly evaluated inside of debugger console
+- Default debug configuration is now automatically provided without
+    the need to create a launch.json first (#103)
+- Add Option cacheDir to specify location of cache dir (#113)
+
+- Fix: Debugger outputted invalid thread reference causes "no such coroutine" message, 
+    so watchs and code from the debug console is not expanded properly
+- Fix: LanguageServer hangs when multiple request send at once from VSCode to LanguageServer
+- Fix: cwd parameter for debugger in launch.json had no effect (#99)
+- Fix: Correctly handle paths with drive letters on windows
+- Fix: sshArgs parameter was not declared as array (#109)
+- Disable syntax check on windows, because it blocks the whole process when running on windows, 
+    until handling of childs processes is fixed
+
+- Fixed spelling (#86,#96,#101) [chrstphrchvz,davorg,aluaces]
+
 ## 2.2.0    `2021-02-21`
 - Parser now supports Moose method modifieres before, after and around, 
   so they can be used in symbol view and within reference search

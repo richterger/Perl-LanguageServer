@@ -1,7 +1,6 @@
 Revision history for Perl-LanguageServer
 
-
-2.3.0
+2.3.0   26.09.2021
 
         - Arguments section in Variable lists now @ARGV and @_ during debugging (#105)
         - @_ is now correctly evaluated inside of debugger console

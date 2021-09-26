@@ -51,9 +51,73 @@ with various editors/includes
 
 L<https://microsoft.github.io/debug-adapter-protocol/overview>
 
+Should work with any Editor/IDE that support the Language-Server-Protocol.
+
 To use both with Visual Studio Code, install the extension "perl"
 
 Any comments and patches are welcome.
+
+=head2 Features
+
+=over 4
+
+=item * Language Server
+
+=over 4
+
+=item * Syntax checking
+
+=item * Symbols in file
+
+=item * Symbols in workspace/directory
+
+=item * Goto Definition
+
+=item * Find References
+
+=item * Call Signatures
+
+=item * Supports multiple workspace folders
+
+=item * Document and selection formatting via perltidy
+
+=item * Run on remote system via ssh
+
+=back
+
+=item * Debugger
+
+=over 4
+
+=item * Run, pause, step, next, return
+
+=item * Support for coro threads
+
+=item * Breakpoints 
+
+=item * Conditional breakpoints
+
+=item * Breakpoints can be set while program runs and for modules not yet loaded
+
+=item * Variable view, can switch to every stack frame or coro thread
+
+=item * Set variable
+
+=item * Watch variable
+
+=item * Tooltips with variable values
+
+=item * Evaluate perl code in debuggee, in context of every stack frame of coro thread
+
+=item * Automatically reload changed Perl modules while debugging
+
+=item * Debug multiple perl programs at once
+
+=item * Run on remote system via ssh
+
+=back
+
+=back
 
 =cut
 
@@ -637,6 +701,10 @@ You can find documentation for this module with the perldoc command.
 
     perldoc Perl::LanguageServer
 
+Presentation on German Perl Workshop 2020:
+
+L<https://github.com/richterger/Perl-LanguageServer/blob/master/docs/Perl-LanguageServer%20und%20Debugger%20f%C3%BCr%20Visual%20Studio%20Code%20u.a.%20Editoren%20-%20Perl%20Workshop%202020.pdf>
+
 
 You can also look for information at:
 
@@ -644,10 +712,6 @@ You can also look for information at:
 
 =item * Github:
  L<https://github.com/richterger/Perl-LanguageServer>
-
-=item * RT: CPAN's request tracker (report bugs here)
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=Perl-LanguageServer>
 
 =item * CPAN Ratings
 
@@ -659,13 +723,15 @@ L<https://metacpan.org/release/Perl-LanguageServer>
 
 =back
 
+For reporting bugs please use GitHub issues.
+
 
 =head1 ACKNOWLEDGEMENTS
 
 
 =head1 LICENSE AND COPYRIGHT
 
-Copyright 2018-2020 grichter.
+Copyright 2018-2021 grichter.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the the Artistic License (2.0). You may obtain a
