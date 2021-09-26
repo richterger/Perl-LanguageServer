@@ -8,6 +8,7 @@ Revision history for Perl-LanguageServer
         - $#foo is now correctly evaluated inside of debugger console
         - Default debug configuration is now automatically provided without
           the need to create a launch.json first (#103)
+        - Add Option cacheDir to specify location of cache dir (#113)
 
         - Fix: Debugger outputted invalid thread reference causes "no such coroutine" message, 
           so watchs and code from the debug console is not expanded properly

@@ -94,6 +94,11 @@
                     "default": null,
                     "description": "directories to ignore, defaults to .vscode, .git, .svn"
                 },
+                "perl.cacheDir": {
+                    "type": "string",
+                    "default": null,
+                    "description": "directory for caching of parsed symbols, if the directory does not exists, it will be created, defaults to ${workspace}/.vscode/perl-lang. This should be one unqiue directory per project and an absolute path."
+                },
                 "perl.showLocalVars": {
                     "type": "boolean",
                     "default": false,

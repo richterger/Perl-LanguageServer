@@ -80,6 +80,17 @@ sub _rpcnot_didChangeConfiguration
 
     $workspace -> show_local_vars ($workspace -> config -> {showLocalVars}) ;
     $workspace -> disable_cache   ($workspace -> config -> {disableCache}) ;
+    
+    if ($req -> params -> {settings}{perl}{cacheDir})
+        {
+        $workspace -> state_dir ($req -> params -> {settings}{perl}{cacheDir}) ;
+        }
+    else
+        {
+        $workspace -> clear_state_dir
+        }
+
+    $workspace -> mkpath ($workspace -> state_dir) ; # force build state dir
 
     async
         {

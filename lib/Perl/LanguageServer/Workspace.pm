@@ -102,6 +102,7 @@ has 'state_dir' =>
     is => 'rw',
     isa => 'Str',
     lazy_build => 1,
+    clearer => 'clear_state_dir',
     ) ;
 
 has 'disable_cache' =>
