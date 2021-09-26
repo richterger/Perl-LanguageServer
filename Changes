@@ -3,17 +3,21 @@ Revision history for Perl-LanguageServer
 
 2.3.0
 
-        - Arguments section in Variable lists now @ARGV and @_ during debugging
+        - Arguments section in Variable lists now @ARGV and @_ during debugging (#105)
         - @_ is now correctly evaluated inside of debugger console
         - $#foo is now correctly evaluated inside of debugger console
+        - Default debug configuration is now automatically provided without
+          the need to create a launch.json first (#103)
 
         - Fix: Debugger outputted invalid thread reference causes "no such coroutine" message, 
           so watchs and code from the debug console is not expanded properly
         - Fix: LanguageServer hangs when multiple request send at once from VSCode to LanguageServer
-        - Fix: cwd parameter for debugger in launch.json had no effect
+        - Fix: cwd parameter for debugger in launch.json had no effect (#99)
         - Fix: Correctly handle paths with drive letters on windows
         - Disable syntax check on windows, because it blocks the whole process when running on windows, 
           until handling of childs processes is fixed
+
+        - Fixed spelling (#86,#96,#101) [chrstphrchvz,davorg,aluaces]
 
 
 2.2.0   21.02.2021

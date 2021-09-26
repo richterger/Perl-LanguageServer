@@ -22,7 +22,7 @@ export function activate(context: vscode.ExtensionContext) {
     let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + dir);    
 	let logFile         : string     = config.get('logFile') || '' ; 
     let logLevel        : number     = config.get('logLevel') || 0 ;
-    let client_version  : string     = "2.2.0" ;
+    let client_version  : string     = "2.3.0" ;
     let perlArgsOpt     : string[]   = [...perlIncOpt, 
                                         ...perlArgs, 
                                         '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', 
@@ -73,16 +73,64 @@ export function activate(context: vscode.ExtensionContext) {
         {
         createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable) 
             {
-            /*
-            console.log('start perl debug server on port ' + debug_adapter_port);
-            // make VS Code connect to debug server instead of launching debug adapter
-            return new vscode.DebugAdapterServer(parseInt(debug_adapter_port)) ;
-            */
             executable.args.push (debug_adapter_port) ;
             console.log ('start perl debug adapter: ' + executable.command + ' ' + executable.args.join (' '))  ;
             return executable ;
             }
         });
+
+    /*
+    vscode.debug.registerDebugConfigurationProvider('perl', 
+        {
+        provideDebugConfigurations(folder: vscode.WorkspaceFolder | undefined): vscode.ProviderResult<vscode.DebugConfiguration[]>
+            {
+            console.log('start perl debug provideDebugConfigurations');
+    
+            let configs: vscode.DebugConfiguration[] = [];
+
+            var dbgconfig =
+                {
+                type: "perl",
+                request: "launch",
+                name: "Perl-Debug",
+                program: "${workspaceFolder}/${relativeFile}",
+                stopOnEntry: true,
+                reloadModules: true
+                } ;
+
+            configs.push(dbgconfig);
+            return configs ;
+            }
+        }, vscode.DebugConfigurationProviderTriggerKind.Dynamic);
+
+    */
+
+    vscode.debug.registerDebugConfigurationProvider('perl', 
+        {
+        resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration>
+            {
+            console.log('start perl debug resolveDebugConfiguration');
+    
+            if (!config.request)
+                {
+                    console.log('config perl debug resolveDebugConfiguration');
+                    var dbgconfig =
+                    {
+                    type: "perl",
+                    request: "launch",
+                    name: "Perl-Debug",
+                    program: "${workspaceFolder}/${relativeFile}",
+                    stopOnEntry: true,
+                    reloadModules: true
+                    } ;
+
+                return dbgconfig ;
+                }
+            
+            return config ;
+            }
+        }, vscode.DebugConfigurationProviderTriggerKind.Dynamic);
+
 
 	console.log('cmd: ' + serverCmd + ' args: ' + serverArgs.join (' '));
 
