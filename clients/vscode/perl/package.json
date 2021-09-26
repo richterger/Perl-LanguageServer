@@ -70,7 +70,7 @@
                     "description": "defaults to perl"
                 },
                 "perl.sshArgs": {
-                    "type": "string",
+                    "type": "array",
                     "default": null,
                     "description": "optional arguments for ssh"
                 },

@@ -14,6 +14,7 @@ Revision history for Perl-LanguageServer
         - Fix: LanguageServer hangs when multiple request send at once from VSCode to LanguageServer
         - Fix: cwd parameter for debugger in launch.json had no effect (#99)
         - Fix: Correctly handle paths with drive letters on windows
+        - Fix: sshArgs parameter was not declared as array (#109)
         - Disable syntax check on windows, because it blocks the whole process when running on windows, 
           until handling of childs processes is fixed
 
