@@ -39,14 +39,14 @@ FEATURES
   * Support for coro threads
   * Breakpoints 
   * Conditional breakpoints
-  * Breakpoints can be set while programm runs and for modules not yet loaded
+  * Breakpoints can be set while program runs and for modules not yet loaded
   * Variable view, can switch to every stack frame or coro thread
   * Set variable
   * Watch variable
   * Tooltips with variable values
   * Evaluate perl code in debuggee, in context of every stack frame of coro thread
   * Automatically reload changed Perl modules while debugging
-  * Debug multiple perl programm at once
+  * Debug multiple perl program at once
   * Run on remote system via ssh
 
 INSTALLATION
