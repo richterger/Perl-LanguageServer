@@ -561,6 +561,7 @@ use IO::Socket ;
 use JSON ;
 use PadWalker ;
 use Scalar::Util qw{blessed reftype looks_like_number};
+use Hash::SafeKeys;
 #use Data::Dump qw{pp} ;
 use File::Basename ;
 use vars qw{@dbline %dbline $dbline} ;
@@ -679,10 +680,12 @@ sub get_var_eval
         }
     elsif (reftype ($ref) eq 'HASH')
         {
+        my $iterator = Hash::SafeKeys::save_iterator_state($ref);
         foreach my $entry (sort keys %$ref)
             {
             $vars{"$entry"} = [\$ref -> {$entry}, $prefix . $pre . '(' . $refexpr . ')' . $post . "->{'" . $entry . "'}" ] ;
             }    
+        Hash::SafeKeys::restore_iterator_state($ref, $iterator);
         }
     else
         {
@@ -914,6 +917,7 @@ sub get_vars
             {
             my $display = $obj . '{' ;
             my $n       = 1 ;
+            my $iterator = Hash::SafeKeys::save_iterator_state($val);
             foreach (sort keys %$val)
                 {
                 $display .= ',' if ($n > 1) ;
@@ -934,6 +938,7 @@ sub get_vars
                 var_ref => $ref,
                 namedVariables => scalar (keys %$val),
                 } ;
+            Hash::SafeKeys::restore_iterator_state($val, $iterator);
             }
 
         if ($key =~ /^Handle/) 
