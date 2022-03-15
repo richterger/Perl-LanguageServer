@@ -14,12 +14,13 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 	console.log('extension "perl" is now active');
-	
+
+    let resource = vscode.window.activeTextEditor?.document.uri ;
     let debug_adapter_port : string  = config.get('debugAdapterPort') || '13603' ; 
-	let perlCmd         : string     = config.get('perlCmd') || 'perl' ; 
+	let perlCmd         : string     = resolve_workspaceFolder((config.get('perlCmd') || 'perl'), resource);
     let perlArgs        : string[]   = config.get('perlArgs') || [] ;
-    let perlInc         : string[]   = config.get('perlInc') || [] ;    
-    let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + dir);    
+    let perlInc         : string[]   = config.get('perlInc') || [] ;
+    let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + resolve_workspaceFolder(dir, resource)) ;    
 	let logFile         : string     = config.get('logFile') || '' ; 
     let logLevel        : number     = config.get('logLevel') || 0 ;
     let client_version  : string     = "2.3.0" ;
@@ -160,4 +161,13 @@ export function activate(context: vscode.ExtensionContext) {
 
 // this method is called when your extension is deactivated
 export function deactivate() {
+}
+
+function resolve_workspaceFolder(path: string, resource? : vscode.Uri): string {
+    if (path.includes("${workspaceFolder}")) {
+        const ws = vscode.workspace.getWorkspaceFolder(resource as vscode.Uri) ?? vscode.workspace.workspaceFolders?.[0];
+        const sub = ws?.uri.fsPath ?? "" ;
+        return path.replace("${workspaceFolder}", sub);
+    }
+    return path;
 }
