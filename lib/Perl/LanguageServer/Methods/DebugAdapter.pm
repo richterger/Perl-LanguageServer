@@ -545,6 +545,7 @@ sub _dapreq_variables
                                                                         'package'  => $package,
                                                                          type      => $type}):
                                                     0 ;    
+        $_ -> {name} .= '' ; # make sure name is a string, otherwise array indices fails on mac 
         }
 
     return $variables ;
