@@ -7,7 +7,7 @@ import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-lan
 export function activate(context: vscode.ExtensionContext) {
 
 	let config = vscode.workspace.getConfiguration('perl') ;
-	if (!config.get('enable'))	
+	if (!config.get('enable'))
 		{
 		console.log('extension "perl" is disabled');
 		return ;
@@ -16,24 +16,24 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('extension "perl" is now active');
 
     let resource = vscode.window.activeTextEditor?.document.uri ;
-    let debug_adapter_port : string  = config.get('debugAdapterPort') || '13603' ; 
+    let debug_adapter_port : string  = config.get('debugAdapterPort') || '13603' ;
 	let perlCmd         : string     = resolve_workspaceFolder((config.get('perlCmd') || 'perl'), resource);
     let perlArgs        : string[]   = config.get('perlArgs') || [] ;
     let perlInc         : string[]   = config.get('perlInc') || [] ;
-    let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + resolve_workspaceFolder(dir, resource)) ;    
-	let logFile         : string     = config.get('logFile') || '' ; 
+    let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + resolve_workspaceFolder(dir, resource)) ;
+	let logFile         : string     = config.get('logFile') || '' ;
     let logLevel        : number     = config.get('logLevel') || 0 ;
     let client_version  : string     = "2.3.0" ;
-    let perlArgsOpt     : string[]   = [...perlIncOpt, 
-                                        ...perlArgs, 
-                                        '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', 
+    let perlArgsOpt     : string[]   = [...perlIncOpt,
+                                        ...perlArgs,
+                                        '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--',
                                         '--port', debug_adapter_port,
                                         '--log-level', logLevel.toString(),
                                         '--log-file',  logFile,
                                         '--version',   client_version] ;
 
     let sshPortOption = '-p' ;
-    let sshCmd : string       = config.get('sshCmd') || '' ; 
+    let sshCmd : string       = config.get('sshCmd') || '' ;
 	if (!sshCmd)
 		{
 		if (/^win/.test(process.platform))
@@ -67,12 +67,12 @@ export function activate(context: vscode.ExtensionContext) {
 	else
 		{
 		serverCmd  = perlCmd ;
-		serverArgs = perlArgsOpt ;	
-		}	
+		serverArgs = perlArgsOpt ;
+		}
 
-    vscode.debug.registerDebugAdapterDescriptorFactory('perl', 
+    vscode.debug.registerDebugAdapterDescriptorFactory('perl',
         {
-        createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable) 
+        createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable)
             {
             executable.args.push (debug_adapter_port) ;
             console.log ('start perl debug adapter: ' + executable.command + ' ' + executable.args.join (' '))  ;
@@ -81,12 +81,12 @@ export function activate(context: vscode.ExtensionContext) {
         });
 
     /*
-    vscode.debug.registerDebugConfigurationProvider('perl', 
+    vscode.debug.registerDebugConfigurationProvider('perl',
         {
         provideDebugConfigurations(folder: vscode.WorkspaceFolder | undefined): vscode.ProviderResult<vscode.DebugConfiguration[]>
             {
             console.log('start perl debug provideDebugConfigurations');
-    
+
             let configs: vscode.DebugConfiguration[] = [];
 
             var dbgconfig =
@@ -106,12 +106,12 @@ export function activate(context: vscode.ExtensionContext) {
 
     */
 
-    vscode.debug.registerDebugConfigurationProvider('perl', 
+    vscode.debug.registerDebugConfigurationProvider('perl',
         {
         resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration>
             {
             console.log('start perl debug resolveDebugConfiguration');
-    
+
             if (!config.request)
                 {
                     console.log('config perl debug resolveDebugConfiguration');
@@ -127,7 +127,7 @@ export function activate(context: vscode.ExtensionContext) {
 
                 return dbgconfig ;
                 }
-            
+
             return config ;
             }
         }, vscode.DebugConfigurationProviderTriggerKind.Dynamic);
@@ -137,10 +137,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let debugArgs  = serverArgs.concat(["--debug"]) ;
 	let serverOptions: ServerOptions = {
-		run:   { command: serverCmd, args: serverArgs }, 
+		run:   { command: serverCmd, args: serverArgs },
 		debug: { command: serverCmd, args: debugArgs },
 	} ;
-	
+
 	// Options to control the language client
 	let clientOptions: LanguageClientOptions = {
 		// Register the server for plain text documents
@@ -150,11 +150,11 @@ export function activate(context: vscode.ExtensionContext) {
 			configurationSection: 'perl',
 		}
 	} ;
-	
+
 	// Create the language client and start the client.
 	let disposable = new LanguageClient('perl', 'Perl Language Server', serverOptions, clientOptions).start();
-	
-	// Push the disposable to the context's subscriptions so that the 
+
+	// Push the disposable to the context's subscriptions so that the
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(disposable);
 }

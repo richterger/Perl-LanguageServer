@@ -15,7 +15,7 @@ use JSON ;
 use Data::Dump qw{dump} ;
 use IO::Select ;
 
-use Perl::LanguageServer::Req ; 
+use Perl::LanguageServer::Req ;
 use Perl::LanguageServer::Workspace ;
 
 with 'Perl::LanguageServer::Methods' ;
@@ -93,7 +93,7 @@ Any comments and patches are welcome.
 
 =item * Support for coro threads
 
-=item * Breakpoints 
+=item * Breakpoints
 
 =item * Conditional breakpoints
 
@@ -140,7 +140,7 @@ has 'channel' =>
     (
     is => 'ro',
     isa => 'Coro::Channel',
-    default => sub { Coro::Channel -> new }    
+    default => sub { Coro::Channel -> new }
     ) ;
 
 has 'debug' =>
@@ -195,28 +195,28 @@ sub logger
         $src = shift ;
         }
     $src = $self if (!$src) ;
-    
+
     if ($log_file)
         {
         open my $fh, '>>', $log_file or warn "$log_file : $!" ;
-        print $fh $src?$src -> log_prefix . ': ':'', @_ ;    
+        print $fh $src?$src -> log_prefix . ': ':'', @_ ;
         close $fh ;
         }
     else
         {
-        print STDERR $src?$src -> log_prefix . ': ':'', @_ ;    
+        print STDERR $src?$src -> log_prefix . ': ':'', @_ ;
         }
     }
 
 
 # ---------------------------------------------------------------------------
 
-sub send_notification 
+sub send_notification
     {
     my ($self, $notification, $src, $txt) = @_ ;
 
     $txt ||= "<--- Notification: " ;
-    $notification -> {jsonrpc} = '2.0' ;       
+    $notification -> {jsonrpc} = '2.0' ;
     my $outdata = $json -> encode ($notification) ;
     my $guard = $self -> out_semaphore -> guard  ;
     use bytes ;
@@ -232,7 +232,7 @@ sub send_notification
 
 # ---------------------------------------------------------------------------
 
-sub call_method 
+sub call_method
     {
     my ($self, $reqdata, $req, $id) = @_ ;
 
@@ -243,7 +243,7 @@ sub call_method
     if ($method =~ /^(\w+)\/(\w+)$/)
         {
         $module = $1 ;
-        $name   = $2 ;    
+        $name   = $2 ;
         }
     elsif ($method =~ /^(\w+)$/)
         {
@@ -251,13 +251,13 @@ sub call_method
         }
     elsif ($method =~ /^\$\/(\w+)$/)
         {
-        $name   = $1 ;    
+        $name   = $1 ;
         }
     else
         {
-        die "Unknown method $method" ;    
+        die "Unknown method $method" ;
         }
-    $module = $req -> type eq 'dbgint'?'DebugAdapterInterface':'DebugAdapter' if ($req -> is_dap) ;    
+    $module = $req -> type eq 'dbgint'?'DebugAdapterInterface':'DebugAdapter' if ($req -> is_dap) ;
 
     my $base_package = __PACKAGE__ . '::Methods' ;
     my $package = $base_package ;
@@ -279,7 +279,7 @@ sub call_method
         $perlmethod = '_dapreq_' . $name ;
         }
     else
-        {    
+        {
         $perlmethod = (defined($id)?'_rpcreq_':'_rpcnot_') . $name ;
         }
     $self -> logger ("method=$perlmethod\n") if ($debug1) ;
@@ -287,7 +287,7 @@ sub call_method
 
 no strict ;
     return $self -> $perlmethod ($workspace, $req) ;
-use strict ;    
+use strict ;
     }
 
 # ---------------------------------------------------------------------------
@@ -300,8 +300,8 @@ sub process_req
     $xid ||= $reqseq++ ;
     $running_coros{$xid} = async
         {
-        my $req_guard = Guard::guard 
-            { 
+        my $req_guard = Guard::guard
+            {
             $self -> logger ("done handle_req id=$xid\n") if ($debug1) ;
             delete $running_reqs{$xid} ;
             delete $running_coros{$xid} ;
@@ -316,7 +316,7 @@ sub process_req
 
         my $rsp ;
         my $outdata ;
-        my $outjson ; 
+        my $outjson ;
         eval
             {
             $rsp = $self -> call_method ($reqdata, $req, $id) ;
@@ -326,10 +326,10 @@ sub process_req
                 $outjson = { request_seq => -$id, seq => -$id, command => $reqdata -> {command}, success => JSON::true, type => 'response', $rsp?(body => $rsp):()}  ;
                 }
             else
-                {    
+                {
                 $outjson = { id => $id, jsonrpc => '2.0', result => $rsp}  if ($rsp) ;
                 }
-            $outdata = $json -> encode ($outjson) if ($outjson) ; 
+            $outdata = $json -> encode ($outjson) if ($outjson) ;
             } ;
         if ($@)
             {
@@ -339,10 +339,10 @@ sub process_req
                 $outjson = { request_seq => -$id, command => $reqdata -> {command}, success => JSON::false, message => "$@", , type => 'response'} ;
                 }
             else
-                {    
+                {
                 $outjson = { id => $id, jsonrpc => '2.0', error => { code => -32001, message => "$@" }} ;
                 }
-            $outdata = $json -> encode ($outjson) if ($outjson) ; 
+            $outdata = $json -> encode ($outjson) if ($outjson) ;
             }
 
         if (defined($id))
@@ -360,7 +360,7 @@ sub process_req
                 $sum += $cnt ;
                 }
 
-            if ($debug1) 
+            if ($debug1)
                 {
                 $wrdata =~ s/\r//g ;
                 $self -> logger ("<--- Response: ", $jsonpretty -> encode ($outjson), "\n") ;
@@ -394,10 +394,10 @@ sub mainloop
                 die "read_error reading headers ($!)" if ($cnt < 0) ;
                 return if ($cnt == 0) ;
                 }
-                
+
             while ($buffer =~ s/^(.*?)\R//)
                 {
-                $line = $1 ;    
+                $line = $1 ;
                 $self -> logger ("line=<$line>\n") if ($debug2) ;
                 last header if ($line eq '') ;
                 $header{$1} = $2 if ($line =~ /(.+?):\s*(.+)/) ;
@@ -409,7 +409,7 @@ sub mainloop
         return 1 if ($len == 0);
         my $data ;
         #$self -> logger ("len=$len len buffer=", length ($buffer), "\n")  if ($debug2) ;
-        while ($len > length ($buffer)) 
+        while ($len > length ($buffer))
             {
             $cnt = $self -> _read (\$buffer, $len - length ($buffer), length ($buffer)) ;
 
@@ -417,12 +417,12 @@ sub mainloop
             die "read_error reading data ($!)" if ($cnt < 0) ;
             return if ($cnt == 0) ;
             }
-        if ($len == length ($buffer)) 
+        if ($len == length ($buffer))
             {
             $data = $buffer ;
             $buffer = '' ;
             }
-        elsif ($len < length ($buffer)) 
+        elsif ($len < length ($buffer))
             {
             $data = substr ($buffer, 0, $len) ;
             $buffer = substr ($buffer, $len) ;
@@ -430,13 +430,13 @@ sub mainloop
         else
             {
             die "to few data bytes" ;
-            }    
+            }
         $self -> logger ("read data=", $data, "\n")  if ($debug2) ;
         $self -> logger ("read header=", dump (\%header), "\n")  if ($debug2) ;
 
         my $reqdata ;
         $reqdata = $json -> decode ($data) if ($data) ;
-        if ($debug1) 
+        if ($debug1)
             {
             $self -> logger ($self -> log_req_txt, $jsonpretty -> encode ($reqdata), "\n") ;
             }
@@ -444,7 +444,7 @@ sub mainloop
 
         $self -> process_req ($id, $reqdata)  ;
         cede () ;
-        } 
+        }
 
     return 1 ;
     }
@@ -512,8 +512,8 @@ sub _run_tcp_server
                         {
                         my ($fh) = @_ ;
                         syswrite ($fh, "Content-Length: 0\r\n\r\n") if ($fh) ;
-                        } ;        
-                    }    
+                        } ;
+                    }
                 $@ = undef ;
                 Coro::AnyEvent::sleep (2) ;
                 IO::AIO::reinit () ; # stop AIO requests
@@ -535,12 +535,12 @@ sub run
         {
         if ($opt eq '--debug')
             {
-            $debug1 = $debug2 = 1  ;    
+            $debug1 = $debug2 = 1  ;
             }
         elsif ($opt eq '--log-level')
             {
             $debug1 = shift @ARGV  ;
-            $debug2 = $debug1 > 1?1:0 ;    
+            $debug2 = $debug1 > 1?1:0 ;
             }
         elsif ($opt eq '--log-file')
             {
@@ -548,24 +548,24 @@ sub run
             }
         elsif ($opt eq '--port')
             {
-            $listen_port = shift @ARGV  ;    
+            $listen_port = shift @ARGV  ;
             }
         elsif ($opt eq '--nostdio')
             {
-            $no_stdio = 1  ;    
+            $no_stdio = 1  ;
             }
         elsif ($opt eq '--heartbeat')
             {
-            $heartbeat = 1  ;    
+            $heartbeat = 1  ;
             }
         elsif ($opt eq '--version')
             {
-            $client_version = shift @ARGV  ;    
+            $client_version = shift @ARGV  ;
             }
         }
 
     $|= 1 ;
-    
+
     my $cv = AnyEvent::CondVar -> new ;
 
    if ($heartbeat || $debug2)
@@ -581,11 +581,11 @@ sub run
                 }
             } ;
         }
-   
+
     if (!$no_stdio)
         {
         async
-            {    
+            {
             my $self = Perl::LanguageServer -> new ({out_fh => 1, in_fh => 0});
 
             $self -> mainloop () ;
@@ -600,18 +600,18 @@ sub run
         } ;
 
     $cv -> recv ;
-    $exit = 1 ;    
+    $exit = 1 ;
     }
 
 # ---------------------------------------------------------------------------
 
 sub parsews
     {
-    my $class = shift ;    
+    my $class = shift ;
     my @args = @_ ;
 
     $|= 1 ;
-    
+
     my $cv = AnyEvent::CondVar -> new ;
 
     async
@@ -621,7 +621,7 @@ sub parsews
         my %folders ;
         foreach my $path (@args)
             {
-            $folders{$path} = $path ;      
+            $folders{$path} = $path ;
             }
         $workspace -> folders (\%folders) ;
         $workspace -> background_parser ($self) ;
@@ -629,18 +629,18 @@ sub parsews
         $cv -> send ;
         } ;
 
-    $cv -> recv ;    
+    $cv -> recv ;
     }
 
 # ---------------------------------------------------------------------------
 
 sub check_file
     {
-    my $class = shift ;    
+    my $class = shift ;
     my @args = @_ ;
 
     $|= 1 ;
-    
+
     my $cv = AnyEvent::CondVar -> new ;
 
     my $self = Perl::LanguageServer -> new ;
@@ -650,7 +650,7 @@ sub check_file
         my %folders ;
         foreach my $path (@args)
             {
-            $folders{$path} = $path ;      
+            $folders{$path} = $path ;
             }
         $workspace -> folders (\%folders) ;
         $workspace -> background_checker ($self) ;
@@ -665,12 +665,12 @@ sub check_file
             my $text ;
             aio_load ($path, $text) ;
 
-            $workspace -> check_perl_syntax ($workspace, $path, $text) ;      
+            $workspace -> check_perl_syntax ($workspace, $path, $text) ;
             }
-        
+
         } ;
 
-    $cv -> recv ;    
+    $cv -> recv ;
     }
 
 
