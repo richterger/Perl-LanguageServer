@@ -109,6 +109,11 @@
                     "default": false,
                     "description": "if true, the LanguageServer will not cache the result of parsing source files on disk, so it can be used within readonly directories"
                 },
+                "perl.debugAdapterHost": {
+                    "type": "string",
+                    "default": "127.0.0.1",
+                    "description": "Address on which the Perl:LanguageServer should be exposed. '127.0.0.1' is the best in most case, but on a container, you might need '0.0.0.0'."
+                },
                 "perl.debugAdapterPort": {
                     "type": "string",
                     "default": "13603",

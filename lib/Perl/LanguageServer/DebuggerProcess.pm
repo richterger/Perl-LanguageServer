@@ -149,7 +149,11 @@ sub launch
     my @inc ;
     @inc = map { ('-I', $_)} @$inc if ($inc) ;
     
-    $ENV{PLSDI_REMOTE} = '127.0.0.1:' . $self -> debug_adapter -> listen_port ;
+    my $host = $self -> debug_adapter -> listen_host;
+    if ($host eq "0.0.0.0") {
+        $host = '127.0.0.1';
+    }
+    $ENV{PLSDI_REMOTE} = $host .':'. $self -> debug_adapter -> listen_port ;
     $ENV{PLSDI_OPTIONS} = $self -> reload_modules?'reload_modules':'' ;
     $ENV{PERL5DB}      = 'BEGIN { $| = 1 ; ' . $cwd . 'require Perl::LanguageServer::DebuggerInterface }' ;
     $ENV{PLSDI_SESSION}= $self -> session_id ;

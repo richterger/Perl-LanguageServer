@@ -16,6 +16,7 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('extension "perl" is now active');
 
     let resource = vscode.window.activeTextEditor?.document.uri ;
+    let debug_adapter_host : string = config.get('debugAdapterHost') || '127.0.0.1' ;
     let debug_adapter_port : string  = config.get('debugAdapterPort') || '13603' ; 
 	let perlCmd         : string     = resolve_workspaceFolder((config.get('perlCmd') || 'perl'), resource);
     let perlArgs        : string[]   = config.get('perlArgs') || [] ;
@@ -28,6 +29,7 @@ export function activate(context: vscode.ExtensionContext) {
                                         ...perlArgs, 
                                         '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', 
                                         '--port', debug_adapter_port,
+                                        '--host', debug_adapter_host,
                                         '--log-level', logLevel.toString(),
                                         '--log-file',  logFile,
                                         '--version',   client_version] ;

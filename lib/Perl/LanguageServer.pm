@@ -132,6 +132,7 @@ our $dev_tool ;
 our $debug1 = 0 ;
 our $debug2 = 0 ;
 our $log_file ;
+our $host ;
 our $client_version ;
 our $reqseq = 1_000_000_000 ;
 
@@ -154,6 +155,20 @@ has 'listen_port' =>
     (
     is => 'rw',
     isa => 'Maybe[Int]',
+    ) ;
+
+has 'listen_host' =>
+    (
+    is => 'rw',
+    isa => 'Str',
+    default => '127.0.0.1'
+    ) ;
+
+has 'host' =>
+    (
+    is => 'rw',
+    isa => 'Str',
+    default => '127.0.0.1'
     ) ;
 
 has 'roles' =>
@@ -453,19 +468,19 @@ sub mainloop
 
 sub _run_tcp_server
     {
-    my ($listen_port) = @_ ;
+    my ($listen_host, $listen_port) = @_ ;
 
     if ($listen_port)
         {
         my $quit ;
         while (!$quit && !$exit)
             {
-            logger (undef, "tcp server start listen on port $listen_port\n") ;
+            logger (undef, "tcp server start listen on host:port $host:$listen_port\n") ;
             my $tcpcv = AnyEvent::CondVar -> new ;
             my $guard ;
             eval
                 {
-                $guard = tcp_server '127.0.0.1', $listen_port, sub
+                $guard = tcp_server $listen_host, $listen_port, sub
                     {
                     my ($fh, $host, $port) = @_ ;
 
@@ -477,7 +492,8 @@ sub _run_tcp_server
                             my $self = Perl::LanguageServer -> new ({out_fh => $fh, in_fh => $fh, log_prefix => 'DAx'});
                             $self -> logger ("connect from $host:$port\n") ;
                             $self -> listen_port ($listen_port) ;
-
+                            $self -> host ($host) ;
+                            $self -> listen_host($listen_host) ;
                             $quit = $self -> mainloop () ;
                             $self -> logger ("got quit signal\n") if ($quit) ;
                             } ;
@@ -508,7 +524,7 @@ sub _run_tcp_server
                 if (!$guard && ($@ =~ /Address already in use/))
                     {
                     # stop other server
-                    tcp_connect '127.0.0.1', $listen_port, sub
+                    tcp_connect $host, $listen_port, sub
                         {
                         my ($fh) = @_ ;
                         syswrite ($fh, "Content-Length: 0\r\n\r\n") if ($fh) ;
@@ -545,6 +561,10 @@ sub run
         elsif ($opt eq '--log-file')
             {
             $log_file = shift @ARGV ;
+            }
+        elsif ($opt eq '--host')
+            {
+            $host = shift @ARGV ;
             }
         elsif ($opt eq '--port')
             {
@@ -596,7 +616,7 @@ sub run
 
     async
         {
-        _run_tcp_server ($listen_port) ;
+        _run_tcp_server ($host, $listen_port) ;
         } ;
 
     $cv -> recv ;
