@@ -219,7 +219,12 @@ sub background_checker
 
         $text = eval { Encode::encode ('utf-8', $text) ; } ;
         $self -> logger ($@) if ($@) ;    
-    
+
+        my $fn = $uri ;
+        $fn =~ s/^file:\/\/// ;
+        $fn = $self -> uri_client2server ($fn) ;
+        $text = "local \$0; BEGIN { \$0 = '$file'; if (\$INC{'FindBin.pm'}) { FindBin->again(); } }\n# line 1 \"$file\"\n" . $text;
+
         my $ret ;
         my $errout ;
         my $out ;
