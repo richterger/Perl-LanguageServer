@@ -19,3 +19,9 @@ Perl-LanguageServer-*.tar.gz
 scripts/
 /.vscode
 p5-Compiler-Lexer
+Perl-LanguageServer.code-workspace
+debian/.debhelper
+debian/libperl-languageserver-perl
+debian/debhelper-build-stamp
+debian/files
+debian/libperl-languageserver-perl.substvars

@@ -1,0 +1,43 @@
+Source: libperl-languageserver-perl
+Maintainer: grichter <richter@ecos.de>
+Section: perl
+Priority: optional
+Build-Depends: debhelper-compat (= 13)
+Build-Depends-Indep: libanyevent-aio-perl <!nocheck>,
+                     libanyevent-perl <!nocheck>,
+                     libclass-refresh-perl <!nocheck>,
+                     libcompiler-lexer-perl <!nocheck>,
+                     libcoro-perl <!nocheck>,
+                     libdata-dump-perl <!nocheck>,
+                     libhash-safekeys-perl <!nocheck>, 
+                     libio-aio-perl <!nocheck>,
+                     libjson-perl <!nocheck>,
+                     libmoose-perl <!nocheck>,
+                     libpadwalker-perl <!nocheck>,
+                     libscalar-list-utils-perl <!nocheck>,
+                     libtest-simple-perl <!nocheck>,
+                     perl
+Standards-Version: 4.5.1
+Homepage: https://metacpan.org/release/Perl-LanguageServer
+Rules-Requires-Root: no
+
+Package: libperl-languageserver-perl
+Architecture: all
+Depends: ${misc:Depends},
+         ${perl:Depends},
+         libanyevent-aio-perl,
+         libanyevent-perl,
+         libclass-refresh-perl,
+         libcompiler-lexer-perl,
+         libcoro-perl,
+         libdata-dump-perl,
+         libhash-safekeys-perl, 
+         libio-aio-perl,
+         libjson-perl,
+         libmoose-perl,
+         libpadwalker-perl,
+         libscalar-list-utils-perl
+Description: Language Server and Debug Protocol Adapter for Perl
+ It implements the Language Server Protocol which provides
+ syntax-checking, symbol search, etc. Perl to various editors, for
+ example Visual Studio Code or Atom.
