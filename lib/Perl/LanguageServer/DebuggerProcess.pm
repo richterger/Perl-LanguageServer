@@ -122,8 +122,16 @@ sub launch
 
     my $fn = $workspace -> file_client2server ($self -> program) ;
     my $pid ;
+    my $env_ref = \%ENV;
     {
     local %ENV ;
+    # keep existing ENV
+    foreach (keys %{$env_ref})
+        {
+        $ENV{$_} = $env_ref -> {$_} ;
+        }
+
+
     foreach (keys %{$self -> env})
         {
         $ENV{$_} = $self -> env -> {$_} ;    
