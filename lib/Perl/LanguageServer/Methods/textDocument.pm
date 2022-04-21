@@ -481,6 +481,8 @@ sub _rpcreq_rangeFormatting
         }
     $workspace -> add_diagnostic_messages ($self, $uri, 'perltidy', \@messages, $files -> {$uri}{version} + 1) ;
 
+    die "perltidy failed with exit code $rc" if ($rc != 0 && $out eq '') ;
+
     # make sure range is numeric
     $range -> {start}{line} += 0 ;
     $range -> {start}{character} = 0 ;
