@@ -5,6 +5,7 @@ Build.bat
 META.*
 MYMETA.*
 .build/
+.npm/
 _build/
 cover_db/
 blib/
