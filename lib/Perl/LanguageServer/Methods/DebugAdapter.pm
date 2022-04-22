@@ -714,5 +714,24 @@ sub _dapreq_next
     return {} ;
     }
 
+# ---------------------------------------------------------------------------
+
+sub _dapreq_source
+    {
+    my ($self, $workspace, $req) = @_ ;
+    my $fh;
+    $self -> logger ('getting source', dump($req), "\nPATH: ", $req -> {params} -> {source} -> {path},"\n") ;
+    my $file_found = open($fh, "<" . $req -> {params} -> {source} -> {path}) ;
+    if ($file_found) {
+            my $src = join("", <$fh>) ;
+            return {"content" => $src} ;
+        }
+    else
+        {
+        $self -> logger ('getting source', "NOT FOUND" ,"\n") ;
+        return {} ;
+        }
+    }
+
 
 1 ;
