@@ -29,11 +29,11 @@ Perl::LanguageServer - Language Server and Debug Protocol Adapter for Perl
 
 =head1 VERSION
 
-Version 2.3.0
+Version 2.4.0
 
 =cut
 
-our $VERSION = '2.3.0';
+our $VERSION = '2.4.0';
 
 
 =head1 SYNOPSIS
