@@ -1,5 +1,6 @@
 Changes
 lib/Perl/LanguageServer.pm
+lib/Perl/LanguageServer/DebuggerBridge.pm
 lib/Perl/LanguageServer/DebuggerInterface.pm
 lib/Perl/LanguageServer/DebuggerProcess.pm
 lib/Perl/LanguageServer/DevTool.pm
