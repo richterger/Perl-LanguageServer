@@ -122,7 +122,27 @@ export function activate(context: vscode.ExtensionContext) {
         {
         createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable) 
             {
-            executable.args.push (debug_adapter_port) ;
+            if (containerCmd)
+                {
+                var daCmd : string ;
+                var daArgs : string[] ;
+                
+
+                daCmd  = containerCmd ;
+                daArgs = containerArgs.concat ([perlCmd, ...perlIncOpt, 
+                        ...perlArgs, 
+                        '-MPerl::LanguageServer::DebuggerBridge', '-e', 'Perl::LanguageServer::DebuggerBridge::run',  
+                        debug_adapter_port])
+                console.log ('start perl debug adapter in container: ' + daCmd + ' ' + daArgs.join (' '))  ;
+                return new vscode.DebugAdapterExecutable(daCmd, daArgs, { env: env }) ;
+                }
+            else
+                {
+                // TODO: use SocketDebugAdapter 
+                //return new vscode.SocketDebugAdapter () ;
+
+                executable.args.push (debug_adapter_port) ;
+                }
             console.log ('start perl debug adapter: ' + executable.command + ' ' + executable.args.join (' '))  ;
             return executable ;
             }
