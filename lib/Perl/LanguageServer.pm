@@ -199,6 +199,27 @@ has 'log_req_txt' =>
     default => '---> Request: ',
     ) ;
 
+has 'req_id' =>
+    (
+    is => 'rw',
+    isa => 'Int',
+    default => 0
+    ) ;
+
+has 'req_id_semaphore' =>
+    (
+    is => 'ro',
+    isa => 'Coro::Semaphore',
+    default => sub { Coro::Semaphore -> new }
+    ) ;
+
+has 'workspace_needs_settings' =>
+    (
+    is => 'rw',
+    isa => 'Int',
+    default => 1
+    ) ;
+
 # ---------------------------------------------------------------------------
 
 sub logger
@@ -226,16 +247,23 @@ sub logger
 
 # ---------------------------------------------------------------------------
 
+# send a notification to the client (the IDE)
+# $notification is the message
+# $src is a function name, for logging
+# $txt is a log prefix
 sub send_notification 
     {
     my ($self, $notification, $src, $txt) = @_ ;
 
     $txt ||= "<--- Notification: " ;
-    $notification -> {jsonrpc} = '2.0' ;       
+    # add jsonrpc data, always 2.0
+    $notification -> {jsonrpc} = '2.0' ;
+    # encode message
     my $outdata = $json -> encode ($notification) ;
     my $guard = $self -> out_semaphore -> guard  ;
     use bytes ;
     my $len  = length($outdata) ;
+    # this is the request using protocol
     my $wrdata = "Content-Length: $len\r\nContent-Type: application/vscode-jsonrpc; charset=utf-8\r\n\r\n$outdata" ;
     $self -> _write ($wrdata) ;
     if ($debug1)
@@ -247,6 +275,34 @@ sub send_notification
 
 # ---------------------------------------------------------------------------
 
+# generate a unique request id, by incrementing
+sub get_request_id
+    {
+        my ($self) = shift;
+        my $guard = $self -> req_id_semaphore -> guard;
+        my $id = $self -> req_id;
+        $self -> req_id ($id + 1);
+        return $id;
+    }
+
+# ---------------------------------------------------------------------------
+
+# send a request to the client (the IDE)
+sub send_request
+    {
+    my ($self, $method, $params, $src, $txt) = @_ ;
+    $txt ||= "<--- Request: " ;
+    my $request = { method => $method, params => $params} ;
+    # add request id
+    $request -> {id} = $self -> get_request_id;
+    # same as a notification, this is $request which differs
+    $self -> send_notification($request, $src, $txt);
+    }
+
+
+# ---------------------------------------------------------------------------
+
+# transform a request from the client to a perl method call
 sub call_method 
     {
     my ($self, $reqdata, $req, $id) = @_ ;
@@ -305,6 +361,14 @@ no strict ;
 use strict ;    
     }
 
+# ---------------------------------------------------------------------------
+
+sub process_response
+    {
+        my ($self, $id, $reqdata) = @_ ;
+
+        $self -> logger ("PROCESS RESPONSE : ", dump($reqdata));
+    }
 # ---------------------------------------------------------------------------
 
 sub process_req
@@ -384,6 +448,20 @@ sub process_req
         } ;
     }
 
+
+# --------------------------------------------------------------------------
+
+sub initConfiguration
+    {
+    my ($self, $workspace) = @_ ;
+    async
+        {
+        $self -> logger("Initializing workspace\n");
+        $self -> send_request("workspace/configuration", { items => [{ section => "perl" }] });
+        $self -> workspace_needs_settings(0);
+        }
+    }
+
 # ---------------------------------------------------------------------------
 
 sub mainloop
@@ -400,6 +478,7 @@ sub mainloop
         my $loop ;
         header:
         while (1)
+            # read headers
             {
             $self -> logger ("start aio read, buffer len = " . length ($buffer) . "\n")  if ($debug2) ;
             if ($loop)
@@ -422,6 +501,7 @@ sub mainloop
 
         my $len = $header{'Content-Length'} ;
         return 1 if ($len == 0);
+        # get the data
         my $data ;
         #$self -> logger ("len=$len len buffer=", length ($buffer), "\n")  if ($debug2) ;
         while ($len > length ($buffer)) 
@@ -449,6 +529,7 @@ sub mainloop
         $self -> logger ("read data=", $data, "\n")  if ($debug2) ;
         $self -> logger ("read header=", dump (\%header), "\n")  if ($debug2) ;
 
+        # process data
         my $reqdata ;
         $reqdata = $json -> decode ($data) if ($data) ;
         if ($debug1) 
@@ -456,8 +537,20 @@ sub mainloop
             $self -> logger ($self -> log_req_txt, $jsonpretty -> encode ($reqdata), "\n") ;
             }
         my $id = $reqdata -> {type}?-$reqdata -> {seq}:$reqdata -> {id};
+        my $is_init_req = defined $reqdata -> {method} && $reqdata -> {method} eq "initialize";
 
-        $self -> process_req ($id, $reqdata)  ;
+        if (( defined $reqdata -> {result} ) || ( defined $reqdata -> {error} ))
+            {
+            $self -> process_response ($id, $reqdata) ;
+            }
+        else
+            {
+            $self -> process_req ($id, $reqdata)  ;
+            }
+        # special case after "initializer" request we can ask for settings
+        if ($is_init_req && $self -> workspace_needs_settings) {
+            $self -> initConfiguration($workspace);
+        }
         cede () ;
         } 
 

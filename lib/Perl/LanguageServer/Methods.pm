@@ -123,7 +123,6 @@ sub _rpcreq_initialize
         # Experimental server capabilities.
 	    #experimental?: any;
         } ;
-
     return { capabilities => $caps } ;
     }
 

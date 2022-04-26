@@ -716,12 +716,22 @@ sub _dapreq_next
 
 # ---------------------------------------------------------------------------
 
+# https://microsoft.github.io/debug-adapter-protocol/specification#Requests_Source
 sub _dapreq_source
     {
     my ($self, $workspace, $req) = @_ ;
     my $fh;
-    $self -> logger ('getting source', dump($req), "\nPATH: ", $req -> {params} -> {source} -> {path},"\n") ;
-    my $file_found = open($fh, "<" . $req -> {params} -> {source} -> {path}) ;
+    my $path = $req -> {params} -> {source} -> {path};
+    # remove eventual garbage like in (eval 3641)[/path/to/file:72]
+    if ($path =~ /\(.*\)\[([^\]]+)\]/) 
+        {
+        $path = $1;
+        }
+    if ($path =~ /([^:]+):\d+/)
+        {
+            $path = $1;
+        }
+    my $file_found = open($fh, "<" . $path) ;
     if ($file_found) {
             my $src = join("", <$fh>) ;
             return {"content" => $src} ;

@@ -204,16 +204,18 @@ sub uri_client2server
 sub file_server2client
     {
     my ($self, $fn) = @_ ;
-
+    
     my $map = $self -> path_map ;
+    $self -> logger ("file_server2client: map EMPTY") if (!$map);
+    $self -> logger ("file_server2client: map", join(", ", @$map), "\n") if ($map);
     return $fn if (!$map) ;
 
     foreach my $m (@$map)
         {
-        #print STDERR "file_server2client $m->[2] -> $m->[3] : $fn\n" ;
+        $self -> logger ("file_server2client: $m->[2] -> $m->[3] : $fn\n") ;
         last if ($fn =~ s/$m->[2]/$m->[3]/) ;
         }
-
+    $self -> logger ("file_server2client: return $fn\n") ;
     return $fn ;    
     }
 

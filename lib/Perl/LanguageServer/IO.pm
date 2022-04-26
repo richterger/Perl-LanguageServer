@@ -73,6 +73,7 @@ sub _write
 
     if (!$windows || !ref $fh)
         {
+        $self -> logger("aio_write: data:", dump($data), "\n");
         return aio_write ($fh, undef, $length, $data, $dataoffset) ;    
         }
 
