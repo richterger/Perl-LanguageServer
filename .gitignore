@@ -25,3 +25,4 @@ debian/libperl-languageserver-perl
 debian/debhelper-build-stamp
 debian/files
 debian/libperl-languageserver-perl.substvars
+.kube/
