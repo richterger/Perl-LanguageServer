@@ -16,8 +16,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	console.log('extension "perl" is now active');
     let resource = vscode.window.activeTextEditor?.document.uri ;
-    let debug_adapter_port : string = config.get('debugAdapterPort') ||
-        (await getPort({port: portNumbers(1025, 65534)}) as Number).toString();
+    let debug_adapter_port : string = (await getPort({port: portNumbers(1025, 65534)}) as Number).toString();
 	console.log(`got debug adapter port #${debug_adapter_port}`);
 	let perlCmd         : string     = resolve_workspaceFolder((config.get('perlCmd') || 'perl'), resource);
     let perlArgs        : string[]   = config.get('perlArgs') || [] ;
