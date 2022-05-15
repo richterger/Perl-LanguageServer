@@ -135,9 +135,14 @@
                     "description": "if true, the LanguageServer will not cache the result of parsing source files on disk, so it can be used within readonly directories"
                 },
                 "perl.debugAdapterPort": {
-                    "type": "string",
-                    "default": "13603",
+                    "type": "integer",
+                    "default": 13603,
                     "description": "port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a different port."
+                },
+                "perl.debugAdapterPortRange": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "if debugAdapterPort is in use try ports from debugAdapterPort to debugAdapterPort + debugAdapterPortRange. Default 100."
                 }
             }
         },

@@ -3,6 +3,64 @@
 
 import * as vscode from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
+import * as net from 'net';
+
+// ------------------------------------------------------------------------------
+//
+// ideas for port checking taken from https://github.com/sindresorhus/get-port
+// and the typescript port of hakonhagland
+//
+
+function check_available_port (port: number): Promise<number>
+    {
+	return new Promise((resolve, reject) =>
+        {
+		const server = net.createServer();
+		server.unref();
+		server.on('error', reject);
+
+		server.listen({ host: '127.0.0.1', port: port }, () =>
+            {
+			//const addr = server.address();
+			server.close(() =>
+                {
+				resolve(port);
+			    });
+		    });
+	    });
+    }
+
+// ------------------------------------------------------------------------------
+
+async function get_available_port (port: number, port_range: number): Promise<number>
+    {
+	for (var i = 0; i < port_range; i++)
+        {
+		try
+            {
+            console.log('try if port ' + (port + i) + ' is available');
+
+			return await check_available_port(port + i);
+		    }
+        catch (error: unknown)
+            {
+			let errorCode = error as NodeJS.ErrnoException;
+			if (errorCode.code === undefined)
+                {
+				throw error;
+			    }
+			else
+                {
+				if (!['EADDRNOTAVAIL', 'EINVAL', 'EADDRINUSE'].includes(errorCode.code))
+                    {
+					throw error;
+				    }
+			    }
+		    }
+	    }
+
+	return 0 ;
+    }
 
 
 // ------------------------------------------------------------------------------
@@ -65,8 +123,8 @@ function buildContainerArgs (containerCmd: string, containerArgs: string[], cont
 
 // ------------------------------------------------------------------------------
 
-export function activate(context: vscode.ExtensionContext) {
-
+export async function activate(context: vscode.ExtensionContext)
+    {
 	let config = vscode.workspace.getConfiguration('perl') ;
 	if (!config.get('enable'))
 		{
@@ -77,8 +135,21 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('extension "perl" is now active');
 
     let resource = vscode.window.activeTextEditor?.document.uri ;
-    let debug_adapter_port : string  = config.get('debugAdapterPort') || '13603' ;
-	let perlCmd         : string     = resolve_workspaceFolder((config.get('perlCmd') || 'perl'), resource);
+
+    let containerCmd  : string   = config.get('containerCmd')  || '' ;
+	let containerArgs : string[] = config.get('containerArgs') || [] ;
+    let containerName : string   = config.get('containerName') || '' ;
+    let containerMode : string   = config.get('containerMode') || 'exec' ;
+
+    let debug_adapter_port : number  = config.get('debugAdapterPort') || 13603 ;
+    let debug_adapter_port_range : number  = config.get('debugAdapterPortRange') || 100 ;
+    if (!containerCmd)
+        {
+        debug_adapter_port = await get_available_port (debug_adapter_port, debug_adapter_port_range) ;
+        console.log('use ' + debug_adapter_port + ' as debug adapter port');
+        }
+    
+    let perlCmd         : string     = resolve_workspaceFolder((config.get('perlCmd') || 'perl'), resource);
     let perlArgs        : string[]   = config.get('perlArgs') || [] ;
     let perlInc         : string[]   = config.get('perlInc') || [] ;
     let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + resolve_workspaceFolder(dir, resource)) ;
@@ -89,7 +160,7 @@ export function activate(context: vscode.ExtensionContext) {
     let perlArgsOpt     : string[]   = [...perlIncOpt,
                                         ...perlArgs,
                                         '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--',
-                                        '--port', debug_adapter_port,
+                                        '--port', debug_adapter_port.toString(),
                                         '--log-level', logLevel.toString(),
                                         '--log-file',  logFile,
                                         '--version',   client_version] ;
@@ -112,11 +183,6 @@ export function activate(context: vscode.ExtensionContext) {
 	let sshUser:string   = config.get('sshUser') || '' ;
 	let sshAddr:string   = config.get('sshAddr') || '';
 	let sshPort:string   = config.get('sshPort') || '' ;
-
-    let containerCmd  : string   = config.get('containerCmd')  || '' ;
-	let containerArgs : string[] = config.get('containerArgs') || [] ;
-    let containerName : string   = config.get('containerName') || '' ;
-    let containerMode : string   = config.get('containerMode') || 'exec' ;
 
     let containerArgsOpt : string[] = buildContainerArgs (containerCmd, containerArgs, containerName, containerMode) ;
 
@@ -177,7 +243,7 @@ export function activate(context: vscode.ExtensionContext) {
                     daArgs = debugContainerArgsOpt.concat ([perlCmd, ...perlIncOpt,
                         ...perlArgs,
                         '-MPerl::LanguageServer::DebuggerBridge', '-e', 'Perl::LanguageServer::DebuggerBridge::run',
-                        debug_adapter_port]) ;
+                        debug_adapter_port.toString()]) ;
                     }
                 else
                     {
@@ -193,7 +259,7 @@ export function activate(context: vscode.ExtensionContext) {
                 // TODO: use SocketDebugAdapter
                 //return new vscode.SocketDebugAdapter () ;
 
-                executable.args.push (debug_adapter_port) ;
+                executable.args.push (debug_adapter_port.toString()) ;
                 }
             console.log ('start perl debug adapter: ' + executable.command + ' ' + executable.args.join (' '))  ;
             return executable ;
@@ -251,9 +317,9 @@ export function activate(context: vscode.ExtensionContext) {
 	// Push the disposable to the context's subscriptions so that the
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(disposable);
-}
+    }
 
 // this method is called when your extension is deactivated
-export function deactivate() {
-}
+//export function deactivate() {
+//}
 
