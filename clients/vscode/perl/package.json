@@ -91,7 +91,7 @@
                 },
                 "perl.containerName": {
                     "type": "string",
-                    "default": "exec",
+                    "default": null,
                     "description": "Image to start or container to exec inside or pod to use"
                 },
                 "perl.env": {

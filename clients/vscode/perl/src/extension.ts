@@ -4,6 +4,67 @@
 import * as vscode from 'vscode';
 import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 
+
+// ------------------------------------------------------------------------------
+
+function resolve_workspaceFolder(path: string, resource? : vscode.Uri): string 
+    {
+    if (path.includes("${workspaceFolder}")) 
+        {
+        const ws = vscode.workspace.getWorkspaceFolder(resource as vscode.Uri) ?? vscode.workspace.workspaceFolders?.[0];
+        const sub = ws?.uri.fsPath ?? "" ;
+        return path.replace("${workspaceFolder}", sub);
+        }
+    return path;
+    }
+
+// ------------------------------------------------------------------------------
+
+function buildContainerArgs (containerCmd: string, containerArgs: string[], containerName: string, containerMode: string): string[] 
+    {
+    //console.log ('buildContainerArgs enter: ' + containerCmd + ' args ' + containerArgs.join (' ') + '  name ' + containerName + ' mode ' + containerMode)  ;
+
+    if (containerMode != 'exec') 
+        containerMode = 'run' ;
+
+    if (containerCmd)
+        {
+        if (containerArgs.length == 0)
+            {
+            if (containerCmd == 'docker')
+                {
+                containerArgs.push(containerMode) ;
+                if (containerMode == 'run')
+                    containerArgs.push('--rm') ;                   
+                containerArgs.push('-i', containerName) ;
+                }
+            else if (containerCmd == 'docker-compose')
+                {
+                containerArgs.push(containerMode) ;
+                if (containerMode == 'run')
+                    containerArgs.push('--rm') ;                   
+                containerArgs.push('--no-deps', '-T', containerName) ;   
+                }
+            else if (containerCmd == 'kubectl')
+                {
+                containerArgs.push('exec', containerName, '-i', '--') ;   
+                }
+            else if (containerCmd == 'devspace')
+                {
+                containerArgs.push('--silent ', 'enter') ;   
+                if (containerName)
+                    containerArgs.push('-c', containerName) ;   
+                containerArgs.push('--') ;   
+                }
+            }    
+        }
+    //console.log ('buildContainerArgs exit: ' + containerCmd + ' args ' + containerArgs.join (' ') + '  name ' + containerName + ' mode ' + containerMode)  ;
+    
+    return containerArgs ;
+    }
+
+// ------------------------------------------------------------------------------
+
 export function activate(context: vscode.ExtensionContext) {
 
 	let config = vscode.workspace.getConfiguration('perl') ;
@@ -56,34 +117,8 @@ export function activate(context: vscode.ExtensionContext) {
 	let containerArgs : string[] = config.get('containerArgs') || [] ;
     let containerName : string   = config.get('containerName') || '' ; 
     let containerMode : string   = config.get('containerMode') || 'exec' ; 
-    if (containerMode != 'exec') 
-        containerMode = 'run' ;
 
-    if (containerCmd)
-        {
-        if (containerArgs.length == 0)
-            {
-
-            if (containerCmd == 'docker')
-                {
-                containerArgs.push(containerMode) ;
-                if (containerMode == 'run')
-                    containerArgs.push('--rm') ;                   
-                containerArgs.push('-i', containerName) ;
-                }
-            else if (containerCmd == 'docker-compose')
-                {
-                containerArgs.push(containerMode) ;
-                if (containerMode == 'run')
-                    containerArgs.push('--rm') ;                   
-                containerArgs.push('--no-deps', '-T', containerName) ;   
-                }
-            else if (containerCmd == 'kubectl')
-                {
-                containerArgs.push('exec', containerName, '-i', '--') ;   
-                }
-            }    
-        }
+    let containerArgsOpt : string[] = buildContainerArgs (containerCmd, containerArgs, containerName, containerMode) ;    
 
     var serverCmd : string ;
 	var serverArgs : string[] ;
@@ -99,7 +134,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (containerCmd)
             {
             sshArgs.push(containerCmd) ;
-            sshArgs = sshArgs.concat(containerArgs) ;
+            sshArgs = sshArgs.concat(containerArgsOpt) ;
             }
         sshArgs.push(perlCmd) ;
         serverArgs = sshArgs.concat(perlArgsOpt) ;
@@ -109,7 +144,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (containerCmd)
             {
             serverCmd = containerCmd ;
-            serverArgs = containerArgs.concat(perlCmd, perlArgsOpt) ;
+            serverArgs = containerArgsOpt.concat(perlCmd, perlArgsOpt) ;
             }
         else
             {
@@ -122,17 +157,34 @@ export function activate(context: vscode.ExtensionContext) {
         {
         createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable) 
             {
-            if (containerCmd)
+            let cfg = session.configuration ;
+            
+            let debugContainerCmd  : string   = cfg.containerCmd  || containerCmd ; 
+            let debugContainerArgs : string[] = cfg.containerArgs || containerArgs;
+            let debugContainerName : string   = cfg.containerName || containerName ; 
+            let debugContainerMode : string   = cfg.containerMode || containerMode ; 
+
+            let debugContainerArgsOpt : string[] = buildContainerArgs (debugContainerCmd, debugContainerArgs, debugContainerName, debugContainerMode) ;    
+
+            if (debugContainerCmd)
                 {
                 var daCmd : string ;
                 var daArgs : string[] ;
-                
 
-                daCmd  = containerCmd ;
-                daArgs = containerArgs.concat ([perlCmd, ...perlIncOpt, 
+                if (containerCmd)
+                    {
+                    // LanguageServer already running inside container
+                    daArgs = debugContainerArgsOpt.concat ([perlCmd, ...perlIncOpt, 
                         ...perlArgs, 
                         '-MPerl::LanguageServer::DebuggerBridge', '-e', 'Perl::LanguageServer::DebuggerBridge::run',  
-                        debug_adapter_port])
+                        debug_adapter_port]) ;
+                    }
+                else
+                    {
+                    // LanguageServer not running inside container
+                    daArgs = debugContainerArgsOpt.concat ([perlCmd, ...perlArgsOpt]) ;
+                    }
+                daCmd  = debugContainerCmd ;
                 console.log ('start perl debug adapter in container: ' + daCmd + ' ' + daArgs.join (' '))  ;
                 return new vscode.DebugAdapterExecutable(daCmd, daArgs, { env: env }) ;
                 }
@@ -156,8 +208,8 @@ export function activate(context: vscode.ExtensionContext) {
     
             if (!config.request)
                 {
-                    console.log('config perl debug resolveDebugConfiguration');
-                    var dbgconfig =
+                console.log('config perl debug resolveDebugConfiguration');
+                var dbgconfig =
                     {
                     type: "perl",
                     request: "launch",
@@ -205,11 +257,3 @@ export function activate(context: vscode.ExtensionContext) {
 export function deactivate() {
 }
 
-function resolve_workspaceFolder(path: string, resource? : vscode.Uri): string {
-    if (path.includes("${workspaceFolder}")) {
-        const ws = vscode.workspace.getWorkspaceFolder(resource as vscode.Uri) ?? vscode.workspace.workspaceFolders?.[0];
-        const sub = ws?.uri.fsPath ?? "" ;
-        return path.replace("${workspaceFolder}", sub);
-    }
-    return path;
-}
