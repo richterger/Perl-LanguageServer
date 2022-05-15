@@ -7,9 +7,9 @@ import { LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-lan
 
 // ------------------------------------------------------------------------------
 
-function resolve_workspaceFolder(path: string, resource? : vscode.Uri): string 
+function resolve_workspaceFolder(path: string, resource? : vscode.Uri): string
     {
-    if (path.includes("${workspaceFolder}")) 
+    if (path.includes("${workspaceFolder}"))
         {
         const ws = vscode.workspace.getWorkspaceFolder(resource as vscode.Uri) ?? vscode.workspace.workspaceFolders?.[0];
         const sub = ws?.uri.fsPath ?? "" ;
@@ -20,11 +20,11 @@ function resolve_workspaceFolder(path: string, resource? : vscode.Uri): string
 
 // ------------------------------------------------------------------------------
 
-function buildContainerArgs (containerCmd: string, containerArgs: string[], containerName: string, containerMode: string): string[] 
+function buildContainerArgs (containerCmd: string, containerArgs: string[], containerName: string, containerMode: string): string[]
     {
     //console.log ('buildContainerArgs enter: ' + containerCmd + ' args ' + containerArgs.join (' ') + '  name ' + containerName + ' mode ' + containerMode)  ;
 
-    if (containerMode != 'exec') 
+    if (containerMode != 'exec')
         containerMode = 'run' ;
 
     if (containerCmd)
@@ -35,31 +35,31 @@ function buildContainerArgs (containerCmd: string, containerArgs: string[], cont
                 {
                 containerArgs.push(containerMode) ;
                 if (containerMode == 'run')
-                    containerArgs.push('--rm') ;                   
+                    containerArgs.push('--rm') ;
                 containerArgs.push('-i', containerName) ;
                 }
             else if (containerCmd == 'docker-compose')
                 {
                 containerArgs.push(containerMode) ;
                 if (containerMode == 'run')
-                    containerArgs.push('--rm') ;                   
-                containerArgs.push('--no-deps', '-T', containerName) ;   
+                    containerArgs.push('--rm') ;
+                containerArgs.push('--no-deps', '-T', containerName) ;
                 }
             else if (containerCmd == 'kubectl')
                 {
-                containerArgs.push('exec', containerName, '-i', '--') ;   
+                containerArgs.push('exec', containerName, '-i', '--') ;
                 }
             else if (containerCmd == 'devspace')
                 {
-                containerArgs.push('--silent ', 'enter') ;   
+                containerArgs.push('--silent ', 'enter') ;
                 if (containerName)
-                    containerArgs.push('-c', containerName) ;   
-                containerArgs.push('--') ;   
+                    containerArgs.push('-c', containerName) ;
+                containerArgs.push('--') ;
                 }
-            }    
+            }
         }
     //console.log ('buildContainerArgs exit: ' + containerCmd + ' args ' + containerArgs.join (' ') + '  name ' + containerName + ' mode ' + containerMode)  ;
-    
+
     return containerArgs ;
     }
 
@@ -68,7 +68,7 @@ function buildContainerArgs (containerCmd: string, containerArgs: string[], cont
 export function activate(context: vscode.ExtensionContext) {
 
 	let config = vscode.workspace.getConfiguration('perl') ;
-	if (!config.get('enable'))	
+	if (!config.get('enable'))
 		{
 		console.log('extension "perl" is disabled');
 		return ;
@@ -77,25 +77,25 @@ export function activate(context: vscode.ExtensionContext) {
 	console.log('extension "perl" is now active');
 
     let resource = vscode.window.activeTextEditor?.document.uri ;
-    let debug_adapter_port : string  = config.get('debugAdapterPort') || '13603' ; 
+    let debug_adapter_port : string  = config.get('debugAdapterPort') || '13603' ;
 	let perlCmd         : string     = resolve_workspaceFolder((config.get('perlCmd') || 'perl'), resource);
     let perlArgs        : string[]   = config.get('perlArgs') || [] ;
     let perlInc         : string[]   = config.get('perlInc') || [] ;
-    let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + resolve_workspaceFolder(dir, resource)) ;    
+    let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + resolve_workspaceFolder(dir, resource)) ;
     let env             : any        = config.get('env') || {} ;
-	let logFile         : string     = config.get('logFile') || '' ; 
+	let logFile         : string     = config.get('logFile') || '' ;
     let logLevel        : number     = config.get('logLevel') || 0 ;
     let client_version  : string     = "2.4.0" ;
-    let perlArgsOpt     : string[]   = [...perlIncOpt, 
-                                        ...perlArgs, 
-                                        '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--', 
+    let perlArgsOpt     : string[]   = [...perlIncOpt,
+                                        ...perlArgs,
+                                        '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--',
                                         '--port', debug_adapter_port,
                                         '--log-level', logLevel.toString(),
                                         '--log-file',  logFile,
                                         '--version',   client_version] ;
 
     let sshPortOption = '-p' ;
-    let sshCmd : string       = config.get('sshCmd') || '' ; 
+    let sshCmd : string       = config.get('sshCmd') || '' ;
 	if (!sshCmd)
 		{
 		if (/^win/.test(process.platform))
@@ -113,12 +113,12 @@ export function activate(context: vscode.ExtensionContext) {
 	let sshAddr:string   = config.get('sshAddr') || '';
 	let sshPort:string   = config.get('sshPort') || '' ;
 
-    let containerCmd  : string   = config.get('containerCmd')  || '' ; 
+    let containerCmd  : string   = config.get('containerCmd')  || '' ;
 	let containerArgs : string[] = config.get('containerArgs') || [] ;
-    let containerName : string   = config.get('containerName') || '' ; 
-    let containerMode : string   = config.get('containerMode') || 'exec' ; 
+    let containerName : string   = config.get('containerName') || '' ;
+    let containerMode : string   = config.get('containerMode') || 'exec' ;
 
-    let containerArgsOpt : string[] = buildContainerArgs (containerCmd, containerArgs, containerName, containerMode) ;    
+    let containerArgsOpt : string[] = buildContainerArgs (containerCmd, containerArgs, containerName, containerMode) ;
 
     var serverCmd : string ;
 	var serverArgs : string[] ;
@@ -151,20 +151,20 @@ export function activate(context: vscode.ExtensionContext) {
 		    serverCmd  = perlCmd ;
 		    serverArgs = perlArgsOpt ;
             }
-		}	
+		}
 
-    vscode.debug.registerDebugAdapterDescriptorFactory('perl', 
+    vscode.debug.registerDebugAdapterDescriptorFactory('perl',
         {
-        createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable) 
+        createDebugAdapterDescriptor(session: vscode.DebugSession, executable: vscode.DebugAdapterExecutable)
             {
             let cfg = session.configuration ;
-            
-            let debugContainerCmd  : string   = cfg.containerCmd  || containerCmd ; 
-            let debugContainerArgs : string[] = cfg.containerArgs || containerArgs;
-            let debugContainerName : string   = cfg.containerName || containerName ; 
-            let debugContainerMode : string   = cfg.containerMode || containerMode ; 
 
-            let debugContainerArgsOpt : string[] = buildContainerArgs (debugContainerCmd, debugContainerArgs, debugContainerName, debugContainerMode) ;    
+            let debugContainerCmd  : string   = cfg.containerCmd  || containerCmd ;
+            let debugContainerArgs : string[] = cfg.containerArgs || containerArgs ;
+            let debugContainerName : string   = cfg.containerName || containerName ;
+            let debugContainerMode : string   = cfg.containerMode || containerMode ;
+
+            let debugContainerArgsOpt : string[] = buildContainerArgs (debugContainerCmd, debugContainerArgs, debugContainerName, debugContainerMode) ;
 
             if (debugContainerCmd)
                 {
@@ -174,9 +174,9 @@ export function activate(context: vscode.ExtensionContext) {
                 if (containerCmd)
                     {
                     // LanguageServer already running inside container
-                    daArgs = debugContainerArgsOpt.concat ([perlCmd, ...perlIncOpt, 
-                        ...perlArgs, 
-                        '-MPerl::LanguageServer::DebuggerBridge', '-e', 'Perl::LanguageServer::DebuggerBridge::run',  
+                    daArgs = debugContainerArgsOpt.concat ([perlCmd, ...perlIncOpt,
+                        ...perlArgs,
+                        '-MPerl::LanguageServer::DebuggerBridge', '-e', 'Perl::LanguageServer::DebuggerBridge::run',
                         debug_adapter_port]) ;
                     }
                 else
@@ -190,7 +190,7 @@ export function activate(context: vscode.ExtensionContext) {
                 }
             else
                 {
-                // TODO: use SocketDebugAdapter 
+                // TODO: use SocketDebugAdapter
                 //return new vscode.SocketDebugAdapter () ;
 
                 executable.args.push (debug_adapter_port) ;
@@ -200,12 +200,12 @@ export function activate(context: vscode.ExtensionContext) {
             }
         });
 
-    vscode.debug.registerDebugConfigurationProvider('perl', 
+    vscode.debug.registerDebugConfigurationProvider('perl',
         {
         resolveDebugConfiguration(folder: vscode.WorkspaceFolder | undefined, config: vscode.DebugConfiguration, token?: vscode.CancellationToken): vscode.ProviderResult<vscode.DebugConfiguration>
             {
             console.log('start perl debug resolveDebugConfiguration');
-    
+
             if (!config.request)
                 {
                 console.log('config perl debug resolveDebugConfiguration');
@@ -221,7 +221,7 @@ export function activate(context: vscode.ExtensionContext) {
 
                 return dbgconfig ;
                 }
-            
+
             return config ;
             }
         }, vscode.DebugConfigurationProviderTriggerKind.Dynamic);
@@ -231,10 +231,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let debugArgs  = serverArgs.concat(["--debug"]) ;
 	let serverOptions: ServerOptions = {
-		run:   { command: serverCmd, args: serverArgs, options: { env: env } }, 
+		run:   { command: serverCmd, args: serverArgs, options: { env: env } },
 		debug: { command: serverCmd, args: debugArgs,  options: { env: env } },
 	} ;
-	
+
 	// Options to control the language client
 	let clientOptions: LanguageClientOptions = {
 		// Register the server for plain text documents
@@ -244,11 +244,11 @@ export function activate(context: vscode.ExtensionContext) {
 			configurationSection: 'perl',
 		}
 	} ;
-	
+
 	// Create the language client and start the client.
 	let disposable = new LanguageClient('perl', 'Perl Language Server', serverOptions, clientOptions).start();
-	
-	// Push the disposable to the context's subscriptions so that the 
+
+	// Push the disposable to the context's subscriptions so that the
 	// client can be deactivated on extension deactivation
 	context.subscriptions.push(disposable);
 }
