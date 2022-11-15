@@ -255,18 +255,25 @@ sub _temp_break
 
     my $running = $self -> running ;
     return if (!$running) ;
-    my $cnt = 30 ;
-    $self -> in_temp_break (1) ;
-    $self -> _dapreq_pause ($workspace) ;  
+
+    my $temp_break_guard = Guard::guard 
+        { 
+        $self -> _temp_cont ($workspace, $running) ;    
+        } ;
+
+    my $cnt = 50 ;
+    my $itb = $self -> in_temp_break ;
+    $self -> in_temp_break ($itb + 1) ;
+    $self -> logger ("in_temp_break = ", $itb + 1, "\n") ;
+    $self -> _dapreq_pause ($workspace) if ($itb == 0);  
     while ($self -> running && $cnt-- > 0)
         {
         Coro::AnyEvent::sleep (0.1) ;    
         }
     $self -> _check_not_running ($workspace) ;
     $running = 0 if (!$self -> in_temp_break) ;
-    $self -> in_temp_break (0) ;
 
-    return $running ;
+    return $temp_break_guard ;
     }
 
 # ---------------------------------------------------------------------------
@@ -275,9 +282,16 @@ sub _temp_cont
     {
     my ($self, $workspace, $old_running) = @_ ;
 
+    my $itb = $self -> in_temp_break ;
+    $self -> logger ("temp_cont = $itb old_running = $old_running\n") ;
     return if (!$old_running) ;
-    $self -> running (1) ;
-    $self -> send_request ('continue') ;
+    return if ($itb == 0) ;
+    $self -> in_temp_break ($itb - 1) ;
+    if ($itb == 1) 
+        {
+        $self -> running (1) ;
+        $self -> send_request ('continue') ;
+        }
     }
 
 
@@ -287,7 +301,7 @@ sub _set_breakpoints
     {
     my ($self, $workspace, $req, $location, $breakpoints, $source) = @_ ;
 
-    my $old_running = $self -> _temp_break ($workspace) ;
+    my $temp_break_guard = $self -> _temp_break ($workspace) ;
 
     my @bp ;
     for (my $i; $i < @$breakpoints; $i++)
@@ -319,8 +333,6 @@ sub _set_breakpoints
             source   => { path => $workspace -> file_server2client ($bp -> [5]) },
             }
         }
-
-    $self -> _temp_cont ($workspace, $old_running) ;
 
     return { breakpoints => \@setbp } ;
     }
@@ -370,7 +382,7 @@ sub _dapreq_breakpointLocations
     my $dai = $self -> debug_adapter_interface ;
     return { breakpoints => [] } if (!$dai || !$dai -> initialized) ;
 
-    my $old_running = $self -> _temp_break ($workspace) ;
+    my $temp_break_guard = $self -> _temp_break ($workspace) ;
 
     my $source      = $req -> params -> {source} ;
     my $ret = $self -> send_request ('can_break', 
@@ -379,8 +391,6 @@ sub _dapreq_breakpointLocations
                                         end_line => $req -> params -> {endLine},
                                         ($source?(filename    => $workspace -> file_client2server ($source -> {path})):()),
                                         }) ;
-
-    $self -> _temp_cont ($workspace, $old_running) ;
 
     foreach (@{$ret -> {breakpoints}})
         {
@@ -631,6 +641,7 @@ sub _dapreq_pause
     {
     my ($self, $workspace, $req) = @_ ;
 
+    $self -> logger ("send SIGINT for pause\n") ;
     $self -> debugger_process -> signal ('INT') ;
     
     return {} ;

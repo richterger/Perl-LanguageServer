@@ -141,7 +141,7 @@ sub _dapreq_di_break
 
     my $initialized = $self -> initialized ;
     my $reason      = $req -> params -> {reason} ;
-    #print STDERR "reason = $reason tempb = ", $debug_adapter -> in_temp_break, "\n" ;
+    $self -> logger ("_dapreq_di_break reason = $reason initialized = $initialized temp_break = ", $debug_adapter -> in_temp_break, " stop_on_entry = ", $self -> debugger_process -> stop_on_entry,"\n") ;
     return if ($reason eq 'pause' && $debug_adapter -> in_temp_break) ;
     $debug_adapter -> in_temp_break (0) ;
 
@@ -149,13 +149,16 @@ sub _dapreq_di_break
 
     $debug_adapter -> clear_non_thread_ids ;
 
-    $self -> send_event ('stopped', 
+    if ($initialized || $self -> debugger_process -> stop_on_entry)
+        {
+        $self -> send_event ('stopped', 
                         { 
                         reason => $reason,
                         threadId => $debug_adapter -> getid (0, $req -> params -> {thread_ref}) || 1,
                         preserveFocusHint => JSON::false (),
                         allThreadsStopped => JSON::true (),
                         }) ;
+        }
 
     if (!$initialized)
         {
