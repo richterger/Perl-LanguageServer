@@ -14,6 +14,8 @@ Language Server and Debugger for Perl
   * Supports multiple workspace folders
   * Document and selection formatting via perltidy
   * Run on remote system via ssh
+  * Run inside docker container
+  * Run inside kubernetes 
 * Debugger
   * Run, pause, step, next, return
   * Support for coro threads
@@ -28,6 +30,8 @@ Language Server and Debugger for Perl
   * Automatically reload changed Perl modules while debugging
   * Debug multiple perl programs at once
   * Run on remote system via ssh
+  * Run inside docker container
+  * Run inside kubernetes 
 
 
 ## Requirements
@@ -36,6 +40,10 @@ You need to install the perl module Perl::LanguageServer to make this extension 
 e.g. run "cpan Perl::LanguageServer" on your target system.
 
 Please make sure to always run the newest version of Perl::LanguageServer as well.
+
+NOTE: Perl::LanguageServer depend on AnyEvent::AIO and Coro. There is a warning that
+this might not work with newer Perls. It works fine for Perl::LanguageServer. So just
+confirm the warning and install it.
 
 ## Extension Settings
 
@@ -55,11 +63,16 @@ This extension contributes the following settings:
 * `perl.perlInc`: array with paths to add to perl library path. This setting is used by the syntax checker and for the debuggee and also for the LanguageServer itself.
 * `perl.fileFilter`: array for filtering perl file, defaults to [*.pm,*.pl]
 * `perl.ignoreDirs`: directories to ignore, defaults to [.vscode, .git, .svn]
-* `perl.debugAdapterPort`: port to use for connection between vscode and debug adapter inside Perl::LanguageServer. On a multi user system every user must use a different port.
+* `perl.debugAdapterPort`: port to use for connection between vscode and debug adapter inside Perl::LanguageServer.
+* `perl.debugAdapterPortRange`: if debugAdapterPort is in use try ports from debugAdapterPort to debugAdapterPort + debugAdapterPortRange. Default 100.
 * `perl.showLocalVars`: if true, show also local variables in symbol view
 * `perl.logLevel`: Log level 0-2.
 * `perl.logFile`: If set, log output is written to the given logfile, instead of displaying it in the vscode output pane. Log output is always appended. Only use during debugging of LanguageServer itself.
-* `perl.disableCache`: if true, the LanguageServer will not cache the result of parsing source files on disk, so it can be used within readonly directories"
+* `perl.disableCache`: If true, the LanguageServer will not cache the result of parsing source files on disk, so it can be used within readonly directories
+* `perl.containerCmd`: If set Perl::LanguageServer can run inside a container. Options are: 'docker', 'docker-compose', 'kubectl'
+* `perl.containerArgs`: arguments for containerCmd. Varies depending on containerCmd.
+* `perl.containerMode`: To start a new container, set to 'run', to execute inside an existing container set to 'exec'. Note: kubectl only supports 'exec'
+* `perl.containerName`: Image to start or container to exec inside or pod to use
 
 ## Debugger Settings for launch.json
 
@@ -166,6 +179,10 @@ Does not yet work on windows, due to issues with reading from stdin.
 ## Release Notes
 
 see CHANGELOG.md
+
+## Questions?
+
+see FAQ.md
 
 ## More Info
 

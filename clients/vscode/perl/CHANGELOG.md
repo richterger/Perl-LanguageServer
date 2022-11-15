@@ -1,5 +1,26 @@
 # Change Log
 
+## 2.4.0   `15.11.2022`
+
+- Choose a different port for debugAdapterPort if it is already in use. This
+  avoids trouble with starting Perl::LanguageServer if another instance
+  of Perl::LanguageServer is runing on the same machine (thanks to hakonhagland)
+- Add configuration debugAdapterPortRange, for choosing range of port for dynamic
+  port assignment
+- Add support for using LanguageServer and debugger inside a Container. 
+  Currently docker containers und containers running inside kubernetes are supported.
+- When starting debugger session and stopOnEntry is false, do not switch to sourefile
+  where debugger would stop, when stopOnEntry is true.
+
+- Fix: Debugger stopps at random locations
+- Fix: debugAdapterPort is now numeric
+- Fix: debugging loop with each statement (#107) 
+- Fix: display of arrays in variables pane on mac (#120)
+- Fix: encoding for perltidy (#127)
+- Fix: return error if perltidy fails, so text is not removed by failing 
+  formatting request (#87)
+- Fix: FindBin does not work when checking syntax (#16)
+
 ## 2.3.0   `26.09.2021`
 
 - Arguments section in Variable lists now @ARGV and @_ during debugging (#105)
