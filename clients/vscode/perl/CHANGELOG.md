@@ -1,6 +1,6 @@
 # Change Log
 
-## 2.4.0   `15.11.2022`
+## 2.4.0   `17.11.2022`
 
 - Choose a different port for debugAdapterPort if it is already in use. This
   avoids trouble with starting Perl::LanguageServer if another instance
@@ -11,6 +11,7 @@
   Currently docker containers und containers running inside kubernetes are supported.
 - When starting debugger session and stopOnEntry is false, do not switch to sourefile
   where debugger would stop, when stopOnEntry is true.
+- Added some FAQs in README.md
 
 - Fix: Debugger stopps at random locations
 - Fix: debugAdapterPort is now numeric

@@ -1,6 +1,6 @@
-# Perl README
+# Perl::LanguageServer
 
-Language Server and Debugger for Perl
+Language Server and Debug Protocol Adapter for Perl
 
 ## Features
 
@@ -33,11 +33,10 @@ Language Server and Debugger for Perl
   * Run inside docker container
   * Run inside kubernetes 
 
-
 ## Requirements
 
 You need to install the perl module Perl::LanguageServer to make this extension work,
-e.g. run "cpan Perl::LanguageServer" on your target system.
+e.g. run `cpan Perl::LanguageServer` on your target system.
 
 Please make sure to always run the newest version of Perl::LanguageServer as well.
 
@@ -45,8 +44,23 @@ NOTE: Perl::LanguageServer depend on AnyEvent::AIO and Coro. There is a warning 
 this might not work with newer Perls. It works fine for Perl::LanguageServer. So just
 confirm the warning and install it.
 
-## Extension Settings
+Perl::LanguageServer depends on other Perl modules. It is a good idea to install most
+of then with your linux package manager.
 
+e.g. on Debian/Ubuntu run:
+
+```
+sudo apt install libanyevent-perl libclass-refresh-perl libcompiler-lexer-perl \
+libdata-dump-perl libio-aio-perl libjson-perl libmoose-perl libpadwalker-perl \
+libscalar-list-utils-perl libcoro-perl
+sudo cpan Perl::LanguageServer
+```
+
+In case any of the above packages are not available for your os version, just
+leave then out. The cpan command will install missing dependencies. In case
+the test fails, when running cpan `install`, you should try to run `force install`.
+
+## Extension Settings
 
 This extension contributes the following settings:
 
@@ -152,11 +166,62 @@ COMMAND=$(echo "$@" | sed 's/^.*perl /perl /')
 docker-compose exec -u "$UID" -T [SERVICE NAME] $COMMAND
 ```
 
-## Carton support
+## FAQ
+
+### Working directory is not defined
+
+It is not defined what the current working directory is at the start of a perl program. 
+So Perl::LanguageServer makes no assumtion about it. To solve the problem you can set 
+the directory via cwd configurationm parameter in launch.json for debugging.
+
+### Module not found when debugging or during syntax check
+
+If you reference a module with a relative path or if you assume that the current working directory 
+is part of the Perl search path, it will not work.
+Instead set the perl include path to a fixed absolue path. In your settings.json do something like:
+
+```
+    "perl.perlInc": [
+        "/path/a/lib",
+        "/path/b/lib",
+        "/path/c/lib",
+    ],
+```
+Include path works for syntax check and inside of debugger.
+`perl.perlInc` should be an absolute path.
+
+### AnyEvent, Coro Warning during install
+
+You need to install the AnyEvent::IO and Coro. Just ignore the warning that it might not work. For Perl::LanguageServer it works fine. 
+
+### 'richterger.perl' failed: options.port should be >= 0 and < 65536
+
+Change port setting from string to integer
+
+### Error "Can't locate MODULE_NAME"
+
+Please make sure the path to the module is in `perl.perlInc` setting and use absolute path names in the perlInc settings
+or make sure you are running in the expected directory by setting the `cwd` setting in the lauch.json.
+
+### ERROR: Unknow perlmethod _rpcnot_setTraceNotification
+
+This is not an issue, that just means that not all features of the debugging protocol are implemented. 
+Also it says ERROR, it's just a warning and you can safely ignore it.
+
+### The debugger sometime stop a random places
+
+Upgrade to Version 2.4.0
+
+### Message about Perl::LanguageServer has crashed 5 times
+
+This is an problem when more then one instance of Perl::LanguageServer is running.
+Upgrade to Version 2.4.0 solve this problem.
+
+### Carton support
 
 If you are using [Carton](https://metacpan.org/pod/Carton) to manage dependencies, add the full path to the Carton `lib` dir to your workspace settings file at `.vscode/settings.json`. For example:
 
-### Linux
+#### Linux
 
 ```json
 {
@@ -164,7 +229,7 @@ If you are using [Carton](https://metacpan.org/pod/Carton) to manage dependencie
 }
 ```
 
-### Mac
+#### Mac
 
 ```json
 {
@@ -175,17 +240,44 @@ If you are using [Carton](https://metacpan.org/pod/Carton) to manage dependencie
 ## Known Issues
 
 Does not yet work on windows, due to issues with reading from stdin.
+I wasn't able to find a reliable way to do a non blocking read from stdin on windows. 
+I would be happy, if anyone knows how to do this in Perl.
+
+Anyway Perl::LanguageServer runs without problems inside of Windows Subsystem for Linux (WSL).
 
 ## Release Notes
 
 see CHANGELOG.md
 
-## Questions?
-
-see FAQ.md
-
 ## More Info
 
-Presentation at German Perl Workshop 2020:
+- Presentation at German Perl Workshop 2020:
 
 https://github.com/richterger/Perl-LanguageServer/blob/master/docs/Perl-LanguageServer%20und%20Debugger%20f%C3%BCr%20Visual%20Studio%20Code%20u.a.%20Editoren%20-%20Perl%20Workshop%202020.pdf
+
+- Github: https://github.com/richterger/Perl-LanguageServer
+
+- MetaCPAN: https://metacpan.org/release/Perl-LanguageServer
+
+For reporting bugs please use GitHub issues.
+
+## References
+
+This is a Language Server and Debug Protocol Adapter for Perl
+
+It implements the Language Server Protocol which provides
+syntax-checking, symbol search, etc. Perl to various editors, for
+example Visual Studio Code or Atom.
+
+https://microsoft.github.io/language-server-protocol/specification
+
+It also implements the Debug Adapter Protocol, which allow debugging
+with various editors/includes
+
+https://microsoft.github.io/debug-adapter-protocol/overview
+
+To use both with Visual Studio Code, install the extension "perl"
+
+https://marketplace.visualstudio.com/items?itemName=richterger.perl
+
+Any comments and patches are welcome.

@@ -83,6 +83,10 @@ Any comments and patches are welcome.
 
 =item * Run on remote system via ssh
 
+=item * Run inside docker container
+
+=item * Run inside kubernetes 
+
 =back
 
 =item * Debugger
@@ -114,10 +118,16 @@ Any comments and patches are welcome.
 =item * Debug multiple perl programs at once
 
 =item * Run on remote system via ssh
+  
+=item * Run inside docker container
+
+=item * Run inside kubernetes 
 
 =back
 
 =back
+
+See README for more information and FAQ
 
 =cut
 
