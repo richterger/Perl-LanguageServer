@@ -57,78 +57,6 @@ To use both with Visual Studio Code, install the extension "perl"
 
 Any comments and patches are welcome.
 
-=head2 Features
-
-=over 4
-
-=item * Language Server
-
-=over 4
-
-=item * Syntax checking
-
-=item * Symbols in file
-
-=item * Symbols in workspace/directory
-
-=item * Goto Definition
-
-=item * Find References
-
-=item * Call Signatures
-
-=item * Supports multiple workspace folders
-
-=item * Document and selection formatting via perltidy
-
-=item * Run on remote system via ssh
-
-=item * Run inside docker container
-
-=item * Run inside kubernetes 
-
-=back
-
-=item * Debugger
-
-=over 4
-
-=item * Run, pause, step, next, return
-
-=item * Support for coro threads
-
-=item * Breakpoints 
-
-=item * Conditional breakpoints
-
-=item * Breakpoints can be set while program runs and for modules not yet loaded
-
-=item * Variable view, can switch to every stack frame or coro thread
-
-=item * Set variable
-
-=item * Watch variable
-
-=item * Tooltips with variable values
-
-=item * Evaluate perl code in debuggee, in context of every stack frame of coro thread
-
-=item * Automatically reload changed Perl modules while debugging
-
-=item * Debug multiple perl programs at once
-
-=item * Run on remote system via ssh
-  
-=item * Run inside docker container
-
-=item * Run inside kubernetes 
-
-=back
-
-=back
-
-See README for more information and FAQ
-
 =cut
 
 our $json = JSON -> new -> utf8(1) -> ascii(1) ;
@@ -683,71 +611,383 @@ sub check_file
     $cv -> recv ;    
     }
 
+1 ;
+
+__END__
+
+=head1 DOCUMENTATION
+
+Language Server and Debug Protocol Adapter for Perl
+
+=head2 Features
+
+=over
+
+=item * Language Server
+
+=over
+
+=item * Syntax checking
+
+=item * Symbols in file
+
+=item * Symbols in workspace/directory
+
+=item * Goto Definition
+
+=item * Find References
+
+=item * Call Signatures
+
+=item * Supports multiple workspace folders
+
+=item * Document and selection formatting via perltidy
+
+=item * Run on remote system via ssh
+
+=item * Run inside docker container
+
+=item * Run inside kubernetes
+
+=back
+
+=item * Debugger
+
+=over
+
+=item * Run, pause, step, next, return
+
+=item * Support for coro threads
+
+=item * Breakpoints 
+
+=item * Conditional breakpoints
+
+=item * Breakpoints can be set while program runs and for modules not yet loaded
+
+=item * Variable view, can switch to every stack frame or coro thread
+
+=item * Set variable
+
+=item * Watch variable
+
+=item * Tooltips with variable values
+
+=item * Evaluate perl code in debuggee, in context of every stack frame of coro thread
+
+=item * Automatically reload changed Perl modules while debugging
+
+=item * Debug multiple perl programs at once
+
+=item * Run on remote system via ssh
+
+=item * Run inside docker container
+
+=item * Run inside kubernetes 
+
+=back
+
+=back
+
+=head2 Requirements
+
+You need to install the perl module Perl::LanguageServer to make this extension work,
+e.g. run C<cpan Perl::LanguageServer> on your target system.
+
+Please make sure to always run the newest version of Perl::LanguageServer as well.
+
+NOTE: Perl::LanguageServer depend on AnyEvent::AIO and Coro. There is a warning that
+this might not work with newer Perls. It works fine for Perl::LanguageServer. So just
+confirm the warning and install it.
+
+Perl::LanguageServer depends on other Perl modules. It is a good idea to install most
+of then with your linux package manager.
+
+e.g. on Debian/Ubuntu run:
 
 
+    
+     sudo apt install libanyevent-perl libclass-refresh-perl libcompiler-lexer-perl \
+     libdata-dump-perl libio-aio-perl libjson-perl libmoose-perl libpadwalker-perl \
+     libscalar-list-utils-perl libcoro-perl
+     
+     sudo cpan Perl::LanguageServer
+    
+
+In case any of the above packages are not available for your os version, just
+leave then out. The cpan command will install missing dependencies. In case
+the test fails, when running cpan C<install>, you should try to run C<force install>.
+
+=head2 Extension Settings
+
+This extension contributes the following settings:
+
+=over
+
+=item * C<perl.enable>: enable/disable this extension
+
+=item * C<perl.sshAddr>: ip address of remote system
+
+=item * C<perl.sshPort>: optional, port for ssh to remote system
+
+=item * C<perl.sshUser>: user for ssh login
+
+=item * C<perl.sshCmd>: defaults to ssh on unix and plink on windows
+
+=item * C<perl.sshWorkspaceRoot>: path of the workspace root on remote system
+
+=item * C<perl.perlCmd>: defaults to perl
+
+=item * C<perl.perlArgs>: additional arguments passed to the perl interpreter that starts the LanguageServer
+
+=item * C<perl.sshArgs>: optional arguments for ssh
+
+=item * C<perl.pathMap>: mapping of local to remote paths
+
+=item * C<perl.perlInc>: array with paths to add to perl library path. This setting is used by the syntax checker and for the debuggee and also for the LanguageServer itself.
+
+=item * C<perl.fileFilter>: array for filtering perl file, defaults to [I<.pm,>.pl]
+
+=item * C<perl.ignoreDirs>: directories to ignore, defaults to [.vscode, .git, .svn]
+
+=item * C<perl.debugAdapterPort>: port to use for connection between vscode and debug adapter inside Perl::LanguageServer.
+
+=item * C<perl.debugAdapterPortRange>: if debugAdapterPort is in use try ports from debugAdapterPort to debugAdapterPort + debugAdapterPortRange. Default 100.
+
+=item * C<perl.showLocalVars>: if true, show also local variables in symbol view
+
+=item * C<perl.logLevel>: Log level 0-2.
+
+=item * C<perl.logFile>: If set, log output is written to the given logfile, instead of displaying it in the vscode output pane. Log output is always appended. Only use during debugging of LanguageServer itself.
+
+=item * C<perl.disableCache>: If true, the LanguageServer will not cache the result of parsing source files on disk, so it can be used within readonly directories
+
+=item * C<perl.containerCmd>: If set Perl::LanguageServer can run inside a container. Options are: 'docker', 'docker-compose', 'kubectl'
+
+=item * C<perl.containerArgs>: arguments for containerCmd. Varies depending on containerCmd.
+
+=item * C<perl.containerMode>: To start a new container, set to 'run', to execute inside an existing container set to 'exec'. Note: kubectl only supports 'exec'
+
+=item * C<perl.containerName>: Image to start or container to exec inside or pod to use
+
+=back
+
+=head2 Debugger Settings for launch.json
+
+=over
+
+=item * C<type>: needs to be C<perl>
+
+=item * C<request>: only C<launch> is supported (this is a restriction of perl itself)
+
+=item * C<name>: name of this debug configuration
+
+=item * C<program>: path to perl program to start
+
+=item * C<stopOnEntry>: if true, program will stop on entry
+
+=item * C<args>:   optional, array with arguments for perl program
+
+=item * C<env>:    optional, object with environment settings 
+
+=item * C<cwd>:    optional, change working directory before launching the debuggee
+
+=item * C<reloadModules>: if true, automatically reload changed Perl modules while debugging
+
+=back
+
+=head2 Remote syntax check & debugging
+
+If you developing on a remote machine, you can instruct the Perl::LanguageServer to
+run on that remote machine, so the correct modules etc. are available for syntax check and debugger is started on the remote machine.
+To do so set sshAddr and sshUser, preferably in your workspace configuration.
+
+Example:
 
 
+    "sshAddr": "10.11.12.13",
+    "sshUser": "root"
 
-=pod
+Also set sshWorkspaceRoot, so the local workspace path can be mapped to the remote one.
 
-
-
-=head1 AUTHOR
-
-grichter, C<< <richter at ecos.de> >>
-
-=head1 BUGS
-
-Please report any bugs or feature requests to C<bug-perl-languageserver at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=Perl-LanguageServer>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
+Example: if your local path is \10.11.12.13\share\path\to\ws and on the remote machine you have /path/to/ws
 
 
+    "sshWorkspaceRoot": "/path/to/ws"
+
+The other possibility is to provide a pathMap. This allows to have multiple mappings.
+
+Examples:
 
 
-=head1 SUPPORT
+    "sshpathMap": [
+        ['remote uri', 'local uri'],
+        ['remote uri', 'local uri']
+    ]
+    
+    "perl.pathMap": [
+        [
+        "file:///",
+        "file:///home/systems/mountpoint/"
+        ]
+    ]
 
-You can find documentation for this module with the perldoc command.
+=head2 Syntax check & debugging inside a container
 
-    perldoc Perl::LanguageServer
+It's possible to use the ssh settings also for containers. The example below is for docker-compose but there's nothing prevent you from tuning it to do docker exec, kubectl exec, machinectl shell or whatnot.
 
-Presentation on German Perl Workshop 2020:
-
-L<https://github.com/richterger/Perl-LanguageServer/blob/master/docs/Perl-LanguageServer%20und%20Debugger%20f%C3%BCr%20Visual%20Studio%20Code%20u.a.%20Editoren%20-%20Perl%20Workshop%202020.pdf>
+.vscode/settings.json
 
 
-You can also look for information at:
+    {
+        "perl": {
+            "enable": true,
+            "sshAddr": "dummy",
+            "sshUser": "dummy",
+            "sshCmd": "bin/shell-into-appserver.sh",
+            "sshWorkspaceRoot": "/home/code (directory in the container)",
+            "logLevel": 0,
+        }
+    }
 
-=over 4
+bin/shell-into-appserver.sh:
 
-=item * Github:
- L<https://github.com/richterger/Perl-LanguageServer>
 
-=item * CPAN Ratings
+    =head1 !/usr/bin/env bash
+    
+    COMMAND=$(echo "$@" | sed 's/^.*perl /perl /')
+    docker-compose exec -u "$UID" -T [SERVICE NAME] $COMMAND
 
-L<http://cpanratings.perl.org/d/Perl-LanguageServer>
+=head2 FAQ
 
-=item * MetaCPAN
+=head3 Working directory is not defined
 
-L<https://metacpan.org/release/Perl-LanguageServer>
+It is not defined what the current working directory is at the start of a perl program. 
+So Perl::LanguageServer makes no assumtion about it. To solve the problem you can set 
+the directory via cwd configurationm parameter in launch.json for debugging.
+
+=head3 Module not found when debugging or during syntax check
+
+If you reference a module with a relative path or if you assume that the current working directory 
+is part of the Perl search path, it will not work.
+Instead set the perl include path to a fixed absolue path. In your settings.json do something like:
+
+
+        "perl.perlInc": [
+            "/path/a/lib",
+            "/path/b/lib",
+            "/path/c/lib",
+        ],
+Include path works for syntax check and inside of debugger.
+C<perl.perlInc> should be an absolute path.
+
+=head3 AnyEvent, Coro Warning during install
+
+You need to install the AnyEvent::IO and Coro. Just ignore the warning that it might not work. For Perl::LanguageServer it works fine. 
+
+=head3 'richterger.perl' failed: options.port should be >= 0 and < 65536
+
+Change port setting from string to integer
+
+=head3 Error "Can't locate MODULE_NAME"
+
+Please make sure the path to the module is in C<perl.perlInc> setting and use absolute path names in the perlInc settings
+or make sure you are running in the expected directory by setting the C<cwd> setting in the lauch.json.
+
+=head3 ERROR: Unknow perlmethod I<rpcnot>setTraceNotification
+
+This is not an issue, that just means that not all features of the debugging protocol are implemented. 
+Also it says ERROR, it's just a warning and you can safely ignore it.
+
+=head3 The debugger sometime stop a random places
+
+Upgrade to Version 2.4.0
+
+=head3 Message about Perl::LanguageServer has crashed 5 times
+
+This is an problem when more then one instance of Perl::LanguageServer is running.
+Upgrade to Version 2.4.0 solve this problem.
+
+=head3 Carton support
+
+If you are using LL<https://metacpan.org/pod/Carton> to manage dependencies, add the full path to the Carton C<lib> dir to your workspace settings file at C<.vscode/settings.json>. For example:
+
+=head4 Linux
+
+
+    {
+      "perl.perlInc": ["/home/myusername/projects/myprojectname/local/lib/perl5"]
+    }
+
+=head4 Mac
+
+
+    {
+      "perl.perlInc": ["/Users/myusername/projects/myprojectname/local/lib/perl5"]
+    }
+
+=head2 Known Issues
+
+Does not yet work on windows, due to issues with reading from stdin.
+I wasn't able to find a reliable way to do a non blocking read from stdin on windows. 
+I would be happy, if anyone knows how to do this in Perl.
+
+Anyway Perl::LanguageServer runs without problems inside of Windows Subsystem for Linux (WSL).
+
+=head2 Release Notes
+
+see CHANGELOG.md
+
+=head2 More Info
+
+=over
+
+=item * Presentation at German Perl Workshop 2020:
+
+=back
+
+https://github.com/richterger/Perl-LanguageServer/blob/master/docs/Perl-LanguageServer%20und%20Debugger%20f%C3%BCr%20Visual%20Studio%20Code%20u.a.%20Editoren%20-%20Perl%20Workshop%202020.pdf
+
+=over
+
+=item * Github: https://github.com/richterger/Perl-LanguageServer
+
+=item * MetaCPAN: https://metacpan.org/release/Perl-LanguageServer
 
 =back
 
 For reporting bugs please use GitHub issues.
 
+=head2 References
 
-=head1 ACKNOWLEDGEMENTS
+This is a Language Server and Debug Protocol Adapter for Perl
 
+It implements the Language Server Protocol which provides
+syntax-checking, symbol search, etc. Perl to various editors, for
+example Visual Studio Code or Atom.
 
-=head1 LICENSE AND COPYRIGHT
+https://microsoft.github.io/language-server-protocol/specification
 
-Copyright 2018-2021 grichter.
+It also implements the Debug Adapter Protocol, which allow debugging
+with various editors/includes
+
+https://microsoft.github.io/debug-adapter-protocol/overview
+
+To use both with Visual Studio Code, install the extension "perl"
+
+https://marketplace.visualstudio.com/items?itemName=richterger.perl
+
+Any comments and patches are welcome.
+
+=head2 LICENSE AND COPYRIGHT
+
+Copyright 2018-2022 grichter.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the the Artistic License (2.0). You may obtain a
 copy of the full license at:
 
-L<http://www.perlfoundation.org/artistic_license_2_0>
+LL<http://www.perlfoundation.org/artistic_license_2_0>
 
 Any use, modification, and distribution of the Standard or Modified
 Versions is governed by this Artistic License. By using, modifying or
@@ -779,7 +1019,183 @@ CONTRIBUTOR WILL BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, OR
 CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THE PACKAGE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+=head1 Change Log
 
-=cut
+=head2 2.4.0   C<18.11.2022>
 
-1; # End of Perl::LanguageServer
+=over
+
+=item * Choose a different port for debugAdapterPort if it is already in use. This
+avoids trouble with starting Perl::LanguageServer if another instance
+of Perl::LanguageServer is runing on the same machine (thanks to hakonhagland)
+
+=item * Add configuration debugAdapterPortRange, for choosing range of port for dynamic
+port assignment
+
+=item * Add support for using LanguageServer and debugger inside a Container. 
+Currently docker containers und containers running inside kubernetes are supported.
+
+=item * When starting debugger session and stopOnEntry is false, do not switch to sourefile
+where debugger would stop, when stopOnEntry is true.
+
+=item * Added some FAQs in README
+
+=item * Fix: Debugger stopps at random locations
+
+=item * Fix: debugAdapterPort is now numeric
+
+=item * Fix: debugging loop with each statement (#107) 
+
+=item * Fix: display of arrays in variables pane on mac (#120)
+
+=item * Fix: encoding for perltidy (#127)
+
+=item * Fix: return error if perltidy fails, so text is not removed by failing 
+formatting request (#87)
+
+=item * Fix: FindBin does not work when checking syntax (#16)
+
+=back
+
+=head2 2.3.0   C<26.09.2021>
+
+=over
+
+=item * Arguments section in Variable lists now @ARGV and @_ during debugging (#105)
+
+=item * @_ is now correctly evaluated inside of debugger console
+
+=item * $#foo is now correctly evaluated inside of debugger console
+
+=item * Default debug configuration is now automatically provided without
+the need to create a launch.json first (#103)
+
+=item * Add Option cacheDir to specify location of cache dir (#113)
+
+=item * Fix: Debugger outputted invalid thread reference causes "no such coroutine" message, 
+so watchs and code from the debug console is not expanded properly
+
+=item * Fix: LanguageServer hangs when multiple request send at once from VSCode to LanguageServer
+
+=item * Fix: cwd parameter for debugger in launch.json had no effect (#99)
+
+=item * Fix: Correctly handle paths with drive letters on windows
+
+=item * Fix: sshArgs parameter was not declared as array (#109)
+
+=item * Disable syntax check on windows, because it blocks the whole process when running on windows, 
+until handling of childs processes is fixed
+
+=item * Fixed spelling (#86,#96,#101) [chrstphrchvz,davorg,aluaces]
+
+=back
+
+=head2 2.2.0    C<2021-02-21>
+
+=over
+
+=item * Parser now supports Moose method modifieres before, after and around, 
+so they can be used in symbol view and within reference search
+
+=item * Support Format Document and Format Selection via perltidy
+
+=item * Add logFile config option
+
+=item * Add perlArgs config option to pass options to Perl interpreter. Add some documentation for config options.
+
+=item * Add disableCache config option to make LanguageServer usable with readonly directories.
+
+=item * updated dependencies package.json & package-lock.json
+
+=item * Fix deep recursion in SymbolView/Parser which was caused by function prototypes.
+Solves also #65
+
+=item * Fix duplicate req id's that caused cleanup of still
+running threads which in turn caused the LanguageServer to hang
+
+=item * Prevent dereferencing an undefined value (#63) [Heiko Jansen]
+
+=item * Fix datatype of cwd config options (#47)
+
+=item * Use perlInc setting also for LanguageServer itself (based only pull request #54 from ALANVF)
+
+=item * Catch Exceptions during display of variables inside debugger
+
+=item * Fix detecting duplicate LanguageServer processes
+
+=item * Fix spelling in documentation (#56) [Christopher Chavez]
+
+=item * Remove notice about Compiler::Lexer 0.22 bugs (#55) [Christopher Chavez]
+
+=item * README: Typo and grammar fixes. Add Carton lib path instructions. (#40) [szTheory]
+
+=item * README: Markdown code block formatting (#42) [szTheory]
+
+=item * Makefile.PL: add META_MERGE with GitHub info (#32) [Christopher Chavez]
+
+=item * search.cpan.org retired, replace with metacpan.org (#31) [Christopher Chavez]
+
+=back
+
+=head2 2.1.0    C<2020-06-27>
+
+=over
+
+=item * Improve Symbol Parser (fix parsing of anonymous subs)
+
+=item * showLocalSymbols
+
+=item * function names in breadcrump
+
+=item * Signature Help for function/method arguments
+
+=item * Add Presentation on Perl Workshop 2020 to repos
+
+=item * Remove Compiler::Lexer from distribution since 
+version is available on CPAN
+
+=item * Make stdout unbuffered while debugging
+
+=item * Make debugger use perlInc setting
+
+=item * Fix fileFilter setting
+
+=item * Sort Arrays numerically in variables view of debugger
+
+=item * Use rootUri if workspaceFolders not given
+
+=item * Fix env config setting
+
+=item * Recongnice changes in config of perlCmd
+
+=back
+
+=head2 2.0.2    C<2020-01-22>
+
+Plugin: Fix command line parameters for plink
+
+Perl::LanguageServer: Fix handling of multiple parallel request, improve symlink handling, add support for UNC paths in path mapping, improve logging for logLevel = 1
+
+=head2 2.0.1    C<2020-01-14>
+
+Added support for reloading Perl module while debugging, make log level configurable, make sure tooltips don't call functions
+
+=head2 2.0.0    C<2020-01-01>
+
+Added Perl debugger
+
+=head2 0.9.0   C<2019-05-03>
+
+Fix issues in the Perl part, make sure to update Perl::LanguageServer from cpan
+
+=head2 0.0.3   C<2018-09-08>
+
+Fix issue with not reading enough from stdin, which caused LanguageServer to hang sometimes
+
+=head2 0.0.2  C<2018-07-21>
+
+Fix quitting issue when starting Perl::LanguageServer, more fixes are in the Perl part
+
+=head2 0.0.1  C<2018-07-13>
+
+Initial Version
