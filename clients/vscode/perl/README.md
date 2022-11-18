@@ -283,7 +283,7 @@ Any comments and patches are welcome.
 
 ## LICENSE AND COPYRIGHT
 
-Copyright 2018-2022 grichter.
+Copyright 2018-2022 Gerald Richter.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the the Artistic License (2.0). You may obtain a
