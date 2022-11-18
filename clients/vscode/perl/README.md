@@ -133,8 +133,8 @@ Examples:
 
 ```json
 "sshpathMap": [
-    ['remote uri', 'local uri'],
-    ['remote uri', 'local uri']
+    ["remote uri", "local uri"],
+    ["remote uri", "local uri"]
 ]
 
 "perl.pathMap": [
@@ -147,7 +147,9 @@ Examples:
 
 ## Syntax check & debugging inside a container
 
-It's possible to use the ssh settings also for containers. The example below is for docker-compose but there's nothing prevent you from tuning it to do docker exec, kubectl exec, machinectl shell or whatnot.
+You can run the LanguageServer and/or debugger inside
+a container by setting `containerCmd` and `conatinerName`.
+There are more container options, see above.
 
 .vscode/settings.json
 
@@ -155,22 +157,13 @@ It's possible to use the ssh settings also for containers. The example below is 
 {
     "perl": {
         "enable": true,
-        "sshAddr": "dummy",
-        "sshUser": "dummy",
-        "sshCmd": "bin/shell-into-appserver.sh",
-        "sshWorkspaceRoot": "/home/code (directory in the container)",
-        "logLevel": 0,
+        "containerCmd": "docker",
+        "containerName": "perl_container",
     }
 }
 ```
 
-bin/shell-into-appserver.sh:
 
-```bash
-#!/usr/bin/env bash
-COMMAND=$(echo "$@" | sed 's/^.*perl /perl /')
-docker-compose exec -u "$UID" -T [SERVICE NAME] $COMMAND
-```
 
 ## FAQ
 
