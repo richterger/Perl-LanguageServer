@@ -143,7 +143,7 @@ sub launch
     
     $ENV{PLSDI_REMOTE} = '127.0.0.1:' . $self -> debug_adapter -> listen_port ;
     $ENV{PLSDI_OPTIONS} = $self -> reload_modules?'reload_modules':'' ;
-    $ENV{PERL5DB}      = 'BEGIN { $| = 1 ; ' . $cwd . 'require Perl::LanguageServer::DebuggerInterface }' ;
+    $ENV{PERL5DB}      = 'BEGIN { $| = 1 ; ' . $cwd . 'require Perl::LanguageServer::DebuggerInterface; DB::DB(); }' ;
     $ENV{PLSDI_SESSION}= $self -> session_id ;
     $pid = $self -> run_async ([$cmd, @inc, '-d', $fn, @{$self -> args}]) ;
     }
