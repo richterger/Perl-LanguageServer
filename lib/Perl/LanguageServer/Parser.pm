@@ -7,11 +7,11 @@ use Coro::AIO ;
 use JSON ;
 use File::Basename ;
 
-use v5.18;
+use v5.16;
 
-no warnings 'experimental' ;
+no if $] >= 5.018, warnings => 'experimental'; # given, when, Smartmatch
 no warnings 'uninitialized' ;
-
+use feature 'switch'; # perl 5.16
 
 use Compiler::Lexer;
 use Data::Dump qw{dump} ;

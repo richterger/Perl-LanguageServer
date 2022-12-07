@@ -96,6 +96,15 @@ e.g. on Debian/Ubuntu run:
      
      sudo cpan Perl::LanguageServer
     
+e.g. on Centos 7 run:
+
+
+    
+     sudo yum install perl-App-cpanminus perl-AnyEvent-AIO perl-Coro
+     sudo cpanm Class::Refresh
+     sudo cpanm Compiler::Lexer
+     sudo cpanm Hash::SafeKeys
+     sudo cpanm Perl::LanguageServer
 
 In case any of the above packages are not available for your os version, just
 leave then out. The cpan command will install missing dependencies. In case
