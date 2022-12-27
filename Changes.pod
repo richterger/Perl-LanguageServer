@@ -1,6 +1,18 @@
 =head1 Change Log
 
-=head2 2.4.0   C<18.11.2022>
+=head2 2.4.1   C<unreleased>
+
+=over
+
+=item * Set minimal Perl version to 5.16 (#91)
+
+=item * Fix: "No DB::DB routine defined" (#91) [peterdragon]
+
+=item * Fix: typos and spelling in README (#159) [dseynhae]
+
+=back
+
+=head2 2.4.0   C<2022-11-18>
 
 =over
 
@@ -36,7 +48,7 @@ formatting request (#87)
 
 =back
 
-=head2 2.3.0   C<26.09.2021>
+=head2 2.3.0   C<2021-09-26>
 
 =over
 

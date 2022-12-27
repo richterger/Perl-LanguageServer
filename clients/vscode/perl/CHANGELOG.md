@@ -1,6 +1,12 @@
 # Change Log
 
-## 2.4.0   `18.11.2022`
+## 2.4.1   `unreleased`
+
+- Set minimal Perl version to 5.16 (#91)
+- Fix: "No DB::DB routine defined" (#91) [peterdragon]
+- Fix: typos and spelling in README (#159) [dseynhae]
+
+## 2.4.0   `2022-11-18`
 
 - Choose a different port for debugAdapterPort if it is already in use. This
   avoids trouble with starting Perl::LanguageServer if another instance
@@ -22,7 +28,7 @@
   formatting request (#87)
 - Fix: FindBin does not work when checking syntax (#16)
 
-## 2.3.0   `26.09.2021`
+## 2.3.0   `2021-09-26`
 
 - Arguments section in Variable lists now @ARGV and @_ during debugging (#105)
 - @_ is now correctly evaluated inside of debugger console
