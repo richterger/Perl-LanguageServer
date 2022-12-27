@@ -48,7 +48,7 @@ WriteMakefile(
         },
     },
     PL_FILES         => {},
-    MIN_PERL_VERSION => '5.014',
+    MIN_PERL_VERSION => '5.016',
     CONFIGURE_REQUIRES => {
         'ExtUtils::MakeMaker' => '0',
     },
