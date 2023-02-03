@@ -714,8 +714,19 @@ e.g. on Debian/Ubuntu run:
      sudo cpan Perl::LanguageServer
     
 
+e.g. on Centos 7 run:
+
+
+    
+      sudo yum install perl-App-cpanminus perl-AnyEvent-AIO perl-Coro
+      sudo cpanm Class::Refresh
+      sudo cpanm Compiler::Lexer
+      sudo cpanm Hash::SafeKeys
+      sudo cpanm Perl::LanguageServer
+    
+
 In case any of the above packages are not available for your os version, just
-leave then out. The cpan command will install missing dependencies. In case
+leave them out. The cpan command will install missing dependencies. In case
 the test fails, when running cpan C<install>, you should try to run C<force install>.
 
 =head2 Extension Settings
@@ -815,7 +826,7 @@ Example: if your local path is \10.11.12.13\share\path\to\ws and on the remote m
 
     "sshWorkspaceRoot": "/path/to/ws"
 
-The other possibility is to provide a pathMap. This allows to have multiple mappings.
+The other possibility is to provide a pathMap. This allows to having multiple mappings.
 
 Examples:
 
@@ -854,14 +865,14 @@ There are more container options, see above.
 =head3 Working directory is not defined
 
 It is not defined what the current working directory is at the start of a perl program. 
-So Perl::LanguageServer makes no assumtion about it. To solve the problem you can set 
-the directory via cwd configurationm parameter in launch.json for debugging.
+So Perl::LanguageServer makes no assumptions about it. To solve the problem you can set 
+the directory via cwd configuration parameter in launch.json for debugging.
 
 =head3 Module not found when debugging or during syntax check
 
 If you reference a module with a relative path or if you assume that the current working directory 
 is part of the Perl search path, it will not work.
-Instead set the perl include path to a fixed absolue path. In your settings.json do something like:
+Instead set the perl include path to a fixed absolute path. In your settings.json do something like:
 
 
         "perl.perlInc": [
@@ -890,13 +901,13 @@ or make sure you are running in the expected directory by setting the C<cwd> set
 This is not an issue, that just means that not all features of the debugging protocol are implemented. 
 Also it says ERROR, it's just a warning and you can safely ignore it.
 
-=head3 The debugger sometime stop a random places
+=head3 The debugger sometimes stops at random places
 
 Upgrade to Version 2.4.0
 
 =head3 Message about Perl::LanguageServer has crashed 5 times
 
-This is an problem when more then one instance of Perl::LanguageServer is running.
+This is a problem when more than one instance of Perl::LanguageServer is running.
 Upgrade to Version 2.4.0 solve this problem.
 
 =head3 Carton support
@@ -920,10 +931,10 @@ If you are using LL<https://metacpan.org/pod/Carton> to manage dependencies, add
 =head2 Known Issues
 
 Does not yet work on windows, due to issues with reading from stdin.
-I wasn't able to find a reliable way to do a non blocking read from stdin on windows. 
+I wasn't able to find a reliable way to do a non-blocking read from stdin on windows. 
 I would be happy, if anyone knows how to do this in Perl.
 
-Anyway Perl::LanguageServer runs without problems inside of Windows Subsystem for Linux (WSL).
+Anyway, Perl::LanguageServer runs without problems inside of Windows Subsystem for Linux (WSL).
 
 =head2 Release Notes
 
@@ -959,7 +970,7 @@ example Visual Studio Code or Atom.
 
 https://microsoft.github.io/language-server-protocol/specification
 
-It also implements the Debug Adapter Protocol, which allow debugging
+It also implements the Debug Adapter Protocol, which allows debugging
 with various editors/includes
 
 https://microsoft.github.io/debug-adapter-protocol/overview
@@ -975,7 +986,7 @@ Any comments and patches are welcome.
 Copyright 2018-2022 Gerald Richter.
 
 This program is free software; you can redistribute it and/or modify it
-under the terms of the the Artistic License (2.0). You may obtain a
+under the terms of the Artistic License (2.0). You may obtain a
 copy of the full license at:
 
 LL<http://www.perlfoundation.org/artistic_license_2_0>
@@ -1012,7 +1023,19 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =head1 Change Log
 
-=head2 2.4.0   C<18.11.2022>
+=head2 2.4.1   C<unreleased>
+
+=over
+
+=item * Set minimal Perl version to 5.16 (#91)
+
+=item * Fix: "No DB::DB routine defined" (#91) [peterdragon]
+
+=item * Fix: typos and spelling in README (#159) [dseynhae]
+
+=back
+
+=head2 2.4.0   C<2022-11-18>
 
 =over
 
@@ -1048,7 +1071,7 @@ formatting request (#87)
 
 =back
 
-=head2 2.3.0   C<26.09.2021>
+=head2 2.3.0   C<2021-09-26>
 
 =over
 
