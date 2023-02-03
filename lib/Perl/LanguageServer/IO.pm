@@ -96,7 +96,7 @@ sub _write
 
     require IPC::Open3 ;
     require Symbol ; 
-    $err = Symbol::gensym ;
+    $err = Symbol::gensym () ;
     my $pid = IPC::Open3::open3($wtr, $rdr, $err, @$cmd) or die "Cannot run @$cmd" ;
 
     $self -> out_fh ($wtr) ;
