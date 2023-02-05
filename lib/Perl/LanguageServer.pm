@@ -29,11 +29,11 @@ Perl::LanguageServer - Language Server and Debug Protocol Adapter for Perl
 
 =head1 VERSION
 
-Version 2.4.0
+Version 2.5.0
 
 =cut
 
-our $VERSION = '2.4.0';
+our $VERSION = '2.5.0';
 
 
 =head1 SYNOPSIS
@@ -707,24 +707,24 @@ of then with your linux package manager.
 e.g. on Debian/Ubuntu run:
 
 
-
+    
      sudo apt install libanyevent-perl libclass-refresh-perl libcompiler-lexer-perl \
      libdata-dump-perl libio-aio-perl libjson-perl libmoose-perl libpadwalker-perl \
      libscalar-list-utils-perl libcoro-perl
-
+     
      sudo cpan Perl::LanguageServer
-
+    
 
 e.g. on Centos 7 run:
 
 
-
+    
       sudo yum install perl-App-cpanminus perl-AnyEvent-AIO perl-Coro
       sudo cpanm Class::Refresh
       sudo cpanm Compiler::Lexer
       sudo cpanm Hash::SafeKeys
       sudo cpanm Perl::LanguageServer
-
+    
 
 In case any of the above packages are not available for your os version, just
 leave them out. The cpan command will install missing dependencies. In case
@@ -836,7 +836,7 @@ Examples:
         ["remote uri", "local uri"],
         ["remote uri", "local uri"]
     ]
-
+    
     "perl.pathMap": [
         [
         "file:///",
@@ -909,7 +909,7 @@ Upgrade to Version 2.4.0
 =head3 Message about Perl::LanguageServer has crashed 5 times
 
 This is a problem when more than one instance of Perl::LanguageServer is running.
-Upgrade to Version 2.4.0 solve this problem.
+Upgrade to Version 2.4.0 solves this problem.
 
 =head3 Carton support
 
@@ -1024,15 +1024,26 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =head1 Change Log
 
-=head2 2.4.1   C<unreleased>
+=head2 2.5.0   C<2023-02-05>
 
 =over
 
 =item * Set minimal Perl version to 5.16 (#91)
 
+=item * Per default enviroment from vscode will be passed to debuggee, syntax check and perltidy.
+
+=item * Add configuration C<disablePassEnv> to not pass enviroment variables.
+
+=item * Support for C<logLevel> and C<logFile> settings via LanguageServer protocol and
+not only via command line options (#97) [schellj]
+
 =item * Fix: "No DB::DB routine defined" (#91) [peterdragon]
 
-=item * Fix: typos and spelling in README (#159) [dseynhae]
+=item * Fix: Typos and spelling in README (#159) [dseynhae]
+
+=item * Fix: Update call to gensym(), to fix 'strict subs' error (#164) [KohaAloha]
+
+=item * Convert identention from tabs to spaces and remove trailing whitespaces 
 
 =back
 
@@ -1041,17 +1052,17 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =over
 
 =item * Choose a different port for debugAdapterPort if it is already in use. This
-avoids trouble with starting Perl::LanguageServer if another instance
-of Perl::LanguageServer is runing on the same machine (thanks to hakonhagland)
+avoids trouble with starting C<Perl::LanguageServer> if another instance
+of C<Perl::LanguageServer> is runing on the same machine (thanks to hakonhagland)
 
-=item * Add configuration debugAdapterPortRange, for choosing range of port for dynamic
+=item * Add configuration C<debugAdapterPortRange>, for choosing range of port for dynamic
 port assignment
 
 =item * Add support for using LanguageServer and debugger inside a Container.
 Currently docker containers und containers running inside kubernetes are supported.
 
-=item * When starting debugger session and stopOnEntry is false, do not switch to sourefile
-where debugger would stop, when stopOnEntry is true.
+=item * When starting debugger session and C<stopOnEntry> is false, do not switch to sourefile
+where debugger would stop, when C<stopOnEntry> is true.
 
 =item * Added some FAQs in README
 
@@ -1063,9 +1074,9 @@ where debugger would stop, when stopOnEntry is true.
 
 =item * Fix: display of arrays in variables pane on mac (#120)
 
-=item * Fix: encoding for perltidy (#127)
+=item * Fix: encoding for C<perltidy> (#127)
 
-=item * Fix: return error if perltidy fails, so text is not removed by failing
+=item * Fix: return error if C<perltidy> fails, so text is not removed by failing
 formatting request (#87)
 
 =item * Fix: FindBin does not work when checking syntax (#16)
@@ -1076,16 +1087,16 @@ formatting request (#87)
 
 =over
 
-=item * Arguments section in Variable lists now @ARGV and @_ during debugging (#105)
+=item * Arguments section in Variable lists now C<@ARGV> and C<@_> during debugging (#105)
 
-=item * @_ is now correctly evaluated inside of debugger console
+=item * C<@_> is now correctly evaluated inside of debugger console
 
-=item * $#foo is now correctly evaluated inside of debugger console
+=item * C<$#foo> is now correctly evaluated inside of debugger console
 
 =item * Default debug configuration is now automatically provided without
-the need to create a launch.json first (#103)
+the need to create a C<launch.json> first (#103)
 
-=item * Add Option cacheDir to specify location of cache dir (#113)
+=item * Add Option C<cacheDir> to specify location of cache dir (#113)
 
 =item * Fix: Debugger outputted invalid thread reference causes "no such coroutine" message,
 so watchs and code from the debug console is not expanded properly
@@ -1187,9 +1198,13 @@ version is available on CPAN
 
 =head2 2.0.2    C<2020-01-22>
 
-Plugin: Fix command line parameters for plink
+=over
 
-Perl::LanguageServer: Fix handling of multiple parallel request, improve symlink handling, add support for UNC paths in path mapping, improve logging for logLevel = 1
+=item * Plugin: Fix command line parameters for plink
+
+=item * Perl::LanguageServer: Fix handling of multiple parallel request, improve symlink handling, add support for UNC paths in path mapping, improve logging for logLevel = 1
+
+=back
 
 =head2 2.0.1    C<2020-01-14>
 

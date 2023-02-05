@@ -226,7 +226,7 @@ Upgrade to Version 2.4.0
 ### Message about Perl::LanguageServer has crashed 5 times
 
 This is a problem when more than one instance of Perl::LanguageServer is running.
-Upgrade to Version 2.4.0 solve this problem.
+Upgrade to Version 2.4.0 solves this problem.
 
 ### Carton support
 
