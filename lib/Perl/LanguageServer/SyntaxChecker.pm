@@ -21,28 +21,28 @@ has 'infile' =>
     (
     is => 'rw',
     isa => 'Str',
-    lazy_build => 1,    
+    lazy_build => 1,
     ) ;
 
 has 'outfile' =>
     (
     is => 'rw',
     isa => 'Str',
-    lazy_build => 1,    
+    lazy_build => 1,
     ) ;
 
 has 'checker_channel' =>
     (
     is => 'ro',
     isa => 'Coro::Channel',
-    default => sub { Coro::Channel -> new }    
+    default => sub { Coro::Channel -> new }
     ) ;
 
 has 'checker2_channel' =>
     (
     is => 'ro',
     isa => 'Coro::Channel',
-    default => sub { Coro::Channel -> new }    
+    default => sub { Coro::Channel -> new }
     ) ;
 
 # ---------------------------------------------------------------------------
@@ -104,9 +104,9 @@ sub check_perl_syntax
     # my $ProcessObj ;
     my $rc ;
     # Win32::Process::Create($ProcessObj,
-                    
+
     #                     $self -> perlcmd,
-    #                     $cmd,  
+    #                     $cmd,
     #                     0,
     #                     NORMAL_PRIORITY_CLASS,
     #                     ".");
@@ -171,15 +171,15 @@ sub check_perl_syntax
     my $pid = IPC::Open3::open3($wtr, $rdr, $err, $self -> perlcmd, '-c', @$inc) or die "Cannot run " . $self -> perlcmd ;
     $self -> logger ("write start pid=$pid\n") if ($Perl::LanguageServer::debug2) ;
     syswrite ($wtr,  $text . "\n__END__\n") ;
-    $self -> logger ("close start\n") if ($Perl::LanguageServer::debug2) ; ;
+    $self -> logger ("close start\n") if ($Perl::LanguageServer::debug2) ;
     close ($wtr) ;
-    $self -> logger ("write done\n") if ($Perl::LanguageServer::debug2) ; ; 
+    $self -> logger ("write done\n") if ($Perl::LanguageServer::debug2) ;
 
     my $out ;
     my $errout = join ('', <$err>) ;
     close $err ;
     close $rdr  ;
-    $self -> logger ("closed\n") if ($Perl::LanguageServer::debug2) ; ;
+    $self -> logger ("closed\n") if ($Perl::LanguageServer::debug2) ;
     waitpid( $pid, 0 );
     my $rc = $? ;
 
@@ -191,7 +191,7 @@ sub check_perl_syntax
 sub background_checker
     {
     my ($self, $server) = @_ ;
-    
+
     async
         {
         my $channel1 = $self -> checker_channel ;
@@ -205,7 +205,7 @@ sub background_checker
             $timer{$uri} = AnyEvent->timer (after => 1.5, cb => sub
                 {
                 delete $timer{$uri} ;
-                $channel2 -> put($cmd) ;    
+                $channel2 -> put($cmd) ;
                 }) ;
             }
 
@@ -218,7 +218,7 @@ sub background_checker
         my ($uri, $text) = @$cmd ;
 
         $text = eval { Encode::encode ('utf-8', $text) ; } ;
-        $self -> logger ($@) if ($@) ;    
+        $self -> logger ($@) if ($@) ;
 
         my $fn = $uri ;
         $fn =~ s/^file:\/\/// ;
@@ -232,7 +232,7 @@ sub background_checker
         my @inc ;
         @inc = map { ('-I', $_)} @$inc if ($inc) ;
 
-        $self -> logger ("start perl -c for $uri\n") if ($Perl::LanguageServer::debug1) ; ;
+        $self -> logger ("start perl -c for $uri\n") if ($Perl::LanguageServer::debug1) ;
         if ($^O =~ /Win/)
             {
 #            ($ret, $out, $errout) = $self -> run_open3 ($text, \@inc) ;
@@ -248,7 +248,7 @@ sub background_checker
             }
 
         my $rc = $ret >> 8 ;
-        $self -> logger ("perl -c rc=$rc out=$out errout=$errout\n") if ($Perl::LanguageServer::debug1) ; ;
+        $self -> logger ("perl -c rc=$rc out=$out errout=$errout\n") if ($Perl::LanguageServer::debug1) ;
 
         my @messages ;
         if ($rc != 0)
@@ -267,7 +267,7 @@ sub background_checker
                 next if ($line =~ /had compilation errors/) ;
                 $filename = $1 if ($line =~ /at (.+?) line (\d+)[,.]/) ;
                 $lineno   = $1 if ($line =~ / line (\d+)[,.]/) ;
-                
+
                 #print STDERR "line = $lineno  file=$filename\n" ;
                 $msg .= $line ;
                 if ($lineno)
@@ -276,7 +276,7 @@ sub background_checker
                     $lastline = $lineno ;
                     $lineno = 0 ;
                     $msg    = '' ;
-                    }    
+                    }
                 }
             }
 
@@ -284,7 +284,7 @@ sub background_checker
         }
     }
 
-1; 
+1;
 
 __END__
 
@@ -303,10 +303,10 @@ sub xxxx
     # open($oldstderr,     ">&", \*STDERR) or die "Can't dup STDERR: $!";
     # open(STDERR, '>', $outfile)     or die "Can't redirect STDERR: $!";
     # print STDERR "start\n" ;
-    # my $pid = spawnp "perl", ["perl", "-c", $infile]; 
+    # my $pid = spawnp "perl", ["perl", "-c", $infile];
     # open(STDERR, ">&", $oldstderr) or die "Can't dup \$oldstderr: $!";
 
-    #my $pid = spawnp "cmd", ["cmd", '/C', "perl -c $infile 2> $outfile"]; 
+    #my $pid = spawnp "cmd", ["cmd", '/C', "perl -c $infile 2> $outfile"];
     my $pid = spawnp $workspace -> perlcmd, [$workspace -> perlcmd, ]
 
     print STDERR "pid=$pid\n" ;
@@ -327,17 +327,17 @@ sub xxxx
 
     #return ;
 
-    #my ($rc, $diags) = rouse_wait ;   
+    #my ($rc, $diags) = rouse_wait ;
     my $diags = [] ;
 
     print STDERR "---perl -c rc=$rc\n" ;
-    
+
     return if ($rc == 0) ;
 
     my $result =
         {
         method => 'textDocument/publishDiagnostics',
-        params => 
+        params =>
             {
             uri => $uri,
             diagnostics => $diags,
@@ -353,17 +353,17 @@ sub xxxx
     #    # "<", \$text,
     #     "2>", \$errout
     #    ;
- 
-    # $cv->cb (sub 
+
+    # $cv->cb (sub
     #     {
     #     shift->recv and die "perl -c failed";
- 
+
     #     print "-------->$errout\n";
     #     });
 
     # return ;
 
-AnyEvent::Util::fork_call (sub  
+AnyEvent::Util::fork_call (sub
    {
     print STDERR "open3 start c $$\n" ;
 IO::AIO::reinit ;
@@ -396,15 +396,15 @@ IO::AIO::reinit ;
             #   range: Range;
             #	severity?: number;
             #	code?: number | string;
-	        #   source?: string;
-	        #   message: string;
-	        #   relatedInformation?: DiagnosticRelatedInformation[];
+            #   source?: string;
+            #   message: string;
+            #   relatedInformation?: DiagnosticRelatedInformation[];
             range => { start => { line => $lineno-1, character => 0 }, end => { line => $lineno+0, character => 0 }},
             message => $line,
             } ;
         push @diags, $diag ;
         }
-    
+
     print STDERR "EOF\n" ;
 
     waitpid( $pid, 0 );
@@ -413,16 +413,16 @@ IO::AIO::reinit ;
     return ($rc, \@diags) ;
    }, rouse_cb ) ;
 
-    my ($rc, $diags) = rouse_wait ;   
-    
+    my ($rc, $diags) = rouse_wait ;
+
     print STDERR "---perl -c rc=$rc\n" ;
-    
+
     return if ($rc == 0) ;
 
     my $result =
         {
         method => 'textDocument/publishDiagnostics',
-        params => 
+        params =>
             {
             uri => $uri,
             diagnostics => $diags,

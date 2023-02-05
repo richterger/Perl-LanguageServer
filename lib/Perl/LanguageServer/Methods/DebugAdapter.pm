@@ -17,50 +17,50 @@ our %debug_adapters ;
 has 'debugger_process' =>
     (
     isa => 'Perl::LanguageServer::DebuggerProcess',
-    is  => 'rw' 
-    ) ; 
+    is  => 'rw'
+    ) ;
 
 has 'debug_adapter_interface' =>
     (
     isa => 'Perl::LanguageServer',
     is  => 'rw',
-    weak_ref => 1, 
-    ) ; 
+    weak_ref => 1,
+    ) ;
 
 has 'ref2id' =>
     (
     isa => 'HashRef',
     is  => 'rw',
     default => sub { {} },
-    ) ; 
+    ) ;
 
 has 'id2ref' =>
     (
     isa => 'HashRef',
     is  => 'rw',
     default => sub { {} },
-    ) ; 
+    ) ;
 
 has 'refcnt' =>
     (
     isa => 'Int',
     is  => 'rw',
     default => 1,
-    ) ; 
+    ) ;
 
 has 'running' =>
     (
     isa => 'Int',
     is  => 'rw',
     default => 0,
-    ) ; 
+    ) ;
 
 has 'in_temp_break' =>
     (
     isa => 'Int',
     is  => 'rw',
     default => 0,
-    ) ; 
+    ) ;
 
 # ---------------------------------------------------------------------------
 
@@ -95,7 +95,7 @@ sub clear_non_thread_ids
             {
             $id = delete $refs -> {$_} ;
             delete $id2refs -> {$id} ;
-            }    
+            }
         }
     }
 
@@ -132,7 +132,7 @@ sub _dapreq_initialize
 
     #$self -> logger ('initialize debug adapter', dump ($req -> params),"\n") ;
 
-    my $caps = 
+    my $caps =
         {
         # The debug adapter supports the 'configurationDone' request.
         supportsConfigurationDoneRequest => JSON::true(),
@@ -256,19 +256,19 @@ sub _temp_break
     my $running = $self -> running ;
     return if (!$running) ;
 
-    my $temp_break_guard = Guard::guard 
-        { 
-        $self -> _temp_cont ($workspace, $running) ;    
+    my $temp_break_guard = Guard::guard
+        {
+        $self -> _temp_cont ($workspace, $running) ;
         } ;
 
     my $cnt = 50 ;
     my $itb = $self -> in_temp_break ;
     $self -> in_temp_break ($itb + 1) ;
     $self -> logger ("in_temp_break = ", $itb + 1, "\n") ;
-    $self -> _dapreq_pause ($workspace) if ($itb == 0);  
+    $self -> _dapreq_pause ($workspace) if ($itb == 0);
     while ($self -> running && $cnt-- > 0)
         {
-        Coro::AnyEvent::sleep (0.1) ;    
+        Coro::AnyEvent::sleep (0.1) ;
         }
     $self -> _check_not_running ($workspace) ;
     $running = 0 if (!$self -> in_temp_break) ;
@@ -287,7 +287,7 @@ sub _temp_cont
     return if (!$old_running) ;
     return if ($itb == 0) ;
     $self -> in_temp_break ($itb - 1) ;
-    if ($itb == 1) 
+    if ($itb == 1)
         {
         $self -> running (1) ;
         $self -> send_request ('continue') ;
@@ -306,11 +306,11 @@ sub _set_breakpoints
     my @bp ;
     for (my $i; $i < @$breakpoints; $i++)
         {
-        push @bp, [$breakpoints -> [$i]{$location}, $breakpoints -> [$i]{condition}]    
+        push @bp, [$breakpoints -> [$i]{$location}, $breakpoints -> [$i]{condition}]
         }
 
-    my $ret = $self -> send_request ('breakpoint', 
-                                        { 
+    my $ret = $self -> send_request ('breakpoint',
+                                        {
                                         breakpoints => \@bp,
                                         ($source?(filename    => $workspace -> file_client2server ($source -> {path})):()),
                                         }) ;
@@ -324,10 +324,10 @@ sub _set_breakpoints
     for (my $i; $i < @{$ret -> {breakpoints}}; $i++)
         {
         my $bp = $ret -> {breakpoints}[$i] ;
-        push @setbp, 
+        push @setbp,
             {
             verified => $bp -> [2]?JSON::true ():JSON::false (),
-            message  => $bp -> [3], 
+            message  => $bp -> [3],
             line     => $bp -> [4]+0,
             id       => $bp -> [6]+0,
             source   => { path => $workspace -> file_server2client ($bp -> [5]) },
@@ -345,7 +345,7 @@ sub _dapreq_setBreakpoints
 
     my $breakpoints = $req -> params -> {breakpoints} ;
     my $source      = $req -> params -> {source} ;
-    
+
     return { breakpoints => [] } if (!$breakpoints || !$source);
 
     return $self -> _set_breakpoints ($workspace, $req, 'line', $breakpoints, $source) ;
@@ -358,7 +358,7 @@ sub _dapreq_setFunctionBreakpoints
     my ($self, $workspace, $req) = @_ ;
 
     my $breakpoints = $req -> params -> {breakpoints} ;
-    
+
     return { breakpoints => [] } if (!$breakpoints);
 
     return $self -> _set_breakpoints ($workspace, $req, 'name', $breakpoints) ;
@@ -366,7 +366,7 @@ sub _dapreq_setFunctionBreakpoints
 
 # ---------------------------------------------------------------------------
 
-sub _dapreq_setExceptionBreakpoints 
+sub _dapreq_setExceptionBreakpoints
     {
     my ($self, $workspace, $req) = @_ ;
 
@@ -375,7 +375,7 @@ sub _dapreq_setExceptionBreakpoints
 
 # ---------------------------------------------------------------------------
 
-sub _dapreq_breakpointLocations  
+sub _dapreq_breakpointLocations
     {
     my ($self, $workspace, $req) = @_ ;
 
@@ -385,8 +385,8 @@ sub _dapreq_breakpointLocations
     my $temp_break_guard = $self -> _temp_break ($workspace) ;
 
     my $source      = $req -> params -> {source} ;
-    my $ret = $self -> send_request ('can_break', 
-                                        { 
+    my $ret = $self -> send_request ('can_break',
+                                        {
                                         line => $req -> params -> {line},
                                         end_line => $req -> params -> {endLine},
                                         ($source?(filename    => $workspace -> file_client2server ($source -> {path})):()),
@@ -396,13 +396,13 @@ sub _dapreq_breakpointLocations
         {
         $_ -> {line} += 0 ;
         }
-    
+
     return $ret ;
     }
 
 # ---------------------------------------------------------------------------
 
-sub _dapreq_configurationDone 
+sub _dapreq_configurationDone
     {
     my ($self, $workspace, $req) = @_ ;
 
@@ -455,7 +455,7 @@ sub _dapreq_threads
     my $threads = $self -> send_request ('threads') ;
     foreach (@{$threads -> {threads}})
         {
-        $_ -> {id} = $self -> getid (0, $_ -> {thread_ref}) ;    
+        $_ -> {id} = $self -> getid (0, $_ -> {thread_ref}) ;
         }
 
     return $threads ;
@@ -470,8 +470,8 @@ sub _dapreq_stackTrace
     $self -> _check_not_running ($workspace) ;
 
     my $thread_ref = $self -> id2ref -> {$req -> params -> {threadId}} -> {ref} ;
-    my $frames = $self -> send_request ('stack', 
-                                        { 
+    my $frames = $self -> send_request ('stack',
+                                        {
                                         thread_ref => $thread_ref,
                                         levels     => $req -> params -> {levels},
                                         start      => $req -> params -> {startFrame},
@@ -479,7 +479,7 @@ sub _dapreq_stackTrace
 
     foreach (@{$frames -> {stackFrames}})
         {
-        $_ -> {id}      = $self -> getid ($req -> params -> {threadId}, $_ -> {frame_ref}, { thread_ref => $thread_ref, package => $_ -> {'package'} }) ;    
+        $_ -> {id}      = $self -> getid ($req -> params -> {threadId}, $_ -> {frame_ref}, { thread_ref => $thread_ref, package => $_ -> {'package'} }) ;
         $_ -> {line}   += 0 ;
         $_ -> {column} += 0 ;
         $_ -> {source}{path} = $workspace -> file_server2client ($_ -> {source}{path}) ;
@@ -501,18 +501,18 @@ sub _dapreq_scopes
     my $thread_ref = $ref -> {thread_ref} ;
     my $package    = $ref -> {package} ;
 
-    return 
+    return
         {
         scopes =>
             [
-            { name => 'Locals',    presentationHint => 'locals', expensive => JSON::false (),  
-                variablesReference => $self -> getid ($req -> params -> {frameId}, 'l', { frame_ref => $frame_ref, thread_ref => $thread_ref, package => $package }),  },    
-            { name => 'Globals',    presentationHint => 'globals', expensive => JSON::true (),  
-                variablesReference => $self -> getid ($req -> params -> {frameId}, 'g', { frame_ref => $frame_ref, thread_ref => $thread_ref, package => $package }),  },    
-            { name => 'Specials',    presentationHint => 'specials', expensive => JSON::true (),  
-                variablesReference => $self -> getid ($req -> params -> {frameId}, 's', { frame_ref => $frame_ref, thread_ref => $thread_ref, package => $package }),  },    
-            { name => 'Arguments',    presentationHint => 'arguments', expensive => JSON::true (),  
-                variablesReference => $self -> getid ($req -> params -> {frameId}, 'a', { frame_ref => $frame_ref, thread_ref => $thread_ref, package => $package }),  },    
+            { name => 'Locals',    presentationHint => 'locals', expensive => JSON::false (),
+                variablesReference => $self -> getid ($req -> params -> {frameId}, 'l', { frame_ref => $frame_ref, thread_ref => $thread_ref, package => $package }),  },
+            { name => 'Globals',    presentationHint => 'globals', expensive => JSON::true (),
+                variablesReference => $self -> getid ($req -> params -> {frameId}, 'g', { frame_ref => $frame_ref, thread_ref => $thread_ref, package => $package }),  },
+            { name => 'Specials',    presentationHint => 'specials', expensive => JSON::true (),
+                variablesReference => $self -> getid ($req -> params -> {frameId}, 's', { frame_ref => $frame_ref, thread_ref => $thread_ref, package => $package }),  },
+            { name => 'Arguments',    presentationHint => 'arguments', expensive => JSON::true (),
+                variablesReference => $self -> getid ($req -> params -> {frameId}, 'a', { frame_ref => $frame_ref, thread_ref => $thread_ref, package => $package }),  },
             ]
         }    ;
     }
@@ -533,29 +533,29 @@ sub _dapreq_variables
     my $type       = $ref -> {ref} ;
     #use Data::Dump ;
     #print STDERR Data::Dump::pp($self -> id2ref), "\n" ;
-    my $variables = $self -> send_request ('vars', 
-                                        { 
+    my $variables = $self -> send_request ('vars',
+                                        {
                                         thread_ref => $thread_ref,
                                         frame_ref  => $frame_ref,
                                         'package'  => $package,
                                         type       => $type,
                                         #var_ref    => $ref,
-                                        count      => $params -> {count}, 
+                                        count      => $params -> {count},
                                         start      => $params -> {start},
-                                        filter     => $params -> {filter}, 
+                                        filter     => $params -> {filter},
                                         }) ;
 
     foreach (@{$variables -> {variables}})
         {
         $_ -> {variablesReference} = $_ -> {var_ref}?$self -> getid ($req -> params -> {variablesReference},
                                                                      $_ -> {var_ref},
-                                                                        { 
-                                                                        frame_ref  => $frame_ref, 
-                                                                        thread_ref => $thread_ref, 
+                                                                        {
+                                                                        frame_ref  => $frame_ref,
+                                                                        thread_ref => $thread_ref,
                                                                         'package'  => $package,
                                                                          type      => $type}):
-                                                    0 ;    
-        $_ -> {name} .= '' ; # make sure name is a string, otherwise array indices fails on mac 
+                                                    0 ;
+        $_ -> {name} .= '' ; # make sure name is a string, otherwise array indices fails on mac
         }
 
     return $variables ;
@@ -578,10 +578,10 @@ sub _dapreq_setVariable
     my $expr       = $params->{value} ;
     my $setvar     = $params->{name} ;
 
-    my $result = $self -> send_request ('setvar', 
-                                        { 
+    my $result = $self -> send_request ('setvar',
+                                        {
                                         thread_ref => $thread_ref,
-                                        frame_ref  => $frame_ref, 
+                                        frame_ref  => $frame_ref,
                                         'package'  => $package,
                                         expression => $expr,
                                         type       => $type,
@@ -590,12 +590,12 @@ sub _dapreq_setVariable
 
     $result -> {variablesReference} = $result -> {var_ref}?$self -> getid ($req -> params -> {variablesReference},
                                                                     $result -> {var_ref},
-                                                                    { 
-                                                                    frame_ref  => $frame_ref, 
-                                                                    thread_ref => $thread_ref, 
+                                                                    {
+                                                                    frame_ref  => $frame_ref,
+                                                                    thread_ref => $thread_ref,
                                                                     'package'  => $package,
                                                                     }):
-                                                0 ;    
+                                                0 ;
     return $result ;
     }
 
@@ -614,23 +614,23 @@ sub _dapreq_evaluate
     my $package    = $ref -> {package} ;
 
 
-    my $result = $self -> send_request ('evaluate', 
-                                        { 
+    my $result = $self -> send_request ('evaluate',
+                                        {
                                         thread_ref => $thread_ref,
-                                        frame_ref  => $frame_ref, 
+                                        frame_ref  => $frame_ref,
                                         'package'  => $package,
                                         expression     => $req -> params -> {expression},
                                         context      => $req -> params -> {context},
                                         }) ;
-    
+
     $result -> {variablesReference} = $result -> {var_ref}?$self -> getid ($req -> params -> {variablesReference},
                                                                     $result -> {var_ref},
-                                                                    { 
-                                                                    frame_ref  => $frame_ref, 
-                                                                    thread_ref => $thread_ref, 
+                                                                    {
+                                                                    frame_ref  => $frame_ref,
+                                                                    thread_ref => $thread_ref,
                                                                     'package'  => $package,
                                                                     }):
-                                                0 ;    
+                                                0 ;
     $result -> {result} = delete $result -> {value} ;
     return $result ;
     }
@@ -643,7 +643,7 @@ sub _dapreq_pause
 
     $self -> logger ("send SIGINT for pause\n") ;
     $self -> debugger_process -> signal ('INT') ;
-    
+
     return {} ;
     }
 
@@ -654,7 +654,7 @@ sub _dapreq_terminate
     my ($self, $workspace, $req) = @_ ;
 
     $self -> debugger_process -> signal ('TERM') ;
-    
+
     return {} ;
     }
 
@@ -665,7 +665,7 @@ sub _dapreq_disconnect
     my ($self, $workspace, $req) = @_ ;
 
     $self -> debugger_process -> signal ('KILL') ;
-    
+
     return {} ;
     }
 
@@ -679,7 +679,7 @@ sub _dapreq_continue
 
     $self -> running (1) ;
     $self -> send_request ('continue', $req?{ thread_id => $req -> {threadId}}:undef) ;
-    
+
     return {} ;
     }
 
@@ -693,7 +693,7 @@ sub _dapreq_stepIn
 
     $self -> running (1) ;
     $self -> send_request ('step_in', { thread_id => $req -> {threadId}}) ;
-    
+
     return {} ;
     }
 
@@ -707,7 +707,7 @@ sub _dapreq_stepOut
 
     $self -> running (1) ;
     $self -> send_request ('step_out', { thread_id => $req -> {threadId}}) ;
-    
+
     return {} ;
     }
 
@@ -721,7 +721,7 @@ sub _dapreq_next
 
     $self -> running (1) ;
     $self -> send_request ('next', { thread_id => $req -> {threadId}}) ;
-    
+
     return {} ;
     }
 

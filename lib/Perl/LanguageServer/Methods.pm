@@ -18,79 +18,79 @@ sub _rpcreq_initialize
 
     $Perl::LanguageServer::workspace = Perl::LanguageServer::Workspace -> new ({ config => $req -> params }) ;
 
-    my $caps = 
+    my $caps =
         {
         # Defines how text documents are synced. Is either a detailed structure defining each notification or
         # for backwards compatibility the TextDocumentSyncKind number. If omitted it defaults to `TextDocumentSyncKind.None`.
         textDocumentSync => 1, # full
-        
+
         # The server provides hover support.
         #hoverProvider?: boolean;
-        
+
         # The server provides completion support.
         #completionProvider?: CompletionOptions;
 
         # The server provides signature help support.
-	    #signatureHelpProvider?: SignatureHelpOptions;
+        #signatureHelpProvider?: SignatureHelpOptions;
         signatureHelpProvider =>
             {
             triggerCharacters => ['('],
             },
 
         # The server provides goto definition support.
-	    #definitionProvider?: boolean;
+        #definitionProvider?: boolean;
         definitionProvider => JSON::true,
 
         # The server provides Goto Type Definition support.
         # Since 3.6.0
-	    #typeDefinitionProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+        #typeDefinitionProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
 
         # The server provides Goto Implementation support.
         # Since 3.6.0
-	    #implementationProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
+        #implementationProvider?: boolean | (TextDocumentRegistrationOptions & StaticRegistrationOptions);
 
         # The server provides find references support.
-	    referencesProvider => JSON::true,
+        referencesProvider => JSON::true,
 
         # The server provides document highlight support.
-	    #documentHighlightProvider?: boolean;
+        #documentHighlightProvider?: boolean;
 
         # The server provides document symbol support.
-	    #documentSymbolProvider?: boolean;
+        #documentSymbolProvider?: boolean;
         documentSymbolProvider => JSON::true,
 
         # The server provides workspace symbol support.
-	    workspaceSymbolProvider => JSON::true,
+        workspaceSymbolProvider => JSON::true,
 
         # The server provides code actions.
-	    #codeActionProvider?: boolean;
+        #codeActionProvider?: boolean;
 
         # The server provides code lens.
-	    #codeLensProvider?: CodeLensOptions;
+        #codeLensProvider?: CodeLensOptions;
 
         # The server provides document formatting.
-	    #documentFormattingProvider?: boolean;
-	    #documentFormattingProvider => JSON::true,
+        #documentFormattingProvider?: boolean;
+        #documentFormattingProvider => JSON::true,
 
         # The server provides document range formatting.
-	    #documentRangeFormattingProvider?: boolean;
-	    documentRangeFormattingProvider => JSON::true,
+        #documentRangeFormattingProvider?: boolean;
+        documentRangeFormattingProvider => JSON::true,
 
         # The server provides document formatting on typing.
-	    #documentOnTypeFormattingProvider?: DocumentOnTypeFormattingOptions;
+        #documentOnTypeFormattingProvider?: DocumentOnTypeFormattingOptions;
 
         # The server provides rename support.
-	    #renameProvider?: boolean;
+        #renameProvider?: boolean;
 
         # The server provides document link support.
-	    #documentLinkProvider?: DocumentLinkOptions;
+        #documentLinkProvider?: DocumentLinkOptions;
 
         # The server provides color provider support.
         # Since 3.6.0
-	    #colorProvider?: boolean | ColorProviderOptions | (ColorProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
+        #colorProvider?: boolean | ColorProviderOptions | (ColorProviderOptions & TextDocumentRegistrationOptions & StaticRegistrationOptions);
 
         # The server provides execute command support.
-	    #executeCommandProvider?: ExecuteCommandOptions;
+        #executeCommandProvider?: ExecuteCommandOptions;
 
         # The server provides selection range support.
         # @since 3.15.0
@@ -99,29 +99,29 @@ sub _rpcreq_initialize
         #selectionRangeProvider => JSON::true,
 
         # Workspace specific server capabilities
-	    workspace => {
-	
-	        # The server supports workspace folder.
-	        # Since 3.6.0
-		    workspaceFolders => {
-		
-			# The server has support for workspace folders
-			supported => JSON::true,
-		
-			# * Whether the server wants to receive workspace folder
-			# * change notifications.
-			# *
-			# * If a strings is provided the string is treated as a ID
-			# * under which the notification is registered on the client
-			# * side. The ID can be used to unregister for these events
-			# * using the `client/unregisterCapability` request.
-			# */
-			changeNotifications => JSON::true,
-		    }
-	    }
+        workspace => {
+
+            # The server supports workspace folder.
+            # Since 3.6.0
+            workspaceFolders => {
+
+            # The server has support for workspace folders
+            supported => JSON::true,
+
+            # * Whether the server wants to receive workspace folder
+            # * change notifications.
+            # *
+            # * If a strings is provided the string is treated as a ID
+            # * under which the notification is registered on the client
+            # * side. The ID can be used to unregister for these events
+            # * using the `client/unregisterCapability` request.
+            # */
+            changeNotifications => JSON::true,
+            }
+        }
 
         # Experimental server capabilities.
-	    #experimental?: any;
+        #experimental?: any;
         } ;
 
     return { capabilities => $caps } ;

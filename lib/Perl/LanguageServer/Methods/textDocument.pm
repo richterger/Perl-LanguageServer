@@ -52,7 +52,7 @@ sub get_symbol_before_left_parenthesis
     my $text = $files -> {$uri}{text} ;
     my $line = $pos -> {line} ;
     my $char = $pos -> {character} - 1 ;
-    my $cnt  = 1 ; 
+    my $cnt  = 1 ;
     my $i ;
     my $endpos ;
     my @symbol ;
@@ -103,7 +103,7 @@ sub get_symbol_before_left_parenthesis
         last if (@symbol) ;
         $line-- ;
         $char = undef ;
-        }    
+        }
 
     my $method ;
     for ($i = $symbolpos - 1 ; $i > 0; $i--)
@@ -202,14 +202,14 @@ sub _filter_children
             {
             if (exists $v -> {children})
                 {
-                push @vars, { %$v, children => $self -> _filter_children ($v -> {children})} ;    
+                push @vars, { %$v, children => $self -> _filter_children ($v -> {children})} ;
                 }
             else
                 {
                 push @vars, $v  ;
                 }
             }
-        }    
+        }
     return \@vars ;
     }
 
@@ -239,14 +239,14 @@ sub _rpcreq_documentSymbol
             {
             if (exists $v -> {children})
                 {
-                push @vars, { %$v, children => $self -> _filter_children ($v -> {children})} ;    
+                push @vars, { %$v, children => $self -> _filter_children ($v -> {children})} ;
                 }
             else
                 {
                 push @vars, $v  ;
                 }
             }
-        }    
+        }
 
     return \@vars ;
     }
@@ -261,9 +261,9 @@ sub _get_symbol
         {
         foreach my $s (@{$symbol -> {children}})
             {
-            $self -> _get_symbol ($workspace, $req, $s, $name, $uri, $def_only, $vars) ;   
+            $self -> _get_symbol ($workspace, $req, $s, $name, $uri, $def_only, $vars) ;
             last if (@$vars > 500) ;
-            }    
+            }
         }
 
     return if ($symbol -> {name} ne $name) ;
@@ -295,7 +295,7 @@ sub _get_symbols
             {
             foreach my $symbol (@{$symbols->{$uri}})
                 {
-                $self -> _get_symbol ($workspace, $req, $symbol, $name, $uri, $def_only, \@vars) ;   
+                $self -> _get_symbol ($workspace, $req, $symbol, $name, $uri, $def_only, \@vars) ;
                 last if (@vars > 500) ;
                 }
             }
@@ -303,7 +303,7 @@ sub _get_symbols
 
     return \@vars ;
     }
-    
+
 # ---------------------------------------------------------------------------
 
 sub _rpcreq_definition
@@ -359,7 +359,7 @@ sub _rpcreq_signatureHelp
             last if (@vars > 200) ;
             }
         }
- 
+
     $self -> logger (pp(\@vars))  if ($Perl::LanguageServer::debug2) ;
 
     my $signum = 0 ;
@@ -401,15 +401,15 @@ sub _rpcreq_rangeFormatting
     #$workspace -> parser_channel -> put (['save', $uri]) ;
     $self -> logger (pp($req -> params)) ;
 
-    #FormattingOptions 
-	# Size of a tab in spaces.
-	#tabSize: uinteger;
-	# Prefer spaces over tabs.
-	#insertSpaces: boolean;
+    #FormattingOptions
+    # Size of a tab in spaces.
+    #tabSize: uinteger;
+    # Prefer spaces over tabs.
+    #insertSpaces: boolean;
     # Trim trailing whitespace on a line.
-	#trimTrailingWhitespace?: boolean;
+    #trimTrailingWhitespace?: boolean;
     # Insert a newline character at the end of the file if one does not exist.
-	# insertFinalNewline?: boolean;
+    # insertFinalNewline?: boolean;
     #trimFinalNewlines?: boolean;
 
     my $ret ;
@@ -435,7 +435,7 @@ sub _rpcreq_rangeFormatting
         $range_text =~ s/\n$// ;
         }
     $self -> logger ('perltidy text: <' . $range_text . ">\n") if ($Perl::LanguageServer::debug2) ;
-    
+
     return [] if ($range_text eq '') ;
 
     my $lang = $ENV{LANG} ;
@@ -458,7 +458,7 @@ sub _rpcreq_rangeFormatting
         }
 
     my $rc = $ret >> 8 ;
-    $self -> logger ("perltidy rc=$rc errout=$errout\n") if ($Perl::LanguageServer::debug1) ; ;
+    $self -> logger ("perltidy rc=$rc errout=$errout\n") if ($Perl::LanguageServer::debug1) ;
 
     my @messages ;
     if ($rc != 0)
@@ -468,7 +468,7 @@ sub _rpcreq_rangeFormatting
         my $lineno = 0 ;
         my $filename ;
         my $msg ;
-        my $severity = 2 ; 
+        my $severity = 2 ;
         foreach $line (@lines)
             {
             next if ($line !~ /^(.+?):(\d+):(.+)/) ;
