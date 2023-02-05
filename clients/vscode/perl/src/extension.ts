@@ -134,6 +134,18 @@ export async function activate(context: vscode.ExtensionContext)
 
 	console.log('extension "perl" is now active');
 
+    let env : any  = {} ;
+	if (!config.get('disablePassEnv'))
+		{
+        var k ;
+        for (k in process.env)
+            {
+            env[k] = process.env[k] ;
+            console.log('env: ' + k + ' = ' + env[k] ) ;
+            }
+        }
+
+
     let resource = vscode.window.activeTextEditor?.document.uri ;
 
     let containerCmd  : string   = config.get('containerCmd')  || '' ;
@@ -153,8 +165,14 @@ export async function activate(context: vscode.ExtensionContext)
     let perlArgs        : string[]   = config.get('perlArgs') || [] ;
     let perlInc         : string[]   = config.get('perlInc') || [] ;
     let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + resolve_workspaceFolder(dir, resource)) ;
-    let env             : any        = config.get('env') || {} ;
-	let logFile         : string     = config.get('logFile') || '' ;
+    let addenv          : any        = config.get('env') || {} ;
+    var k ;
+    for (k in addenv)
+        {
+        env[k] = addenv[k] ;
+        console.log('addenv: ' + k + ' = ' + env[k] ) ;
+        }
+    let logFile         : string     = config.get('logFile') || '' ;
     let logLevel        : number     = config.get('logLevel') || 0 ;
     let client_version  : string     = "2.4.0" ;
     let perlArgsOpt     : string[]   = [...perlIncOpt,
