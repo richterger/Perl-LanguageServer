@@ -54,6 +54,16 @@ BEGIN {
   @skippkg = ();
   $usrctxt = '';
   $evalarg = '';
+
+  # scan args for stdin redirect
+  for (my $i=0; $i <= $#ARGV; $i++) {
+    if ($ARGV[$i] eq "<" && $i < $#ARGV) {
+      # open stdin from file
+      open STDIN, "<", $ARGV[$i+1] or die "open stdin";
+      # remove from ARGV
+      splice @ARGV, $i, 2;
+    }
+  }
 }
 
 ####
