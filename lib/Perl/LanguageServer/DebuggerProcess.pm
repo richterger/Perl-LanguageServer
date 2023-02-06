@@ -123,10 +123,10 @@ sub launch
     my $fn = $workspace -> file_client2server ($self -> program) ;
     my $pid ;
     {
-    local %ENV ;
+    local %ENV = %ENV ;
     foreach (keys %{$self -> env})
         {
-        $ENV{$_} = $self -> env -> {$_} ;    
+        $ENV{$_} = $self -> env -> {$_} ;
         }
 
     my $cwd ;
