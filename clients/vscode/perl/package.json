@@ -195,6 +195,11 @@
                                 "type": "boolean",
                                 "description": "Automatically reload changed Perl modules while debugging.",
                                 "default": true
+                            },
+                            "sudoUser": {
+                                "type": "string",
+                                "description": "optional, if set run debug process with sudo -u <sudoUser>.",
+                                "default": null
                             }
                         }
                     }
@@ -211,18 +216,18 @@
                 ],
                 "configurationSnippets": [
                     {
-                      "label": "Perl-Debugger: Start current file",
-                      "description": "A new configuration for launching perl debug program",
-                      "body": {
-                        "type": "perl",
-                        "request": "launch",
-                        "name": "Perl-Debug",
-                        "program": "${workspaceFolder}/${relativeFile}",
-                        "stopOnEntry": true,
-                        "reloadModules": true
-                      }
+                        "label": "Perl-Debugger: Start current file",
+                        "description": "A new configuration for launching perl debug program",
+                        "body": {
+                            "type": "perl",
+                            "request": "launch",
+                            "name": "Perl-Debug",
+                            "program": "${workspaceFolder}/${relativeFile}",
+                            "stopOnEntry": true,
+                            "reloadModules": true
+                        }
                     }
-                  ]
+                ]
             }
         ]
     },
@@ -241,6 +246,7 @@
         "typescript": "^4.3.5"
     },
     "dependencies": {
+        "vsce": "^2.15.0",
         "vscode-languageclient": "^6.1.4"
     }
 }
