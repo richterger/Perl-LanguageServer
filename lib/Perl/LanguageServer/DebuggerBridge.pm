@@ -31,16 +31,16 @@ sub run
             if ($fh == $stdin)
                 {
                 my $data ;
-                exit if (sysread ($fh, $data, 16384) <= 0) ; 
+                exit if (sysread ($fh, $data, 16384) <= 0) ;
                 syswrite ($socket, $data) ;
                 }
             elsif ($fh == $socket)
                 {
                 my $data ;
-                exit if (sysread ($fh, $data, 16384) <= 0) ; 
+                exit if (sysread ($fh, $data, 16384) <= 0) ;
                 syswrite (\*STDOUT, $data) ;
                 }
-            }    
+            }
         }
     }
 

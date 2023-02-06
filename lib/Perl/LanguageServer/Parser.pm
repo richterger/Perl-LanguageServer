@@ -71,7 +71,7 @@ sub _get_docu
             unshift @docu, $src ;
             }
         else
-            {    
+            {
             next if ($src =~ /^\s*$/) ;
             next if ($src =~ /^\s*#[-#+~= \t]+$/) ;
             last if ($src !~ /^\s*#(.*?)\s*$/) ;
@@ -91,14 +91,14 @@ sub _get_docu
 
 sub parse_perl_source
     {
-    my ($self, $uri, $source, $server) = @_ ;    
+    my ($self, $uri, $source, $server) = @_ ;
 
     $source =~ s/\r//g ; #  Compiler::Lexer computes wrong line numbers with \r
     my @source = split /\n/, $source ;
 
     my $lexer  = Compiler::Lexer->new();
     my $tokens = $lexer->tokenize($source);
-    
+
     cede () ;
 
     #$server -> logger (dump ($tokens) . "\n") ;
@@ -137,20 +137,20 @@ sub parse_perl_source
             {
             when (['VarDecl', 'OurDecl', 'FunctionDecl'])
                 {
-                $decl = $token -> {data}, 
-                $declline = $token -> {line} ;   
+                $decl = $token -> {data},
+                $declline = $token -> {line} ;
                 }
             when (/Var$/)
                 {
                 $top = $decl eq 'our' || !$parent?\@vars:$parent ;
-                push @$top, 
+                push @$top,
                     {
                     name        => $token -> {data},
                     kind        => SymbolKindVariable,
-                    containerName => $decl eq 'our'?$package:$func,     
+                    containerName => $decl eq 'our'?$package:$func,
                     ($decl?(definition   => $decl):()),
                     ($decl eq 'my'?(localvar => $decl):()),
-                    } ; 
+                    } ;
                 $add = $top -> [-1] ;
                 $token -> {line} = $declline if ($decl) ;
                 $decl = undef ;
@@ -161,7 +161,7 @@ sub parse_perl_source
                 $decl = undef ;
                 if (@vars && $vars[-1]{kind} == SymbolKindVariable)
                     {
-                    $vars[-1]{name} =~ s/^\$/%/ ;    
+                    $vars[-1]{name} =~ s/^\$/%/ ;
                     }
                 }
             when (['RightBrace', 'SemiColon'])
@@ -174,20 +174,20 @@ sub parse_perl_source
                     $func   = $stacktop -> {func} ;
                     my $symbol = $stacktop -> {symbol} ;
                     my $start_line = $symbol -> {range}{start}{line} // $symbol -> {line} ;
-                    $symbol ->  {range} = { start => { line => $start_line, character => 0 }, end => { line => $token -> {line}-1, character => 9999 }} 
+                    $symbol ->  {range} = { start => { line => $start_line, character => 0 }, end => { line => $token -> {line}-1, character => 9999 }}
                         if (defined ($start_line)) ;
                     }
                 if ($token -> {name} eq 'SemiColon')
                     {
                     $decl = undef ;
-                    continue ;    
-                    }    
+                    continue ;
+                    }
                 }
             when ('LeftBracket')
                 {
                 if (@vars && $vars[-1]{kind} == SymbolKindVariable)
                     {
-                    $vars[-1]{name} =~ s/^\$/@/ ;    
+                    $vars[-1]{name} =~ s/^\$/@/ ;
                     }
                 }
             when (['Function', 'Method'])
@@ -195,18 +195,18 @@ sub parse_perl_source
                 if ($token -> {data} =~ /^\w/)
                     {
                     $top = !$parent?\@vars:$parent ;
-                    push @$top, 
+                    push @$top,
                         {
                         name        => $token -> {data},
                         kind        => SymbolKindFunction,
-                        containerName => @stack?$func:$package,     
+                        containerName => @stack?$func:$package,
                         ($decl?(definition   => $decl):()),
-                        }  ;  
+                        }  ;
                     $func_param = $add = $top -> [-1] ;
                     if ($decl)
                         {
-                        push @stack, 
-                            { 
+                        push @stack,
+                            {
                             brace_level => $brace_level,
                             parent      => $parent,
                             func        => $func,
@@ -245,9 +245,9 @@ sub parse_perl_source
                         my @parameters ;
                         foreach my $p (reverse @params)
                             {
-                            push @parameters, 
+                            push @parameters,
                                 {
-                                label => $p,    
+                                label => $p,
                                 } ;
                             }
                         $func_param -> {detail} = '(' . join (',', reverse @params) . ')' ;
@@ -255,11 +255,11 @@ sub parse_perl_source
                             {
                             label => $func_param -> {name} . $func_param -> {detail},
                             documentation => $func_doc,
-                            parameters => \@parameters 
+                            parameters => \@parameters
                             } ;
-                        }                    
-                    $func_param = undef ;    
-                    }    
+                        }
+                    $func_param = undef ;
+                    }
                 }
             when ('Prototype')
                 {
@@ -270,9 +270,9 @@ sub parse_perl_source
                     my @parameters ;
                     foreach my $p (@params)
                         {
-                        push @parameters, 
+                        push @parameters,
                             {
-                            label => $p,    
+                            label => $p,
                             } ;
                         }
                     $func_param -> {detail} = '(' . join (',', @params) . ')' ;
@@ -280,10 +280,10 @@ sub parse_perl_source
                         {
                         label => $func_param -> {name} . $func_param -> {detail},
                         documentation => $func_doc,
-                        parameters => \@parameters 
+                        parameters => \@parameters
                         } ;
-                    $func_param = undef ;    
-                    }    
+                    $func_param = undef ;
+                    }
                 }
             when (['Package', 'UseDecl'] )
                 {
@@ -292,31 +292,31 @@ sub parse_perl_source
                 }
             when (['ShortHashDereference', 'ShortArrayDereference'])
                 {
-                $state{scalar} = '$' ;    
+                $state{scalar} = '$' ;
                 }
             when ('Key')
                 {
                 if (exists ($state{constant}))
                     {
                     $top = \@vars ;
-                    push @$top, 
+                    push @$top,
                         {
                         name        => $token -> {data},
                         kind        => SymbolKindConstant,
-                        containerName => $package,     
+                        containerName => $package,
                         definition   => 1,
-                        } ;    
+                        } ;
                     $add = $top -> [-1] ;
                     }
                 elsif (exists ($state{scalar}))
                     {
                     $top = $decl eq 'our' || !$parent?\@vars:$parent ;
-                    push @$top, 
+                    push @$top,
                         {
                         name        => $state{scalar} . $token -> {data},
                         kind        => SymbolKindVariable,
-                        containerName => $decl eq 'our'?$package:$func,     
-                        } ;    
+                        containerName => $decl eq 'our'?$package:$func,
+                        } ;
                     $add = $top -> [-1] ;
                     }
                 elsif ($token -> {data} ~~ ['has', 'class_has'])
@@ -326,46 +326,46 @@ sub parse_perl_source
                 elsif ($token -> {data} ~~ ['around', 'before', 'after'])
                     {
                     $state{method_mod} = 1 ;
-                    $decl = $token -> {data}, 
-                    $declline = $token -> {line} ;   
+                    $decl = $token -> {data},
+                    $declline = $token -> {line} ;
                     }
                 elsif ($token -> {data} =~ /^[a-z_][a-z0-9_]+$/i)
                     {
                     $top = \@vars ;
-                    push @$top, 
+                    push @$top,
                         {
                         name        => $token -> {data},
                         kind        => SymbolKindFunction,
-                        }  ;  
+                        }  ;
                     $add = $top -> [-1] ;
                     }
                 }
             when ('RawString')
                 {
                 if (exists ($state{has}))
-                    {    
+                    {
                     $top = \@vars ;
-                    push @$top, 
+                    push @$top,
                         {
                         name        => $token -> {data},
                         kind        => SymbolKindProperty,
-                        containerName => $package,     
+                        containerName => $package,
                         definition   => 1,
                         } ;
                     $add = $top -> [-1] ;
                     }
                 }
-            when ('UsedName') 
+            when ('UsedName')
                 {
                 if ($token -> {data} eq 'constant')
                     {
                     delete $state{module} ;
-                    $state{constant} = 1 ;      
+                    $state{constant} = 1 ;
                     }
                 else
                     {
-                    $state{ns} = [$token->{data}] ;    
-                    }    
+                    $state{ns} = [$token->{data}] ;
+                    }
                 }
             when ('Namespace')
                 {
@@ -379,8 +379,8 @@ sub parse_perl_source
             when ('Assign')
                 {
                 $decl = undef ;
-                continue ;    
-                }    
+                continue ;
+                }
             when ($token -> {data} =~ /^\W/)
                 {
                 if (exists ($state{ns}))
@@ -391,49 +391,49 @@ sub parse_perl_source
                         if ($state{is} eq 'package')
                             {
                             $def = 1 ;
-                            $package = join ('::', @{$state{ns}}) ;    
+                            $package = join ('::', @{$state{ns}}) ;
                             $top = \@vars ;
-                            push @$top, 
+                            push @$top,
                                 {
                                 name        => $package,
                                 kind        => SymbolKindModule,
                                 #containerName => join ('::', @{$state{ns}}),
                                 #($def?(definition   => $def):()),
                                 definition => 1,
-                                } ;   
+                                } ;
                             $add = $top -> [-1] ;
                             }
                         else
-                            {        
+                            {
                             my $name = pop @{$state{ns}} ;
                             $top = \@vars ;
-                            push @$top, 
+                            push @$top,
                                 {
                                 name        => $name,
                                 kind        => SymbolKindModule,
                                 containerName => join ('::', @{$state{ns}}),
                                 ($def?(definition   => $def):()),
-                                } ;   
+                                } ;
                             $add = $top -> [-1] ;
                             }
                         }
                     else
-                        {    
+                        {
                         my $name = shift @{$state{ns}} ;
                         $top = \@vars ;
-                        push @$top, 
+                        push @$top,
                             {
                             name        => $name,
                             kind        => SymbolKindFunction,
-                            containerName => join ('::', @{$state{ns}}),     
-                            } ;   
+                            containerName => join ('::', @{$state{ns}}),
+                            } ;
                         $add = $top -> [-1] ;
                         }
                     }
 
                 %state = () ;
                 }
-            }    
+            }
         if ($add)
             {
             if (!$uri)
@@ -441,11 +441,11 @@ sub parse_perl_source
                 $add ->  {line} = $token -> {line}-1 ;
                 }
             else
-                {    
+                {
                 #$add ->  {location} = { uri => $uri, range => { start => { line => $token -> {line}-1, character => 0 }, end => { line => $token -> {line}-1, character => 0 }}} ;
-                $add ->  {range} =         { start => { line => $token -> {line}-1, character => 0 },          
+                $add ->  {range} =         { start => { line => $token -> {line}-1, character => 0 },
                                              end   => { line => $token -> {line}-1, character => ($endchar?9999:0) }} ;
-                $add -> {selectionRange} = { start => { line => $token -> {line}-1, character => $beginchar }, 
+                $add -> {selectionRange} = { start => { line => $token -> {line}-1, character => $beginchar },
                                              end   => { line => $token -> {line}-1, character => $endchar }} ;
                 $beginchar = $endchar = 0 ;
                 }
@@ -464,7 +464,7 @@ sub parse_perl_source
 
 sub _parse_perl_source_cached
     {
-    my ($self, $uri, $source, $path, $stats, $server) = @_ ;    
+    my ($self, $uri, $source, $path, $stats, $server) = @_ ;
 
     my $cachepath ;
     if (!$self -> disable_cache)
@@ -484,7 +484,7 @@ sub _parse_perl_source_cached
             #$server -> logger ("cache = $mtime_cache src = $mtime_src\n") ;
             if ($mtime_src > $mtime_cache)
                 {
-                #$server -> logger ("load from cache\n") ;    
+                #$server -> logger ("load from cache\n") ;
                 my $cache ;
                 aio_load ($cachepath, $cache) ;
                 my $cache_data = eval { $Perl::LanguageServer::json -> decode ($cache) ; } ;
@@ -512,9 +512,9 @@ sub _parse_perl_source_cached
         aio_write ($ifh, undef, undef, $Perl::LanguageServer::json -> encode ({ version => CacheVersion, vars => $vars}), 0) ;
         aio_close ($ifh) ;
         }
-        
+
     $stats -> {parsed}++ ;
-    
+
     return $vars ;
     }
 
@@ -544,12 +544,12 @@ sub _parse_dir
             $self -> _parse_dir ($server, $dir . '/' . $d, $vars, $stats) ;
             }
         }
-    
+
     if ($files)
         {
         foreach my $f (sort @$files)
             {
-            next if ($f !~ /$filefilter/) ; 
+            next if ($f !~ /$filefilter/) ;
 
             $fn = $dir . '/' . $f ;
             aio_load ($fn, $text) ;
@@ -563,8 +563,8 @@ sub _parse_dir
             $server -> logger ("loaded $stats->{loaded} files, parsed $stats->{parsed} files, $cnt files\n") if ($cnt % 100 == 0) ;
             }
         }
-    
-    
+
+
     }
 
 # ----------------------------------------------------------------------------
@@ -576,7 +576,7 @@ sub background_parser
     my $channel = $self -> parser_channel ;
     $channel -> shutdown ; # end other parser
     cede ;
-    
+
     $channel = $self -> parser_channel (Coro::Channel -> new) ;
     my $folders = $self -> folders ;
     $server -> logger ("background_parser folders = ", dump ($folders), "\n") ;
@@ -596,10 +596,10 @@ sub background_parser
 
     while (my $item = $channel -> get)
         {
-        my ($cmd, $uri) = @$item ;    
+        my ($cmd, $uri) = @$item ;
 
         my $fn = substr ($self -> uri_client2server ($uri), 7) ;
-        next if (basename ($fn) !~ /$filefilter/) ; 
+        next if (basename ($fn) !~ /$filefilter/) ;
 
         my $text ;
         aio_load ($fn, $text) ;
@@ -610,11 +610,11 @@ sub background_parser
         }
 
     $server -> logger ("background_parser quit\n") ;
-    }    
+    }
 
 
 
 1 ;
 
 
-    
+

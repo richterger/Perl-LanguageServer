@@ -8,13 +8,13 @@ use Data::Dump qw{dump} ;
 
 no warnings 'uninitialized' ;
 
-has 'out_fh' => 
+has 'out_fh' =>
     (
     is => 'rw',
     #isa => 'Int',
     ) ;
 
-has 'in_fh' => 
+has 'in_fh' =>
     (
     is => 'rw',
     #isa => 'Int',
@@ -26,7 +26,7 @@ our $windows=  ($^O =~ /Win/)?1:0 ;
 
 # ---------------------------------------------------------------------------
 
-sub _read 
+sub _read
     {
     my ($self, $data, $length, $dataoffset, $fh, $readline) = @_ ;
 
@@ -43,7 +43,7 @@ sub _read
         }
     if (!$windows || !ref $fh)
         {
-        return aio_read ($fh, undef, $length, $$data, $dataoffset) ;    
+        return aio_read ($fh, undef, $length, $$data, $dataoffset) ;
         }
 
     my $timeout = 0.01 ;
@@ -61,19 +61,19 @@ sub _read
 
 # ---------------------------------------------------------------------------
 
-sub _write 
+sub _write
     {
     my ($self, $data, $length, $dataoffset) = @_ ;
 
     my $fh = $self -> out_fh ;
     if (ref ($fh) =~ /^Coro::Handle/)
         {
-        return $fh -> syswrite ($data, $length, $dataoffset) ;    
+        return $fh -> syswrite ($data, $length, $dataoffset) ;
         }
 
     if (!$windows || !ref $fh)
         {
-        return aio_write ($fh, undef, $length, $data, $dataoffset) ;    
+        return aio_write ($fh, undef, $length, $data, $dataoffset) ;
         }
 
     $length = length ($data) if (!defined ($length)) ;
@@ -91,11 +91,11 @@ sub _write
     $on_exit   ||= 'on_exit' ;
 
     my($wtr, $rdr, $err);
-    
+
     $self -> logger ("start @$cmd\n") ;
 
     require IPC::Open3 ;
-    require Symbol ; 
+    require Symbol ;
     $err = Symbol::gensym () ;
     my $pid = IPC::Open3::open3($wtr, $rdr, $err, @$cmd) or die "Cannot run @$cmd" ;
 
@@ -110,24 +110,24 @@ sub _write
         while ($self -> _read (\$data, 8192))
             {
             $self -> logger ("stdout ", $data, "\n") ;
-            $self -> $on_stdout ($data) ;    
-            }    
+            $self -> $on_stdout ($data) ;
+            }
         waitpid( $pid, 0 );
         $self -> logger ("@$cmd ended\n") ;
         Coro::cede_notself () ;
-        $self -> $on_exit ($?)  ;    
+        $self -> $on_exit ($?)  ;
         } ;
-    
+
     async
         {
         my $data ;
-        while ($self -> _read (\$data, 8192, undef, $err)) 
+        while ($self -> _read (\$data, 8192, undef, $err))
             {
             $self -> logger ("stderr ", $data, "\n") ;
-            $self -> $on_stderr ($data) ;    
-            }    
+            $self -> $on_stderr ($data) ;
+            }
         } ;
-    
+
     return $pid ;
     }
 

@@ -2,7 +2,7 @@
     "name": "perl",
     "displayName": "Perl",
     "description": "Language Server and Debugger for Perl",
-    "version": "2.4.0",
+    "version": "2.5.0",
     "publisher": "richterger",
     "repository": "https://github.com/richterger/Perl-LanguageServer",
     "license": "SEE LICENSE IN LICENSE",
@@ -97,6 +97,11 @@
                 "perl.env": {
                     "type": "object",
                     "description": "object with environment settings for command that starts the LanguageServer, e.g. can be used to set KUBECONFIG.",
+                    "default": null
+                },
+                "perl.disablePassEnv": {
+                    "type": "boolean",
+                    "description": "per default enviroment from vscode will be passed to debuggee, syntax check and perltidy. If set to true, no enviroment variables will be passed.",
                     "default": null
                 },
                 "perl.pathMap": {

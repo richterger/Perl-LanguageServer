@@ -13,53 +13,53 @@ import * as net from 'net';
 
 function check_available_port (port: number): Promise<number>
     {
-	return new Promise((resolve, reject) =>
+    return new Promise((resolve, reject) =>
         {
-		const server = net.createServer();
-		server.unref();
-		server.on('error', reject);
+        const server = net.createServer();
+        server.unref();
+        server.on('error', reject);
 
-		server.listen({ host: '127.0.0.1', port: port }, () =>
+        server.listen({ host: '127.0.0.1', port: port }, () =>
             {
-			//const addr = server.address();
-			server.close(() =>
+            //const addr = server.address();
+            server.close(() =>
                 {
-				resolve(port);
-			    });
-		    });
-	    });
+                resolve(port);
+                });
+            });
+        });
     }
 
 // ------------------------------------------------------------------------------
 
 async function get_available_port (port: number, port_range: number): Promise<number>
     {
-	for (var i = 0; i < port_range; i++)
+    for (var i = 0; i < port_range; i++)
         {
-		try
+        try
             {
             console.log('try if port ' + (port + i) + ' is available');
 
-			return await check_available_port(port + i);
-		    }
+            return await check_available_port(port + i);
+            }
         catch (error: unknown)
             {
-			let errorCode = error as NodeJS.ErrnoException;
-			if (errorCode.code === undefined)
+            let errorCode = error as NodeJS.ErrnoException;
+            if (errorCode.code === undefined)
                 {
-				throw error;
-			    }
-			else
+                throw error;
+                }
+            else
                 {
-				if (!['EADDRNOTAVAIL', 'EINVAL', 'EADDRINUSE'].includes(errorCode.code))
+                if (!['EADDRNOTAVAIL', 'EINVAL', 'EADDRINUSE'].includes(errorCode.code))
                     {
-					throw error;
-				    }
-			    }
-		    }
-	    }
+                    throw error;
+                    }
+                }
+            }
+        }
 
-	return 0 ;
+    return 0 ;
     }
 
 
@@ -125,19 +125,31 @@ function buildContainerArgs (containerCmd: string, containerArgs: string[], cont
 
 export async function activate(context: vscode.ExtensionContext)
     {
-	let config = vscode.workspace.getConfiguration('perl') ;
-	if (!config.get('enable'))
-		{
-		console.log('extension "perl" is disabled');
-		return ;
-		}
+    let config = vscode.workspace.getConfiguration('perl') ;
+    if (!config.get('enable'))
+        {
+        console.log('extension "perl" is disabled');
+        return ;
+        }
 
-	console.log('extension "perl" is now active');
+    console.log('extension "perl" is now active');
+
+    let env : any  = {} ;
+    if (!config.get('disablePassEnv'))
+        {
+        var k ;
+        for (k in process.env)
+            {
+            env[k] = process.env[k] ;
+            console.log('env: ' + k + ' = ' + env[k] ) ;
+            }
+        }
+
 
     let resource = vscode.window.activeTextEditor?.document.uri ;
 
     let containerCmd  : string   = config.get('containerCmd')  || '' ;
-	let containerArgs : string[] = config.get('containerArgs') || [] ;
+    let containerArgs : string[] = config.get('containerArgs') || [] ;
     let containerName : string   = config.get('containerName') || '' ;
     let containerMode : string   = config.get('containerMode') || 'exec' ;
 
@@ -148,15 +160,21 @@ export async function activate(context: vscode.ExtensionContext)
         debug_adapter_port = await get_available_port (debug_adapter_port, debug_adapter_port_range) ;
         console.log('use ' + debug_adapter_port + ' as debug adapter port');
         }
-    
+
     let perlCmd         : string     = resolve_workspaceFolder((config.get('perlCmd') || 'perl'), resource);
     let perlArgs        : string[]   = config.get('perlArgs') || [] ;
     let perlInc         : string[]   = config.get('perlInc') || [] ;
     let perlIncOpt      : string[]   = perlInc.map((dir: string) => "-I" + resolve_workspaceFolder(dir, resource)) ;
-    let env             : any        = config.get('env') || {} ;
-	let logFile         : string     = config.get('logFile') || '' ;
+    let addenv          : any        = config.get('env') || {} ;
+    var k ;
+    for (k in addenv)
+        {
+        env[k] = addenv[k] ;
+        console.log('addenv: ' + k + ' = ' + env[k] ) ;
+        }
+    let logFile         : string     = config.get('logFile') || '' ;
     let logLevel        : number     = config.get('logLevel') || 0 ;
-    let client_version  : string     = "2.4.0" ;
+    let client_version  : string     = "2.5.0" ;
     let perlArgsOpt     : string[]   = [...perlIncOpt,
                                         ...perlArgs,
                                         '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--',
@@ -167,31 +185,31 @@ export async function activate(context: vscode.ExtensionContext)
 
     let sshPortOption = '-p' ;
     let sshCmd : string       = config.get('sshCmd') || '' ;
-	if (!sshCmd)
-		{
-		if (/^win/.test(process.platform))
-			{
-			sshCmd        = 'plink' ;
+    if (!sshCmd)
+        {
+        if (/^win/.test(process.platform))
+            {
+            sshCmd        = 'plink' ;
             sshPortOption = '-P' ;
             }
-		else
-			{
-			sshCmd = 'ssh' ;
-			}
-		}
-	let sshArgs:string[] = config.get('sshArgs') || [] ;
-	let sshUser:string   = config.get('sshUser') || '' ;
-	let sshAddr:string   = config.get('sshAddr') || '';
-	let sshPort:string   = config.get('sshPort') || '' ;
+        else
+            {
+            sshCmd = 'ssh' ;
+            }
+        }
+    let sshArgs:string[] = config.get('sshArgs') || [] ;
+    let sshUser:string   = config.get('sshUser') || '' ;
+    let sshAddr:string   = config.get('sshAddr') || '';
+    let sshPort:string   = config.get('sshPort') || '' ;
 
     let containerArgsOpt : string[] = buildContainerArgs (containerCmd, containerArgs, containerName, containerMode) ;
 
     var serverCmd : string ;
-	var serverArgs : string[] ;
+    var serverArgs : string[] ;
 
-	if (sshAddr && sshUser)
-		{
-		serverCmd = sshCmd ;
+    if (sshAddr && sshUser)
+        {
+        serverCmd = sshCmd ;
         if (sshPort)
             {
             sshArgs.push(sshPortOption, sshPort) ;
@@ -204,9 +222,9 @@ export async function activate(context: vscode.ExtensionContext)
             }
         sshArgs.push(perlCmd) ;
         serverArgs = sshArgs.concat(perlArgsOpt) ;
-		}
-	else
-		{
+        }
+    else
+        {
         if (containerCmd)
             {
             serverCmd = containerCmd ;
@@ -214,10 +232,10 @@ export async function activate(context: vscode.ExtensionContext)
             }
         else
             {
-		    serverCmd  = perlCmd ;
-		    serverArgs = perlArgsOpt ;
+            serverCmd  = perlCmd ;
+            serverArgs = perlArgsOpt ;
             }
-		}
+        }
 
     vscode.debug.registerDebugAdapterDescriptorFactory('perl',
         {
@@ -293,30 +311,30 @@ export async function activate(context: vscode.ExtensionContext)
         }, vscode.DebugConfigurationProviderTriggerKind.Dynamic);
 
 
-	console.log('cmd: ' + serverCmd + ' args: ' + serverArgs.join (' '));
+    console.log('cmd: ' + serverCmd + ' args: ' + serverArgs.join (' '));
 
-	let debugArgs  = serverArgs.concat(["--debug"]) ;
-	let serverOptions: ServerOptions = {
-		run:   { command: serverCmd, args: serverArgs, options: { env: env } },
-		debug: { command: serverCmd, args: debugArgs,  options: { env: env } },
-	} ;
+    let debugArgs  = serverArgs.concat(["--debug"]) ;
+    let serverOptions: ServerOptions = {
+        run:   { command: serverCmd, args: serverArgs, options: { env: env } },
+        debug: { command: serverCmd, args: debugArgs,  options: { env: env } },
+    } ;
 
-	// Options to control the language client
-	let clientOptions: LanguageClientOptions = {
-		// Register the server for plain text documents
-		documentSelector: [{scheme: 'file', language: 'perl'}],
-		synchronize: {
-			// Synchronize the setting section 'perl_lang' to the server
-			configurationSection: 'perl',
-		}
-	} ;
+    // Options to control the language client
+    let clientOptions: LanguageClientOptions = {
+        // Register the server for plain text documents
+        documentSelector: [{scheme: 'file', language: 'perl'}],
+        synchronize: {
+            // Synchronize the setting section 'perl_lang' to the server
+            configurationSection: 'perl',
+        }
+    } ;
 
-	// Create the language client and start the client.
-	let disposable = new LanguageClient('perl', 'Perl Language Server', serverOptions, clientOptions).start();
+    // Create the language client and start the client.
+    let disposable = new LanguageClient('perl', 'Perl Language Server', serverOptions, clientOptions).start();
 
-	// Push the disposable to the context's subscriptions so that the
-	// client can be deactivated on extension deactivation
-	context.subscriptions.push(disposable);
+    // Push the disposable to the context's subscriptions so that the
+    // client can be deactivated on extension deactivation
+    context.subscriptions.push(disposable);
     }
 
 // this method is called when your extension is deactivated

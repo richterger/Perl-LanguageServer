@@ -17,22 +17,22 @@ our $reqseq = 1_000_000_000 ;
 has 'debugger_process' =>
     (
     isa => 'Perl::LanguageServer::DebuggerProcess',
-    is  => 'rw' 
-    ) ; 
+    is  => 'rw'
+    ) ;
 
 has 'debug_adapter' =>
     (
     isa => 'Perl::LanguageServer',
     is  => 'rw',
-    weak_ref => 1, 
+    weak_ref => 1,
     predicate => 'has_debug_adapter',
-    ) ; 
+    ) ;
 
 has 'cmd_queue' =>
     (
     is => 'ro',
     isa => 'Coro::Channel',
-    default => sub { Coro::Channel -> new }    
+    default => sub { Coro::Channel -> new }
     ) ;
 
 has 'cmd_in_progress' =>
@@ -45,7 +45,7 @@ has 'initialized' =>
     (
     is => 'rw',
     isa => 'Bool',
-    default => 0    
+    default => 0
     ) ;
 
 has 'responses' =>
@@ -53,7 +53,7 @@ has 'responses' =>
     isa => 'HashRef',
     is  => 'rw',
     default => sub { {} },
-    ) ; 
+    ) ;
 
 # ---------------------------------------------------------------------------
 
@@ -74,7 +74,7 @@ sub send_request
 
     my $channel = $self -> cmd_queue ;
     return if ($channel -> size == 0) ;
-    my $req = $channel -> get () ;    
+    my $req = $channel -> get () ;
     $self -> cmd_in_progress ($req) ;
     $self -> send_notification ($req, $self, "<--- To debuggee: ") ;
 
@@ -94,10 +94,10 @@ sub request
     local $channels -> {$seq} = Coro::Channel -> new ;
 
     my $channel = $self -> cmd_queue ;
-    $channel -> put ($req) ;    
-    $self -> send_request () ;   
+    $channel -> put ($req) ;
+    $self -> send_request () ;
     my $ret = $channels -> {$seq} -> get ;
-    $self -> send_request () ;   
+    $self -> send_request () ;
     return $ret ;
     }
 
@@ -115,7 +115,7 @@ sub _dapreq_di_response
     return if (!exists $channels -> {$seq}) ;
     $channels -> {$seq} -> put ($req -> params) ;
     $self -> cmd_in_progress (undef) ;
-    $self -> send_request () ;   
+    $self -> send_request () ;
     return ;
     }
 
@@ -127,11 +127,11 @@ sub _dapreq_di_break
 
     $self -> log_prefix ('DAI') ;
     $self -> log_req_txt ('---> From debuggee: ') ;
-    
+
     my $debug_adapter = $Perl::LanguageServer::Methods::DebugAdapter::debug_adapters{$req -> params -> {session_id}} ;
     die "no debug_adapter for session " . $req -> params -> {session_id} if (!$debug_adapter) ;
     $debug_adapter -> running (0) ;
-    
+
     $self -> logger ("session_id = " . $req -> params -> {session_id} . "\n") ;
     #$self -> logger ("debug_adapter = ", dump ($debug_adapter), "\n") ;
 
@@ -151,8 +151,8 @@ sub _dapreq_di_break
 
     if ($initialized || $self -> debugger_process -> stop_on_entry)
         {
-        $self -> send_event ('stopped', 
-                        { 
+        $self -> send_event ('stopped',
+                        {
                         reason => $reason,
                         threadId => $debug_adapter -> getid (0, $req -> params -> {thread_ref}) || 1,
                         preserveFocusHint => JSON::false (),
@@ -192,8 +192,8 @@ sub _dapreq_di_loadedfile
         }
 
 
-    $self -> send_event ('loadedSource', 
-                        { 
+    $self -> send_event ('loadedSource',
+                        {
                         reason => $req -> params -> {reason},
                         source => $req -> params -> {source},
                         }) ;
@@ -216,13 +216,13 @@ sub _dapreq_di_breakpoints
 
     foreach my $bp (@{$req -> params -> {breakpoints}})
         {
-        $self -> send_event ('breakpoint', 
-                        { 
+        $self -> send_event ('breakpoint',
+                        {
                         reason => 'changed',
-                        breakpoint => 
+                        breakpoint =>
                             {
                             verified => $bp -> [2]?JSON::true ():JSON::false (),
-                            message  => $bp -> [3], 
+                            message  => $bp -> [3],
                             line     => $bp -> [4]+0,
                             id       => $bp -> [6]+0,
                             source   => { path => $workspace -> file_server2client ($bp -> [5]) },

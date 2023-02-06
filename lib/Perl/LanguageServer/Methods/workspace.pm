@@ -56,43 +56,43 @@ sub _rpcnot_didChangeConfiguration
             $fn = $_ -> [0] ;
             $fn =~ s/^file:// ;
             $fn =~ s/^\/\/\//\// ;
-            $_ -> [2] ||= $fn ;    
+            $_ -> [2] ||= $fn ;
             $fn = $_ -> [1] ;
             $fn =~ s/^file:// ;
             $fn =~ s/^\/\/\//\// ;
-            $_ -> [3] ||= $fn ;    
+            $_ -> [3] ||= $fn ;
             }
         $workspace -> path_map ($map) ;
         }
 
-    $self -> logger ("path_map = ", dump ( $workspace -> path_map), "\n") ;    
+    $self -> logger ("path_map = ", dump ( $workspace -> path_map), "\n") ;
 
     my $inc   = $req -> params -> {settings}{perl}{perlInc} ;
     if ($inc)
         {
-        $inc = [$inc] if (!ref $inc) ;    
-        $workspace -> perlinc ($inc) ;    
+        $inc = [$inc] if (!ref $inc) ;
+        $workspace -> perlinc ($inc) ;
         }
 
-    $self -> logger ("perlinc = ", dump ( $workspace -> perlinc), "\n") ;    
+    $self -> logger ("perlinc = ", dump ( $workspace -> perlinc), "\n") ;
 
     my $filter   = $req -> params -> {settings}{perl}{fileFilter} ;
     if ($filter)
         {
-        $filter = [$filter] if (!ref $filter) ;    
-        $workspace -> file_filter_regex ('(?:' . join ('|', map { quotemeta($_) } @$filter ) . ')$') ;    
+        $filter = [$filter] if (!ref $filter) ;
+        $workspace -> file_filter_regex ('(?:' . join ('|', map { quotemeta($_) } @$filter ) . ')$') ;
         }
 
-    $self -> logger ("file_filter_regex = ", dump ( $workspace -> file_filter_regex), "\n") ;    
+    $self -> logger ("file_filter_regex = ", dump ( $workspace -> file_filter_regex), "\n") ;
 
     my $dirs   = $req -> params -> {settings}{perl}{ignoreDirs} ;
     if ($dirs)
         {
-        $dirs = [$dirs] if (!ref $dirs) ;    
-        $workspace -> ignore_dir ({ map { ( $_ => 1 ) } @$dirs }) ;    
+        $dirs = [$dirs] if (!ref $dirs) ;
+        $workspace -> ignore_dir ({ map { ( $_ => 1 ) } @$dirs }) ;
         }
 
-    $self -> logger ("ignore_dir = ", dump ( $workspace -> ignore_dir), "\n") ;    
+    $self -> logger ("ignore_dir = ", dump ( $workspace -> ignore_dir), "\n") ;
 
     if (!exists ($workspace -> config -> {workspaceFolders}) || @{$workspace -> config -> {workspaceFolders} // []} == 0)
         {
@@ -103,7 +103,7 @@ sub _rpcnot_didChangeConfiguration
 
     $workspace -> show_local_vars ($workspace -> config -> {showLocalVars}) ;
     $workspace -> disable_cache   ($workspace -> config -> {disableCache}) ;
-    
+
     if ($req -> params -> {settings}{perl}{cacheDir})
         {
         $workspace -> state_dir ($req -> params -> {settings}{perl}{cacheDir}) ;
@@ -141,15 +141,15 @@ sub _rpcnot_didChangeWorkspaceFolders
         {
         $workspace -> set_workspace_folders ($added) ;
         }
-        
+
     my $removed = $req -> params -> {event}{removed} ;
     if ($removed)
         {
         foreach my $folder (@$removed)
             {
             my $uri = $folder -> {uri} ;
-            #TODO    
-            }    
+            #TODO
+            }
         }
 
     async

@@ -20,28 +20,28 @@ our $session_cnt = 1 ;
 has 'program' =>
     (
     isa => 'Str',
-    is  => 'ro' 
-    ) ; 
+    is  => 'ro'
+    ) ;
 
 has 'args' =>
     (
     isa => 'ArrayRef',
     is  => 'ro',
     default => sub { [] },
-    ) ; 
+    ) ;
 
 has 'env' =>
     (
     isa => 'HashRef',
     is  => 'ro',
     default => sub { {} },
-    ) ; 
+    ) ;
 
 has 'cwd' =>
     (
     isa => 'Maybe[Str]',
     is  => 'ro',
-    ) ; 
+    ) ;
 
 has 'sudo_user' =>
     (
@@ -52,39 +52,39 @@ has 'sudo_user' =>
 has 'stop_on_entry' =>
     (
     isa => 'Bool',
-    is  => 'ro' 
-    ) ; 
+    is  => 'ro'
+    ) ;
 
 has 'reload_modules' =>
     (
     isa => 'Bool',
-    is  => 'ro' 
-    ) ; 
+    is  => 'ro'
+    ) ;
 
 has 'session_id' =>
     (
     isa => 'Str',
-    is  => 'ro' 
-    ) ; 
+    is  => 'ro'
+    ) ;
 
 has 'type' =>
     (
     isa => 'Str',
-    is  => 'ro' 
-    ) ; 
+    is  => 'ro'
+    ) ;
 
 has 'debug_adapter' =>
     (
     isa => 'Perl::LanguageServer',
     is  => 'rw',
-    weak_ref => 1, 
-    ) ; 
+    weak_ref => 1,
+    ) ;
 
 has 'pid' =>
     (
     isa => 'Int',
-    is  => 'rw' 
-    ) ; 
+    is  => 'rw'
+    ) ;
 
 
 # ---------------------------------------------------------------------------
@@ -130,7 +130,7 @@ sub launch
     my $fn = $workspace -> file_client2server ($self -> program) ;
     my $pid ;
     {
-    local %ENV ;
+    local %ENV = %ENV ;
     my @sudoargs ;
     if ($self->sudo_user)
         {
@@ -153,7 +153,7 @@ sub launch
     my $inc = $workspace -> perlinc ;
     my @inc ;
     @inc = map { ('-I', $_)} @$inc if ($inc) ;
-    
+
     $ENV{PLSDI_REMOTE} = '127.0.0.1:' . $self -> debug_adapter -> listen_port ;
     $ENV{PLSDI_OPTIONS} = $self -> reload_modules?'reload_modules':'' ;
     $ENV{PERL5DB}      = 'BEGIN { $| = 1 ; ' . $cwd . 'require Perl::LanguageServer::DebuggerInterface; DB::DB(); }' ;
@@ -169,10 +169,10 @@ sub launch
     }
 
     $self -> pid ($pid) ;
-    $self -> send_event ('process', 
-                        { 
-                        name            => $self -> program, 
-                        systemProcessId => $pid, 
+    $self -> send_event ('process',
+                        {
+                        name            => $self -> program,
+                        systemProcessId => $pid,
                         isLocalProcess  => JSON::true(),
                         startMethod     => 'launch',
                         }) ;
