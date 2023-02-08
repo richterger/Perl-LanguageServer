@@ -209,7 +209,7 @@ Example: if your local path is \10.11.12.13\share\path\to\ws and on the remote m
 
     "sshWorkspaceRoot": "/path/to/ws"
 
-The other possibility is to provide a pathMap. This allows to having multiple mappings.
+The other possibility is to provide a pathMap. This allows one to having multiple mappings.
 
 Examples:
 
