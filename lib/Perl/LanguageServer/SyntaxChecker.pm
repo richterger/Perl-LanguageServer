@@ -240,7 +240,7 @@ sub background_checker
             }
         else
             {
-            $ret = run_cmd ([$self -> perlcmd, '-c', @inc],
+            $ret = run_cmd ([$self -> perlcmd, '-T', '-c', @inc],
                 "<", \$text,
                 ">", \$out,
                 "2>", \$errout)
