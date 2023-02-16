@@ -232,7 +232,7 @@ sub background_checker
         my @inc ;
         @inc = map { ('-I', $_)} @$inc if ($inc) ;
 
-        $self -> logger ("start perl -c for $uri\n") if ($Perl::LanguageServer::debug1) ;
+        $self -> logger ("start perl -T -c for $uri\n") if ($Perl::LanguageServer::debug1) ;
         if ($^O =~ /Win/)
             {
 #            ($ret, $out, $errout) = $self -> run_open3 ($text, \@inc) ;
@@ -240,7 +240,8 @@ sub background_checker
             }
         else
             {
-            $ret = run_cmd ([$self -> perlcmd, '-c', @inc],
+            # using -T to avoid problems with taint in hashbang line
+            $ret = run_cmd ([$self -> perlcmd, '-T', '-c', @inc],
                 "<", \$text,
                 ">", \$out,
                 "2>", \$errout)
@@ -248,7 +249,7 @@ sub background_checker
             }
 
         my $rc = $ret >> 8 ;
-        $self -> logger ("perl -c rc=$rc out=$out errout=$errout\n") if ($Perl::LanguageServer::debug1) ;
+        $self -> logger ("perl -T -c rc=$rc out=$out errout=$errout\n") if ($Perl::LanguageServer::debug1) ;
 
         my @messages ;
         if ($rc != 0)
