@@ -26,7 +26,7 @@ has 'program' =>
 
 has 'args' =>
     (
-    isa => 'ArrayRef',
+    isa => 'ArrayRef | Str',
     is  => 'ro',
     default => sub { [] },
     ) ;
@@ -166,7 +166,13 @@ sub launch
         push @sudoargs, "PERL5DB=$ENV{PERL5DB}" ;
         push @sudoargs, "PLSDI_SESSION=$ENV{PLSDI_SESSION}" ;
         }
-    $pid = $self -> run_async ([@sudoargs, $cmd, @inc, '-d', $fn, @{$self -> args}]) ;
+    if ( ref($self -> args ))       # ref is array
+        {
+        $pid = $self -> run_async ([@sudoargs, $cmd, @inc, '-d', $fn, @{$self -> args}]) ;
+        } else                      # no ref is string
+        {
+        $pid = $self -> run_async (join(" ",@sudoargs).$cmd." ".join(" ",@inc)." -d $fn ".$self->args) ;
+        }
     }
 
     $self -> pid ($pid) ;
