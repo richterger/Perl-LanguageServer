@@ -43,6 +43,12 @@ has 'cwd' =>
     is  => 'ro',
     ) ;
 
+has 'sudo_user' =>
+    (
+    isa => 'Maybe[Str]',
+    is  => 'ro',
+    ) ; 
+
 has 'stop_on_entry' =>
     (
     isa => 'Bool',
@@ -91,6 +97,7 @@ sub BUILDARGS
     $args -> {reload_modules} = delete $args -> {reloadModules}?1:0 ;
     $args -> {stop_on_entry} = delete $args -> {stopOnEntry}?1:0 ;
     $args -> {session_id}    = delete $args -> {__sessionId} || $session_cnt ;
+    $args -> {sudo_user}    = delete $args -> {sudoUser} ;
     $session_cnt++ ;
 
     return $args ;
@@ -124,9 +131,15 @@ sub launch
     my $pid ;
     {
     local %ENV = %ENV ;
+    my @sudoargs ;
+    if ($self->sudo_user)
+        {
+        push @sudoargs, "sudo", "-u", $self->sudo_user ;
+        }
     foreach (keys %{$self -> env})
         {
         $ENV{$_} = $self -> env -> {$_} ;
+        push @sudoargs, "$_=" . $self -> env -> {$_} ;   
         }
 
     my $cwd ;
@@ -145,7 +158,14 @@ sub launch
     $ENV{PLSDI_OPTIONS} = $self -> reload_modules?'reload_modules':'' ;
     $ENV{PERL5DB}      = 'BEGIN { $| = 1 ; ' . $cwd . 'require Perl::LanguageServer::DebuggerInterface; DB::DB(); }' ;
     $ENV{PLSDI_SESSION}= $self -> session_id ;
-    $pid = $self -> run_async ([$cmd, @inc, '-d', $fn, @{$self -> args}]) ;
+    if ($self->sudo_user)
+        {
+        push @sudoargs, "PLSDI_REMOTE=$ENV{PLSDI_REMOTE}" ;
+        push @sudoargs, "PLSDI_OPTIONS=$ENV{PLSDI_OPTIONS}" ;
+        push @sudoargs, "PERL5DB=$ENV{PERL5DB}" ;
+        push @sudoargs, "PLSDI_SESSION=$ENV{PLSDI_SESSION}" ;
+        }
+    $pid = $self -> run_async ([@sudoargs, $cmd, @inc, '-d', $fn, @{$self -> args}]) ;
     }
 
     $self -> pid ($pid) ;
