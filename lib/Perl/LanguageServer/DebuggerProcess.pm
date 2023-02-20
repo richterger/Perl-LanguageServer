@@ -139,7 +139,7 @@ sub launch
     foreach (keys %{$self -> env})
         {
         $ENV{$_} = $self -> env -> {$_} ;
-        push @sudoargs, "$_=" . $self -> env -> {$_} ;   
+        push @sudoargs, "$_=" . $self -> env -> {$_} if $self->sudo_user;
         }
 
     my $cwd ;
