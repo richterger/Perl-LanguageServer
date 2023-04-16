@@ -45,6 +45,9 @@ WriteMakefile(
                 url => 'https://github.com/richterger/Perl-LanguageServer.git',
                 web => 'https://github.com/richterger/Perl-LanguageServer',
             },
+            bugtracker => {
+                web => 'https://github.com/richterger/Perl-LanguageServer/issues'
+            },
         },
     },
     PL_FILES         => {},
