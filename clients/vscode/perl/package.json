@@ -183,7 +183,7 @@
                             },
                             "args": {
                                 "type": [ "array", "string" ],
-                                "description": "optional, array with arguments for perl program or string.",
+                                "description": "optional, array or string with arguments for perl program.",
                                 "default": null
                             },
                             "env": {

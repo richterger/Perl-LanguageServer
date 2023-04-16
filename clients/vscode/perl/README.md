@@ -113,10 +113,11 @@ This extension contributes the following settings:
 * `name`: name of this debug configuration
 * `program`: path to perl program to start
 * `stopOnEntry`: if true, program will stop on entry
-* `args`:   optional, array with arguments for perl program
+* `args`:   optional, array or string with arguments for perl program
 * `env`:    optional, object with environment settings
 * `cwd`:    optional, change working directory before launching the debuggee
 * `reloadModules`: if true, automatically reload changed Perl modules while debugging
+* `sudoUser`: optional, if set run debug process with sudo -u \<sudoUser\>.
 
 ## Remote syntax check & debugging
 
@@ -139,7 +140,7 @@ Example: if your local path is \\10.11.12.13\share\path\to\ws and on the remote 
 "sshWorkspaceRoot": "/path/to/ws"
 ```
 
-The other possibility is to provide a pathMap. This allows to having multiple mappings.
+The other possibility is to provide a pathMap. This allows one to having multiple mappings.
 
 Examples:
 
@@ -214,7 +215,7 @@ Change port setting from string to integer
 Please make sure the path to the module is in `perl.perlInc` setting and use absolute path names in the perlInc settings
 or make sure you are running in the expected directory by setting the `cwd` setting in the lauch.json.
 
-### ERROR: Unknow perlmethod _rpcnot_setTraceNotification
+### ERROR: Unknown perlmethod _rpcnot_setTraceNotification
 
 This is not an issue, that just means that not all features of the debugging protocol are implemented.
 Also it says ERROR, it's just a warning and you can safely ignore it.
@@ -227,6 +228,35 @@ Upgrade to Version 2.4.0
 
 This is a problem when more than one instance of Perl::LanguageServer is running.
 Upgrade to Version 2.4.0 solves this problem.
+
+### The program I want to debug needs some input via stdin
+
+You can read stdin from a file during debugging. To do so add the following parameter
+to your `launch.json`:
+
+```
+  "args": [ "<", "/path/to/stdin.txt" ]
+```
+
+e.g.
+
+```
+{
+    "type": "perl",
+    "request": "launch",
+    "name": "Perl-Debug",
+    "program": "${workspaceFolder}/${relativeFile}",
+    "stopOnEntry": true,
+    "reloadModules": true,
+    "env": {
+        "REQUEST_METHOD": "POST",
+        "CONTENT_TYPE": "application/x-www-form-urlencoded",
+        "CONTENT_LENGTH": 34
+    }
+    "args": [ "<", "/path/to/stdin.txt" ]
+}
+```
+
 
 ### Carton support
 
