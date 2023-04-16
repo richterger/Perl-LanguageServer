@@ -200,6 +200,11 @@
                                 "type": "boolean",
                                 "description": "Automatically reload changed Perl modules while debugging.",
                                 "default": true
+                            },
+                            "sudoUser": {
+                                "type": "string",
+                                "description": "optional, if set run debug process with sudo -u <sudoUser>.",
+                                "default": null
                             }
                         }
                     }
