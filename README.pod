@@ -279,7 +279,7 @@ Change port setting from string to integer
 Please make sure the path to the module is in C<perl.perlInc> setting and use absolute path names in the perlInc settings
 or make sure you are running in the expected directory by setting the C<cwd> setting in the lauch.json.
 
-=head3 ERROR: Unknow perlmethod I<rpcnot>setTraceNotification
+=head3 ERROR: Unknown perlmethod I<rpcnot>setTraceNotification
 
 This is not an issue, that just means that not all features of the debugging protocol are implemented.
 Also it says ERROR, it's just a warning and you can safely ignore it.

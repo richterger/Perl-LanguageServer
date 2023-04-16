@@ -897,7 +897,7 @@ Change port setting from string to integer
 Please make sure the path to the module is in C<perl.perlInc> setting and use absolute path names in the perlInc settings
 or make sure you are running in the expected directory by setting the C<cwd> setting in the lauch.json.
 
-=head3 ERROR: Unknow perlmethod I<rpcnot>setTraceNotification
+=head3 ERROR: Unknown perlmethod I<rpcnot>setTraceNotification
 
 This is not an issue, that just means that not all features of the debugging protocol are implemented.
 Also it says ERROR, it's just a warning and you can safely ignore it.
@@ -1030,9 +1030,9 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =item * Set minimal Perl version to 5.16 (#91)
 
-=item * Per default enviroment from vscode will be passed to debuggee, syntax check and perltidy.
+=item * Per default environment from vscode will be passed to debuggee, syntax check and perltidy.
 
-=item * Add configuration C<disablePassEnv> to not pass enviroment variables.
+=item * Add configuration C<disablePassEnv> to not pass environment variables.
 
 =item * Support for C<logLevel> and C<logFile> settings via LanguageServer protocol and
 not only via command line options (#97) [schellj]
@@ -1053,7 +1053,7 @@ not only via command line options (#97) [schellj]
 
 =item * Choose a different port for debugAdapterPort if it is already in use. This
 avoids trouble with starting C<Perl::LanguageServer> if another instance
-of C<Perl::LanguageServer> is runing on the same machine (thanks to hakonhagland)
+of C<Perl::LanguageServer> is running on the same machine (thanks to hakonhagland)
 
 =item * Add configuration C<debugAdapterPortRange>, for choosing range of port for dynamic
 port assignment
@@ -1110,7 +1110,7 @@ so watchs and code from the debug console is not expanded properly
 =item * Fix: sshArgs parameter was not declared as array (#109)
 
 =item * Disable syntax check on windows, because it blocks the whole process when running on windows,
-until handling of childs processes is fixed
+until handling of child's processes is fixed
 
 =item * Fixed spelling (#86,#96,#101) [chrstphrchvz,davorg,aluaces]
 
