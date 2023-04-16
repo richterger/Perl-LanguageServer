@@ -798,7 +798,7 @@ This extension contributes the following settings:
 
 =item * C<stopOnEntry>: if true, program will stop on entry
 
-=item * C<args>:   optional, array with arguments for perl program
+=item * C<args>:   optional, array with arguments for perl program or string
 
 =item * C<env>:    optional, object with environment settings
 

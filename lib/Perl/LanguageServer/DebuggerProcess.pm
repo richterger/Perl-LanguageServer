@@ -25,7 +25,7 @@ has 'program' =>
 
 has 'args' =>
     (
-    isa => 'ArrayRef',
+    isa => 'ArrayRef | Str',
     is  => 'ro',
     default => sub { [] },
     ) ;
@@ -145,7 +145,13 @@ sub launch
     $ENV{PLSDI_OPTIONS} = $self -> reload_modules?'reload_modules':'' ;
     $ENV{PERL5DB}      = 'BEGIN { $| = 1 ; ' . $cwd . 'require Perl::LanguageServer::DebuggerInterface; DB::DB(); }' ;
     $ENV{PLSDI_SESSION}= $self -> session_id ;
-    $pid = $self -> run_async ([$cmd, @inc, '-d', $fn, @{$self -> args}]) ;
+    if ( ref($self -> args ))       # ref is array
+        {
+        $pid = $self -> run_async ([$cmd, @inc, '-d', $fn, @{$self -> args}]) ;
+        } else                      # no ref is string
+        {
+        $pid = $self -> run_async ($cmd." ".join(" ",@inc)." -d $fn ".$self->args) ;
+        }
     }
 
     $self -> pid ($pid) ;
