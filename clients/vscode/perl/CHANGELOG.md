@@ -9,6 +9,7 @@
 - Add support for podman
 - Add support for run Perl::LanguageServer outside, but debugger inside a container
 - Fix: Spelling (#170, #171) [pkg-perl-tools]
+- Fix: Convert charset encoding of debugger output according to current locale (#167) [wielandp]
 
 
 ## 2.5.0   `2023-02-05`

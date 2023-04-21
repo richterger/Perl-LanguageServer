@@ -71,6 +71,7 @@ WriteMakefile(
         'Class::Refresh'     => '0',
         'Compiler::Lexer'    => '0.23',
         'Hash::SafeKeys'     => '0',
+        'Encode::Locale'     => '0',
     },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean => { FILES => 'Perl-LanguageServer-*' },
