@@ -4,7 +4,8 @@ use 5.006;
 use strict;
 use Moose ;
 
-use utf8;
+use Encode::Locale;
+use Encode;
 use File::Basename ;
 use Coro ;
 use Coro::AIO ;
@@ -182,7 +183,7 @@ sub on_stdout
 
     foreach my $line (split /\r?\n/, $data)
         {
-        utf8::decode($line);
+        $line = decode(locale => $line);
         $self -> send_event ('output', { category => 'stdout', output => $line . "\r\n" }) ;
         }
     }
@@ -195,7 +196,7 @@ sub on_stderr
 
     foreach my $line (split /\r?\n/, $data)
         {
-        utf8::decode($line);
+        $line = decode(locale => $line);
         $self -> send_event ('output', { category => 'stderr', output => $line . "\r\n" }) ;
         }
     }
