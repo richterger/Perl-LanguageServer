@@ -118,6 +118,11 @@ This extension contributes the following settings:
 * `cwd`:    optional, change working directory before launching the debuggee
 * `reloadModules`: if true, automatically reload changed Perl modules while debugging
 * `sudoUser`: optional, if set run debug process with sudo -u \<sudoUser\>.
+* `containerCmd`: If set debugger runs inside a container. Options are: 'docker', 'docker-compose', 'podman', 'kubectl'
+* `containerArgs`: arguments for containerCmd. Varies depending on containerCmd.
+* `containerMode`: To start a new container, set to 'run', to debug inside an existing container set to 'exec'. Note: kubectl only supports 'exec'
+* `containerName`: Image to start or container to exec inside or pod to use
+* `pathMap`: mapping of local to remote paths for this debug session (overwrites global `perl.path_map`)
 
 ## Remote syntax check & debugging
 
@@ -145,7 +150,7 @@ The other possibility is to provide a pathMap. This allows one to having multipl
 Examples:
 
 ```json
-"sshpathMap": [
+"perl.pathMap": [
     ["remote uri", "local uri"],
     ["remote uri", "local uri"]
 ]
@@ -176,6 +181,34 @@ There are more container options, see above.
 }
 ```
 
+This will start the whole Perl::LanguageServer inside the container. This is espacally
+helpfull to make syntax check working, if there is a different setup inside
+and outside the container.
+
+In this case you need to tell the Perl::LanguageServer how to map local paths
+to paths inside the container. This is done by setting `perl.pathMap` (see above).
+
+Example:
+
+```json
+"perl.pathMap": [
+    [
+	"file:///path/inside/the/container",
+	"file:///local/path/outside/the/container"
+    ]
+]
+```
+
+It's also possible to run the LanguageServer outside the container and only
+the debugger inside the container. This is especially helpfull, when the
+container is not always running, while you are editing. 
+To make only the debugger running inside the container, put
+`containerCmd`, `conatinerName` and `pasth_map` in your `launch.json`. 
+You can have different setting for each debug session.
+
+Normaly the arguments for the `containerCmd` are automatically build. In case
+you want to use an unsupported `containerCmd` you need to specifiy
+apropriate `containerArgs`.
 
 
 ## FAQ

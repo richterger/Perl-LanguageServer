@@ -2,7 +2,7 @@
     "name": "perl",
     "displayName": "Perl",
     "description": "Language Server and Debugger for Perl",
-    "version": "2.5.0",
+    "version": "2.6.0",
     "publisher": "richterger",
     "repository": "https://github.com/richterger/Perl-LanguageServer",
     "license": "SEE LICENSE IN LICENSE",
@@ -77,7 +77,7 @@
                 "perl.containerCmd": {
                     "type": "string",
                     "default": null,
-                    "description": "If set Perl::LanguageServer can run inside a container. Options are: 'docker', 'docker-compose', 'kubectl'"
+                    "description": "If set Perl::LanguageServer can run inside a container. Options are: 'docker', 'docker-compose', 'podman', 'kubectl'"
                 },
                 "perl.containerArgs": {
                     "type": "array",
@@ -205,7 +205,33 @@
                                 "type": "string",
                                 "description": "optional, if set run debug process with sudo -u <sudoUser>.",
                                 "default": null
+                            },
+                            "pathMap": {
+                                "type": "array",
+                                "default": null,
+                                "description": "mapping of local to remote paths for this debug session (overwrites global `perl.path_map`)"
+                            },
+                            "containerCmd": {
+                                "type": "string",
+                                "default": null,
+                                "description": "If set debugger runs inside a container. Options are: 'docker', 'docker-compose', 'podman', 'kubectl'"
+                            },
+                            "containerArgs": {
+                                "type": "array",
+                                "default": null,
+                                "description": "arguments for containerCmd. Varies depending on containerCmd."
+                            },
+                            "containerMode": {
+                                "type": "string",
+                                "default": "exec",
+                                "description": "To start a new container, set to 'run', to debug inside an existing container set to 'exec'. Note: kubectl only supports 'exec'"
+                            },
+                            "containerName": {
+                                "type": "string",
+                                "default": null,
+                                "description": "Image to start or container to exec inside or pod to use"
                             }
+                        
                         }
                     }
                 },

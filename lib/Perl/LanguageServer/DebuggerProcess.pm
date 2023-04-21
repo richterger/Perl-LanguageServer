@@ -49,6 +49,12 @@ has 'sudo_user' =>
     is  => 'ro',
     ) ; 
 
+has 'path_map' =>
+    (
+    isa => 'Maybe[ArrayRef]',
+    is  => 'rw'
+    ) ;
+
 has 'stop_on_entry' =>
     (
     isa => 'Bool',
@@ -98,6 +104,24 @@ sub BUILDARGS
     $args -> {stop_on_entry} = delete $args -> {stopOnEntry}?1:0 ;
     $args -> {session_id}    = delete $args -> {__sessionId} || $session_cnt ;
     $args -> {sudo_user}    = delete $args -> {sudoUser} ;
+    my $map   = delete $args -> {pathMap} ;
+    if ($map)
+        {
+        my $fn ;
+        foreach (@$map)
+            {
+            $fn = $_ -> [0] ;
+            $fn =~ s/^file:// ;
+            $fn =~ s/^\/\/\//\// ;
+            $_ -> [2] ||= $fn ;
+            $fn = $_ -> [1] ;
+            $fn =~ s/^file:// ;
+            $fn =~ s/^\/\/\//\// ;
+            $_ -> [3] ||= $fn ;
+            }
+        $args -> {path_map} = $map ;
+        }
+
     $session_cnt++ ;
 
     return $args ;
@@ -110,6 +134,43 @@ sub logger
     my $self = shift ;
 
     $self -> debug_adapter -> logger (@_) ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub file_server2client
+    {
+    my ($self, $workspace, $fn) = @_ ;
+
+    return $workspace -> file_server2client ($fn, $self -> path_map) ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub file_client2server
+    {
+    my ($self, $workspace, $fn) = @_ ;
+
+    return $workspace -> file_client2server ($fn, $self -> path_map) ;
+    }
+
+# ---------------------------------------------------------------------------
+
+sub add_path_mapping
+    {
+    my ($self, $fn_server, $fn_client) = @_ ;
+    my $map = $self -> path_map ;
+    $map = $self -> path_map ([]) if (!$map) ;
+
+
+    foreach my $m (@$map)
+        {
+        #print STDERR "add file_server2client $m->[2] -> $m->[3]\n" ;
+        return if ($fn_server eq $m->[2]) ;
+        }
+
+    unshift @$map, ['file://' . $fn_server, 'file://' . $fn_client, $fn_server, $fn_client] ;
+    return  ;
     }
 
 # ---------------------------------------------------------------------------
@@ -127,7 +188,7 @@ sub launch
     {
     my ($self, $workspace, $cmd) = @_ ;
 
-    my $fn = $workspace -> file_client2server ($self -> program) ;
+    my $fn = $self -> file_client2server ($workspace, $self -> program) ;
     my $pid ;
     {
     local %ENV = %ENV ;

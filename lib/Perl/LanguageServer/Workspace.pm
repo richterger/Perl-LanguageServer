@@ -203,9 +203,9 @@ sub uri_client2server
 
 sub file_server2client
     {
-    my ($self, $fn) = @_ ;
+    my ($self, $fn, $map) = @_ ;
 
-    my $map = $self -> path_map ;
+    $map ||= $self -> path_map ;
     return $fn if (!$map) ;
 
     foreach my $m (@$map)
@@ -221,9 +221,9 @@ sub file_server2client
 
 sub file_client2server
     {
-    my ($self, $fn) = @_ ;
+    my ($self, $fn, $map) = @_ ;
 
-    my $map = $self -> path_map ;
+    $map ||= $self -> path_map ;
     return $fn if (!$map) ;
 
     $fn =~ s/\\/\//g ;
@@ -235,25 +235,6 @@ sub file_client2server
         }
 
     return $fn ;
-    }
-
-# ---------------------------------------------------------------------------
-
-sub add_path_mapping
-    {
-    my ($self, $fn_server, $fn_client) = @_ ;
-    my $map = $self -> path_map ;
-    $map = $self -> path_map ([]) if (!$map) ;
-
-
-    foreach my $m (@$map)
-        {
-        #print STDERR "add file_server2client $m->[2] -> $m->[3]\n" ;
-        return if ($fn_server eq $m->[2]) ;
-        }
-
-    unshift @$map, ['file://' . $fn_server, 'file://' . $fn_client, $fn_server, $fn_client] ;
-    return  ;
     }
 
 # ---------------------------------------------------------------------------

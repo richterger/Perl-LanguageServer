@@ -6,6 +6,8 @@
 - Allow to use a string for debuggee arguments. (#149, #173) [wielandp]
 - Add stdin redirection (#166) [wielandp]
 - Add link to issues to META files (#168) [szabgab/issues]
+- Add support for podman
+- Add support for run Perl::LanguageServer outside, but debugger inside a container
 - Fix: Spelling (#170, #171) [pkg-perl-tools]
 
 

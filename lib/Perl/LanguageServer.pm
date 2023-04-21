@@ -12,7 +12,7 @@ use Coro::Handle ;
 use AnyEvent;
 use AnyEvent::Socket ;
 use JSON ;
-use Data::Dump qw{dump} ;
+use Data::Dump qw{dump pp} ;
 use IO::Select ;
 
 use Perl::LanguageServer::Req ;
@@ -33,7 +33,7 @@ Version 2.5.0
 
 =cut
 
-our $VERSION = '2.5.0';
+our $VERSION = '2.6.0';
 
 
 =head1 SYNOPSIS
@@ -526,6 +526,7 @@ sub run
         async
             {
             my $self = Perl::LanguageServer -> new ({out_fh => 1, in_fh => 0});
+            $self -> listen_port ($listen_port) ;
 
             $self -> mainloop () ;
 

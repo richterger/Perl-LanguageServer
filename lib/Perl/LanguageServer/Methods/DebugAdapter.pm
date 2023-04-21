@@ -312,12 +312,12 @@ sub _set_breakpoints
     my $ret = $self -> send_request ('breakpoint',
                                         {
                                         breakpoints => \@bp,
-                                        ($source?(filename    => $workspace -> file_client2server ($source -> {path})):()),
+                                        ($source?(filename    => $self -> debugger_process -> file_client2server ($workspace, $source -> {path})):()),
                                         }) ;
 
     if ($req -> params -> {real_filename})
         {
-        $workspace -> add_path_mapping ($req -> params -> {real_filename}, $workspace -> file_server2client ($req -> params -> {req_filename}))
+        $workspace -> add_path_mapping ($req -> params -> {real_filename}, $self -> debugger_process -> file_server2client ($workspace, $req -> params -> {req_filename}))
         }
 
     my @setbp ;
@@ -330,7 +330,7 @@ sub _set_breakpoints
             message  => $bp -> [3],
             line     => $bp -> [4]+0,
             id       => $bp -> [6]+0,
-            source   => { path => $workspace -> file_server2client ($bp -> [5]) },
+            source   => { path => $self -> debugger_process -> file_server2client ($workspace, $bp -> [5]) },
             }
         }
 
@@ -389,7 +389,7 @@ sub _dapreq_breakpointLocations
                                         {
                                         line => $req -> params -> {line},
                                         end_line => $req -> params -> {endLine},
-                                        ($source?(filename    => $workspace -> file_client2server ($source -> {path})):()),
+                                        ($source?(filename    => $self -> debugger_process -> file_client2server ($workspace, $source -> {path})):()),
                                         }) ;
 
     foreach (@{$ret -> {breakpoints}})
@@ -482,7 +482,7 @@ sub _dapreq_stackTrace
         $_ -> {id}      = $self -> getid ($req -> params -> {threadId}, $_ -> {frame_ref}, { thread_ref => $thread_ref, package => $_ -> {'package'} }) ;
         $_ -> {line}   += 0 ;
         $_ -> {column} += 0 ;
-        $_ -> {source}{path} = $workspace -> file_server2client ($_ -> {source}{path}) ;
+        $_ -> {source}{path} = $self -> debugger_process -> file_server2client ($workspace, $_ -> {source}{path}) ;
         }
 
     return $frames ;
