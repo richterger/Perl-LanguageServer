@@ -1,5 +1,27 @@
 =head1 Change Log
 
+=head2 2.6.0   not yet released
+
+=over
+
+=item * Add debug setting for running as different user. See sudoUser setting. (#174) [wielandp]
+
+=item * Allow to use a string for debuggee arguments. (#149, #173) [wielandp]
+
+=item * Add stdin redirection (#166) [wielandp]
+
+=item * Add link to issues to META files (#168) [szabgab/issues]
+
+=item * Add support for podman
+
+=item * Add support for run Perl::LanguageServer outside, but debugger inside a container
+
+=item * Fix: Spelling (#170, #171) [pkg-perl-tools]
+
+=item * Fix: Convert charset encoding of debugger output according to current locale (#167) [wielandp]
+
+=back
+
 =head2 2.5.0   C<2023-02-05>
 
 =over

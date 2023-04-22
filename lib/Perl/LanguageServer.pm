@@ -799,13 +799,25 @@ This extension contributes the following settings:
 
 =item * C<stopOnEntry>: if true, program will stop on entry
 
-=item * C<args>:   optional, array with arguments for perl program or string
+=item * C<args>:   optional, array or string with arguments for perl program
 
 =item * C<env>:    optional, object with environment settings
 
 =item * C<cwd>:    optional, change working directory before launching the debuggee
 
 =item * C<reloadModules>: if true, automatically reload changed Perl modules while debugging
+
+=item * C<sudoUser>: optional, if set run debug process with sudo -u \<sudoUser\>.
+
+=item * C<containerCmd>: If set debugger runs inside a container. Options are: 'docker', 'docker-compose', 'podman', 'kubectl'
+
+=item * C<containerArgs>: arguments for containerCmd. Varies depending on containerCmd.
+
+=item * C<containerMode>: To start a new container, set to 'run', to debug inside an existing container set to 'exec'. Note: kubectl only supports 'exec'
+
+=item * C<containerName>: Image to start or container to exec inside or pod to use
+
+=item * C<pathMap>: mapping of local to remote paths for this debug session (overwrites global C<perl.path_map>)
 
 =back
 
@@ -833,7 +845,7 @@ The other possibility is to provide a pathMap. This allows one to having multipl
 Examples:
 
 
-    "sshpathMap": [
+    "perl.pathMap": [
         ["remote uri", "local uri"],
         ["remote uri", "local uri"]
     ]
@@ -861,6 +873,34 @@ There are more container options, see above.
             "containerName": "perl_container",
         }
     }
+
+This will start the whole Perl::LanguageServer inside the container. This is espacally
+helpfull to make syntax check working, if there is a different setup inside
+and outside the container.
+
+In this case you need to tell the Perl::LanguageServer how to map local paths
+to paths inside the container. This is done by setting C<perl.pathMap> (see above).
+
+Example:
+
+
+    "perl.pathMap": [
+        [
+        "file:///path/inside/the/container",
+        "file:///local/path/outside/the/container"
+        ]
+    ]
+
+It's also possible to run the LanguageServer outside the container and only
+the debugger inside the container. This is especially helpfull, when the
+container is not always running, while you are editing. 
+To make only the debugger running inside the container, put
+C<containerCmd>, C<conatinerName> and C<pasth_map> in your C<launch.json>. 
+You can have different setting for each debug session.
+
+Normaly the arguments for the C<containerCmd> are automatically build. In case
+you want to use an unsupported C<containerCmd> you need to specifiy
+apropriate C<containerArgs>.
 
 =head2 FAQ
 
@@ -911,6 +951,34 @@ Upgrade to Version 2.4.0
 
 This is a problem when more than one instance of Perl::LanguageServer is running.
 Upgrade to Version 2.4.0 solves this problem.
+
+=head3 The program I want to debug needs some input via stdin
+
+You can read stdin from a file during debugging. To do so add the following parameter
+to your C<launch.json>:
+
+C<< 
+  "args": [ "E<lt>", "/path/to/stdin.txt" ]
+ >>
+
+e.g.
+
+C<< 
+{
+    "type": "perl",
+    "request": "launch",
+    "name": "Perl-Debug",
+    "program": "${workspaceFolder}/${relativeFile}",
+    "stopOnEntry": true,
+    "reloadModules": true,
+    "env": {
+        "REQUEST_METHOD": "POST",
+        "CONTENT_TYPE": "application/x-www-form-urlencoded",
+        "CONTENT_LENGTH": 34
+    }
+    "args": [ "E<lt>", "/path/to/stdin.txt" ]
+}
+ >>
 
 =head3 Carton support
 
@@ -1024,6 +1092,28 @@ CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THE PACKAGE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =head1 Change Log
+
+=head2 2.6.0   not yet released
+
+=over
+
+=item * Add debug setting for running as different user. See sudoUser setting. (#174) [wielandp]
+
+=item * Allow to use a string for debuggee arguments. (#149, #173) [wielandp]
+
+=item * Add stdin redirection (#166) [wielandp]
+
+=item * Add link to issues to META files (#168) [szabgab/issues]
+
+=item * Add support for podman
+
+=item * Add support for run Perl::LanguageServer outside, but debugger inside a container
+
+=item * Fix: Spelling (#170, #171) [pkg-perl-tools]
+
+=item * Fix: Convert charset encoding of debugger output according to current locale (#167) [wielandp]
+
+=back
 
 =head2 2.5.0   C<2023-02-05>
 
