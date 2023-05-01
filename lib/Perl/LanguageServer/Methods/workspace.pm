@@ -76,6 +76,9 @@ sub _rpcnot_didChangeConfiguration
 
     $self -> logger ("perlinc = ", dump ( $workspace -> perlinc), "\n") ;
 
+    $workspace -> use_taint_for_syntax_check ($req -> params -> {settings}{perl}{useTaintForSyntaxCheck}) ;
+    $self -> logger ("use_taint_for_syntax_check = ", dump ( $workspace -> use_taint_for_syntax_check), "\n") ;
+
     my $filter   = $req -> params -> {settings}{perl}{fileFilter} ;
     if ($filter)
         {
