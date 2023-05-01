@@ -113,10 +113,16 @@ This extension contributes the following settings:
 * `name`: name of this debug configuration
 * `program`: path to perl program to start
 * `stopOnEntry`: if true, program will stop on entry
-* `args`:   optional, array with arguments for perl program
+* `args`:   optional, array or string with arguments for perl program
 * `env`:    optional, object with environment settings
 * `cwd`:    optional, change working directory before launching the debuggee
 * `reloadModules`: if true, automatically reload changed Perl modules while debugging
+* `sudoUser`: optional, if set run debug process with sudo -u \<sudoUser\>.
+* `containerCmd`: If set debugger runs inside a container. Options are: 'docker', 'docker-compose', 'podman', 'kubectl'
+* `containerArgs`: arguments for containerCmd. Varies depending on containerCmd.
+* `containerMode`: To start a new container, set to 'run', to debug inside an existing container set to 'exec'. Note: kubectl only supports 'exec'
+* `containerName`: Image to start or container to exec inside or pod to use
+* `pathMap`: mapping of local to remote paths for this debug session (overwrites global `perl.path_map`)
 
 ## Remote syntax check & debugging
 
@@ -139,12 +145,12 @@ Example: if your local path is \\10.11.12.13\share\path\to\ws and on the remote 
 "sshWorkspaceRoot": "/path/to/ws"
 ```
 
-The other possibility is to provide a pathMap. This allows to having multiple mappings.
+The other possibility is to provide a pathMap. This allows one to having multiple mappings.
 
 Examples:
 
 ```json
-"sshpathMap": [
+"perl.pathMap": [
     ["remote uri", "local uri"],
     ["remote uri", "local uri"]
 ]
@@ -175,6 +181,34 @@ There are more container options, see above.
 }
 ```
 
+This will start the whole Perl::LanguageServer inside the container. This is espacally
+helpfull to make syntax check working, if there is a different setup inside
+and outside the container.
+
+In this case you need to tell the Perl::LanguageServer how to map local paths
+to paths inside the container. This is done by setting `perl.pathMap` (see above).
+
+Example:
+
+```json
+"perl.pathMap": [
+    [
+	"file:///path/inside/the/container",
+	"file:///local/path/outside/the/container"
+    ]
+]
+```
+
+It's also possible to run the LanguageServer outside the container and only
+the debugger inside the container. This is especially helpfull, when the
+container is not always running, while you are editing. 
+To make only the debugger running inside the container, put
+`containerCmd`, `conatinerName` and `pasth_map` in your `launch.json`. 
+You can have different setting for each debug session.
+
+Normaly the arguments for the `containerCmd` are automatically build. In case
+you want to use an unsupported `containerCmd` you need to specifiy
+apropriate `containerArgs`.
 
 
 ## FAQ
@@ -214,7 +248,7 @@ Change port setting from string to integer
 Please make sure the path to the module is in `perl.perlInc` setting and use absolute path names in the perlInc settings
 or make sure you are running in the expected directory by setting the `cwd` setting in the lauch.json.
 
-### ERROR: Unknow perlmethod _rpcnot_setTraceNotification
+### ERROR: Unknown perlmethod _rpcnot_setTraceNotification
 
 This is not an issue, that just means that not all features of the debugging protocol are implemented.
 Also it says ERROR, it's just a warning and you can safely ignore it.
@@ -227,6 +261,35 @@ Upgrade to Version 2.4.0
 
 This is a problem when more than one instance of Perl::LanguageServer is running.
 Upgrade to Version 2.4.0 solves this problem.
+
+### The program I want to debug needs some input via stdin
+
+You can read stdin from a file during debugging. To do so add the following parameter
+to your `launch.json`:
+
+```
+  "args": [ "<", "/path/to/stdin.txt" ]
+```
+
+e.g.
+
+```
+{
+    "type": "perl",
+    "request": "launch",
+    "name": "Perl-Debug",
+    "program": "${workspaceFolder}/${relativeFile}",
+    "stopOnEntry": true,
+    "reloadModules": true,
+    "env": {
+        "REQUEST_METHOD": "POST",
+        "CONTENT_TYPE": "application/x-www-form-urlencoded",
+        "CONTENT_LENGTH": 34
+    }
+    "args": [ "<", "/path/to/stdin.txt" ]
+}
+```
+
 
 ### Carton support
 

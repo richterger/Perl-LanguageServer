@@ -96,6 +96,13 @@ function buildContainerArgs (containerCmd: string, containerArgs: string[], cont
                     containerArgs.push('--rm') ;
                 containerArgs.push('-i', containerName) ;
                 }
+            else if (containerCmd == 'podman')
+                {
+                containerArgs.push(containerMode) ;
+                if (containerMode == 'run')
+                    containerArgs.push('--rm') ;
+                containerArgs.push('-i', containerName) ;
+                }
             else if (containerCmd == 'docker-compose')
                 {
                 containerArgs.push(containerMode) ;
@@ -174,7 +181,7 @@ export async function activate(context: vscode.ExtensionContext)
         }
     let logFile         : string     = config.get('logFile') || '' ;
     let logLevel        : number     = config.get('logLevel') || 0 ;
-    let client_version  : string     = "2.5.0" ;
+    let client_version  : string     = "2.6.0" ;
     let perlArgsOpt     : string[]   = [...perlIncOpt,
                                         ...perlArgs,
                                         '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--',

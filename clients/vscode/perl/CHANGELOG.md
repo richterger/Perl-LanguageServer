@@ -1,10 +1,22 @@
 # Change Log
 
+## 2.6.0   not yet released
+
+- Add debug setting for running as different user. See sudoUser setting. (#174) [wielandp]
+- Allow to use a string for debuggee arguments. (#149, #173) [wielandp]
+- Add stdin redirection (#166) [wielandp]
+- Add link to issues to META files (#168) [szabgab/issues]
+- Add support for podman
+- Add support for run Perl::LanguageServer outside, but debugger inside a container
+- Fix: Spelling (#170, #171) [pkg-perl-tools]
+- Fix: Convert charset encoding of debugger output according to current locale (#167) [wielandp]
+
+
 ## 2.5.0   `2023-02-05`
 
 - Set minimal Perl version to 5.16 (#91)
-- Per default enviroment from vscode will be passed to debuggee, syntax check and perltidy.
-- Add configuration `disablePassEnv` to not pass enviroment variables.
+- Per default environment from vscode will be passed to debuggee, syntax check and perltidy.
+- Add configuration `disablePassEnv` to not pass environment variables.
 - Support for `logLevel` and `logFile` settings via LanguageServer protocol and
 not only via command line options (#97) [schellj]
 - Fix: "No DB::DB routine defined" (#91) [peterdragon]
@@ -16,7 +28,7 @@ not only via command line options (#97) [schellj]
 
 - Choose a different port for debugAdapterPort if it is already in use. This
   avoids trouble with starting `Perl::LanguageServer` if another instance
-  of `Perl::LanguageServer` is runing on the same machine (thanks to hakonhagland)
+  of `Perl::LanguageServer` is running on the same machine (thanks to hakonhagland)
 - Add configuration `debugAdapterPortRange`, for choosing range of port for dynamic
   port assignment
 - Add support for using LanguageServer and debugger inside a Container.
@@ -49,7 +61,7 @@ not only via command line options (#97) [schellj]
 - Fix: Correctly handle paths with drive letters on windows
 - Fix: sshArgs parameter was not declared as array (#109)
 - Disable syntax check on windows, because it blocks the whole process when running on windows,
-    until handling of childs processes is fixed
+    until handling of child's processes is fixed
 - Fixed spelling (#86,#96,#101) [chrstphrchvz,davorg,aluaces]
 
 ## 2.2.0    `2021-02-21`

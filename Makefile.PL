@@ -45,6 +45,9 @@ WriteMakefile(
                 url => 'https://github.com/richterger/Perl-LanguageServer.git',
                 web => 'https://github.com/richterger/Perl-LanguageServer',
             },
+            bugtracker => {
+                web => 'https://github.com/richterger/Perl-LanguageServer/issues'
+            },
         },
     },
     PL_FILES         => {},
@@ -68,6 +71,7 @@ WriteMakefile(
         'Class::Refresh'     => '0',
         'Compiler::Lexer'    => '0.23',
         'Hash::SafeKeys'     => '0',
+        'Encode::Locale'     => '0',
     },
     dist  => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean => { FILES => 'Perl-LanguageServer-*' },

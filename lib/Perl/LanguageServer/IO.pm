@@ -92,17 +92,36 @@ sub _write
 
     my($wtr, $rdr, $err);
 
-    $self -> logger ("start @$cmd\n") ;
+    if ( ref($cmd) )
+        {
+        $self -> logger ("start @$cmd\n") ;
+        } else
+        {
+        $self -> logger ("start $cmd\n") ;        
+        }
 
     require IPC::Open3 ;
     require Symbol ;
     $err = Symbol::gensym () ;
-    my $pid = IPC::Open3::open3($wtr, $rdr, $err, @$cmd) or die "Cannot run @$cmd" ;
+    my $pid;
+    if ( ref($cmd) )
+        {
+        $pid = IPC::Open3::open3($wtr, $rdr, $err, @$cmd) or die "Cannot run @$cmd" ;
+        } else
+        {
+        $pid = IPC::Open3::open3($wtr, $rdr, $err, $cmd) or die "Cannot run $cmd" ;
+        }
 
     $self -> out_fh ($wtr) ;
     $self -> in_fh  ($rdr) ;
 
-    $self -> logger ("@$cmd started\n") ;
+    if ( ref($cmd) )
+        {
+        $self -> logger ("@$cmd started\n") ;
+        } else
+        {
+        $self -> logger ("$cmd started\n") ;
+        }
 
     async
         {
