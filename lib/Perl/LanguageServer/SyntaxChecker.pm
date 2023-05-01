@@ -245,7 +245,6 @@ sub background_checker
             }
         else
             {
-            # using -T to avoid problems with taint in hashbang line
             $ret = run_cmd ([$self -> perlcmd, $syntax_options, '-c', @inc],
                 "<", \$text,
                 ">", \$out,
