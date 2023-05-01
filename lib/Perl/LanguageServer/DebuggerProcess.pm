@@ -49,6 +49,12 @@ has 'stop_on_entry' =>
     is  => 'ro'
     ) ;
 
+has 'use_taint_for_syntax_check' =>
+    (
+    isa => 'Bool',
+    is  => 'ro'
+    ) ;
+
 has 'reload_modules' =>
     (
     isa => 'Bool',

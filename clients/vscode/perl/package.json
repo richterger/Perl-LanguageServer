@@ -114,6 +114,11 @@
                     "default": null,
                     "description": "array with paths to add to perl library path. This setting is used by the syntax checker and for the debuggee and also for the LanguageServer itself. perl.perlInc should be absolute paths."
                 },
+                "perl.useTaintForSyntaxCheck": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Use -T for syntax check."
+                },
                 "perl.fileFilter": {
                     "type": "array",
                     "default": null,

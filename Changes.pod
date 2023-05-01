@@ -1,5 +1,7 @@
 =head1 Change Log
 
+=item * When C<useTaintForSyntaxCheck> is true, use taint mode for syntax check.
+
 =head2 2.5.0   C<2023-02-05>
 
 =over
