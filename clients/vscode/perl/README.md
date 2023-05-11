@@ -90,6 +90,7 @@ This extension contributes the following settings:
 * `perl.sshWorkspaceRoot`: path of the workspace root on remote system
 * `perl.perlCmd`: defaults to perl
 * `perl.perlArgs`: additional arguments passed to the perl interpreter that starts the LanguageServer
+* `useTaintForSyntaxCheck`: if true, use taint mode for syntax check
 * `perl.sshArgs`: optional arguments for ssh
 * `perl.pathMap`: mapping of local to remote paths
 * `perl.perlInc`: array with paths to add to perl library path. This setting is used by the syntax checker and for the debuggee and also for the LanguageServer itself.

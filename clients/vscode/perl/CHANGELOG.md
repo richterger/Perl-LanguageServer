@@ -8,6 +8,7 @@
 - Add link to issues to META files (#168) [szabgab/issues]
 - Add support for podman
 - Add support for run Perl::LanguageServer outside, but debugger inside a container
+- Add setting useTaintForSyntaxCheck. If true, use taint mode for syntax check (#172) [wielandp]
 - Fix: Spelling (#170, #171) [pkg-perl-tools]
 - Fix: Convert charset encoding of debugger output according to current locale (#167) [wielandp]
 
