@@ -83,6 +83,12 @@ has 'perlinc' =>
     is  => 'rw',
     ) ;
 
+has 'use_taint_for_syntax_check' =>
+    (
+    isa => 'Maybe[Bool]',
+    is  => 'rw'
+    ) ;
+
 has 'show_local_vars' =>
     (
     isa => 'Maybe[Bool]',

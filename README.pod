@@ -180,6 +180,8 @@ This extension contributes the following settings:
 
 =item * C<stopOnEntry>: if true, program will stop on entry
 
+=item * C<useTaintForSyntaxCheck>: if true, use taint mode for syntax check.
+
 =item * C<args>:   optional, array or string with arguments for perl program
 
 =item * C<env>:    optional, object with environment settings

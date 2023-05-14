@@ -4,6 +4,8 @@
 
 =over
 
+=item * Add setting useTaintForSyntaxCheck. If true, use taint mode for syntax check.
+
 =item * Add debug setting for running as different user. See sudoUser setting. (#174) [wielandp]
 
 =item * Allow to use a string for debuggee arguments. (#149, #173) [wielandp]
