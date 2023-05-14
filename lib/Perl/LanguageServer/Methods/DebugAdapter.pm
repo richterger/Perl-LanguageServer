@@ -4,7 +4,7 @@ use Moose::Role ;
 
 use Coro ;
 use Coro::AIO ;
-use Data::Dump qw{dump} ;
+use Data::Dump qw{dump pp} ;
 use Perl::LanguageServer::DevTool ;
 use Perl::LanguageServer::DebuggerProcess ;
 
@@ -605,15 +605,14 @@ sub _dapreq_setVariable
 sub _dapreq_source
     {
     my ($self, $workspace, $req) = @_ ;
-    use Data::Dump qw{pp} ;
     
-    my $filename = $req->{params}->{source}->{path};
-    $self -> logger ("req_source fname=".pp($filename)."\n") ;
+    my $source      = $req -> params -> {source} ;
+    $self -> logger ("req_source source =" . pp($source)) ;
     my $ret = $self -> send_request ('source',
                                         {
-                                        filename => $filename,
+                                        ($source?(filename    => $self -> debugger_process -> file_client2server ($workspace, $source -> {path})):()),
                                         }) ;
-    $self -> logger ("_dapreq_source ret=".pp($ret)."\n") ;
+    $self -> logger ("_dapreq_source ret = " . pp($ret)) ;
     return $ret;
     }
 
