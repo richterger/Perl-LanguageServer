@@ -1489,6 +1489,18 @@ package DB
 
 # ---------------------------------------------------------------------------
 
+sub req_source
+{
+    my ($class, $params) = @_ ;
+
+    my $filename    = $params -> {filename} ;
+    my $source = join("", @{$main::{'_<'.$filename}});
+    $source =~ s/\n;$//;
+	  return { content => $source };
+}
+
+# ---------------------------------------------------------------------------
+
 sub req_can_break
     {
     my ($class, $params) = @_ ;

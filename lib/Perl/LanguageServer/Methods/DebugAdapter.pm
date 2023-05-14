@@ -602,6 +602,23 @@ sub _dapreq_setVariable
 
 # ---------------------------------------------------------------------------
 
+sub _dapreq_source
+    {
+    my ($self, $workspace, $req) = @_ ;
+    use Data::Dump qw{pp} ;
+    
+    my $filename = $req->{params}->{source}->{path};
+    $self -> logger ("req_source fname=".pp($filename)."\n") ;
+    my $ret = $self -> send_request ('source',
+                                        {
+                                        filename => $filename,
+                                        }) ;
+    $self -> logger ("_dapreq_source ret=".pp($ret)."\n") ;
+    return $ret;
+    }
+
+# ---------------------------------------------------------------------------
+
 sub _dapreq_evaluate
     {
     my ($self, $workspace, $req) = @_ ;
