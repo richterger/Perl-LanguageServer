@@ -118,6 +118,7 @@ This extension contributes the following settings:
 * `cwd`:    optional, change working directory before launching the debuggee
 * `reloadModules`: if true, automatically reload changed Perl modules while debugging
 * `sudoUser`: optional, if set run debug process with sudo -u \<sudoUser\>.
+* `useTaintForDebug`: optional, if true run debug process with -T (taint mode).
 * `containerCmd`: If set debugger runs inside a container. Options are: 'docker', 'docker-compose', 'podman', 'kubectl'
 * `containerArgs`: arguments for containerCmd. Varies depending on containerCmd.
 * `containerMode`: To start a new container, set to 'run', to debug inside an existing container set to 'exec'. Note: kubectl only supports 'exec'
