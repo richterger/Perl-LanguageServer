@@ -1702,6 +1702,12 @@ sub init
     my $remote ;
     my $port ;
     ($remote, $port) = split /:/, $ENV{PLSDI_REMOTE} ;
+    if ($remote =~ m/^([0-9.]+)$/) {
+      $remote = $1; # untaint
+    }
+    if ($port =~ m/^(\d+)$/) {
+      $port = $1; # untaint
+    }
 
     $socket = IO::Socket::INET->new(PeerAddr => $remote,
                                     PeerPort => $port,
