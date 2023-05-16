@@ -206,6 +206,11 @@
                                 "description": "optional, if set run debug process with sudo -u <sudoUser>.",
                                 "default": null
                             },
+                            "useTaintForDebug": {
+                                "type": "boolean",
+                                "description": "optional, if set run debug process in taint mode.",
+                                "default": false
+                            },
                             "pathMap": {
                                 "type": "array",
                                 "default": null,
