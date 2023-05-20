@@ -232,12 +232,12 @@ sub background_checker
         my @inc ;
         @inc = map { ('-I', $_)} @$inc if ($inc) ;
 
-        my $syntax_options = "";
+        my @syntax_options ;
         if ($self -> use_taint_for_syntax_check) {
-            $syntax_options = "-T";
+            @syntax_options = ('-T') ;
         }
 
-        $self -> logger ("start perl $syntax_options -c for $uri\n") if ($Perl::LanguageServer::debug1) ;
+        $self -> logger ("start perl @syntax_options -c @inc for $uri\n") if ($Perl::LanguageServer::debug1) ;
         if ($^O =~ /Win/)
             {
 #            ($ret, $out, $errout) = $self -> run_open3 ($text, \@inc) ;
@@ -245,7 +245,7 @@ sub background_checker
             }
         else
             {
-            $ret = run_cmd ([$self -> perlcmd, $syntax_options, '-c', @inc],
+            $ret = run_cmd ([$self -> perlcmd, @syntax_options, '-c', @inc],
                 "<", \$text,
                 ">", \$out,
                 "2>", \$errout)
@@ -253,7 +253,7 @@ sub background_checker
             }
 
         my $rc = $ret >> 8 ;
-        $self -> logger ("perl $syntax_options -c rc=$rc out=$out errout=$errout\n") if ($Perl::LanguageServer::debug1) ;
+        $self -> logger ("perl -c rc=$rc out=$out errout=$errout\n") if ($Perl::LanguageServer::debug1) ;
 
         my @messages ;
         if ($rc != 0)
