@@ -1127,8 +1127,6 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =back
 
-…rride on clients
-
 =head2 2.5.0   C<2023-02-05>
 
 =over

@@ -15,8 +15,6 @@
 - Fix: Convert charset encoding of debugger output according to current locale (#167) [wielandp]
 - Fix: Fix diagnostic notifications override on clients (based on #185) [bmeneg]
 
-…rride on clients
-
 ## 2.5.0   `2023-02-05`
 
 - Set minimal Perl version to 5.16 (#91)
