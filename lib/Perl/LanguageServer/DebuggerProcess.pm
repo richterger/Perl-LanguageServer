@@ -51,6 +51,12 @@ has 'sudo_user' =>
     is  => 'ro',
     ) ; 
 
+has 'use_taint_for_debug' =>
+    (
+    isa => 'Bool',
+    is  => 'rw'
+    ) ;
+
 has 'path_map' =>
     (
     isa => 'Maybe[ArrayRef]',
@@ -106,6 +112,7 @@ sub BUILDARGS
     $args -> {stop_on_entry} = delete $args -> {stopOnEntry}?1:0 ;
     $args -> {session_id}    = delete $args -> {__sessionId} || $session_cnt ;
     $args -> {sudo_user}    = delete $args -> {sudoUser} ;
+    $args -> {use_taint_for_debug} = delete $args -> {useTaintForDebug} ;
     my $map   = delete $args -> {pathMap} ;
     if ($map)
         {
@@ -227,6 +234,10 @@ sub launch
         push @sudoargs, "PLSDI_OPTIONS=$ENV{PLSDI_OPTIONS}" ;
         push @sudoargs, "PERL5DB=$ENV{PERL5DB}" ;
         push @sudoargs, "PLSDI_SESSION=$ENV{PLSDI_SESSION}" ;
+        }
+    if ($self->use_taint_for_debug)
+        {
+        push @inc, "-T" ;
         }
 
     if (ref $self -> args)       # ref is array
