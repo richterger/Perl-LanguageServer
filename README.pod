@@ -134,6 +134,8 @@ This extension contributes the following settings:
 
 =item * C<perl.perlArgs>: additional arguments passed to the perl interpreter that starts the LanguageServer
 
+=item * C<useTaintForSyntaxCheck>: if true, use taint mode for syntax check
+
 =item * C<perl.sshArgs>: optional arguments for ssh
 
 =item * C<perl.pathMap>: mapping of local to remote paths
@@ -179,8 +181,6 @@ This extension contributes the following settings:
 =item * C<program>: path to perl program to start
 
 =item * C<stopOnEntry>: if true, program will stop on entry
-
-=item * C<useTaintForSyntaxCheck>: if true, use taint mode for syntax check.
 
 =item * C<args>:   optional, array or string with arguments for perl program
 

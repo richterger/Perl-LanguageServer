@@ -9,10 +9,13 @@
 - Add support for podman
 - Add support for run Perl::LanguageServer outside, but debugger inside a container
 - Add setting useTaintForSyntaxCheck. If true, use taint mode for syntax check (#172) [wielandp]
+- Add setting useTaintForDebug. If true, use taint mode inside debugger (#181) [wielandp]
 - Add debug adapter request `source`, which allows to display source of eval or file that are not available to vscode (#180) [wielandp]
 - Fix: Spelling (#170, #171) [pkg-perl-tools]
 - Fix: Convert charset encoding of debugger output according to current locale (#167) [wielandp]
+- Fix: Fix diagnostic notifications override on clients (based on #185) [bmeneg]
 
+…rride on clients
 
 ## 2.5.0   `2023-02-05`
 

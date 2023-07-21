@@ -4,8 +4,6 @@
 
 =over
 
-=item * Add setting useTaintForSyntaxCheck. If true, use taint mode for syntax check.
-
 =item * Add debug setting for running as different user. See sudoUser setting. (#174) [wielandp]
 
 =item * Allow to use a string for debuggee arguments. (#149, #173) [wielandp]
@@ -18,11 +16,21 @@
 
 =item * Add support for run Perl::LanguageServer outside, but debugger inside a container
 
+=item * Add setting useTaintForSyntaxCheck. If true, use taint mode for syntax check (#172) [wielandp]
+
+=item * Add setting useTaintForDebug. If true, use taint mode inside debugger (#181) [wielandp]
+
+=item * Add debug adapter request C<source>, which allows to display source of eval or file that are not available to vscode (#180) [wielandp]
+
 =item * Fix: Spelling (#170, #171) [pkg-perl-tools]
 
 =item * Fix: Convert charset encoding of debugger output according to current locale (#167) [wielandp]
 
+=item * Fix: Fix diagnostic notifications override on clients (based on #185) [bmeneg]
+
 =back
+
+…rride on clients
 
 =head2 2.5.0   C<2023-02-05>
 

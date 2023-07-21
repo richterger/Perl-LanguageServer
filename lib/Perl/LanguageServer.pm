@@ -753,6 +753,8 @@ This extension contributes the following settings:
 
 =item * C<perl.perlArgs>: additional arguments passed to the perl interpreter that starts the LanguageServer
 
+=item * C<useTaintForSyntaxCheck>: if true, use taint mode for syntax check
+
 =item * C<perl.sshArgs>: optional arguments for ssh
 
 =item * C<perl.pathMap>: mapping of local to remote paths
@@ -1111,11 +1113,21 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =item * Add support for run Perl::LanguageServer outside, but debugger inside a container
 
+=item * Add setting useTaintForSyntaxCheck. If true, use taint mode for syntax check (#172) [wielandp]
+
+=item * Add setting useTaintForDebug. If true, use taint mode inside debugger (#181) [wielandp]
+
+=item * Add debug adapter request C<source>, which allows to display source of eval or file that are not available to vscode (#180) [wielandp]
+
 =item * Fix: Spelling (#170, #171) [pkg-perl-tools]
 
 =item * Fix: Convert charset encoding of debugger output according to current locale (#167) [wielandp]
 
+=item * Fix: Fix diagnostic notifications override on clients (based on #185) [bmeneg]
+
 =back
+
+…rride on clients
 
 =head2 2.5.0   C<2023-02-05>
 
