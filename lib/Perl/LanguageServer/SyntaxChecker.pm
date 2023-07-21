@@ -222,7 +222,7 @@ sub background_checker
 
         my $fn = $uri ;
         $fn =~ s/^file:\/\/// ;
-        $fn = $self -> uri_client2server ($fn) ;
+        $fn = $self -> file_client2server ($fn) ;
         $text = "local \$0; BEGIN { \$0 = '$fn'; if (\$INC{'FindBin.pm'}) { FindBin->again(); } }\n# line 1 \"$fn\"\n" . $text;
 
         my $ret ;

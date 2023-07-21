@@ -400,6 +400,9 @@ sub _rpcreq_rangeFormatting
     my $range = $req -> params -> {range} ;
     #$workspace -> parser_channel -> put (['save', $uri]) ;
     $self -> logger (pp($req -> params)) ;
+    my $fn = $uri ;
+    $fn =~ s/^file:\/\/// ;
+    $fn = $self -> file_client2server ($fn) ;
 
     #FormattingOptions
     # Size of a tab in spaces.
@@ -473,7 +476,7 @@ sub _rpcreq_rangeFormatting
             {
             next if ($line !~ /^(.+?):(\d+):(.+)/) ;
 
-            $filename = $1 eq '<stdin>'?'-':$1 ;
+            $filename = $1 eq '<stdin>'?$fn:$1 ;
             $lineno   = $2 ;
             $msg      = $3 ;
             push @messages, [$filename, $lineno, $severity, $msg] if ($lineno && $msg) ;

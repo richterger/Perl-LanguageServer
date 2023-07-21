@@ -344,21 +344,18 @@ sub add_diagnostic_messages
 
     foreach my $filename (keys %diags)
         {
-        foreach my $filename (keys %diags)
+        my $fnuri = !$filename || $filename eq '-'?$uri:$self -> uri_server2client ('file://' . $filename) ;
+        my $result =
             {
-            my $fnuri = !$filename || $filename eq '-'?$uri:$self -> uri_server2client ('file://' . $filename) ;
-            my $result =
+            method => 'textDocument/publishDiagnostics',
+            params =>
                 {
-                method => 'textDocument/publishDiagnostics',
-                params =>
-                    {
-                    uri => $fnuri,
-                    diagnostics => $diags{$filename},
-                    },
-                } ;
+                uri => $fnuri,
+                diagnostics => $diags{$filename},
+                },
+            } ;
 
-            $server -> send_notification ($result) ;
-            }
+        $server -> send_notification ($result) ;
         }
     }
 
