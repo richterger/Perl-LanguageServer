@@ -271,7 +271,7 @@ sub add_diagnostic_messages
     $files -> {$uri}{messages_version}  = $version if (defined ($version));
 
     # make sure all old messages associated with this uri are cleaned up
-    my %diags = ( map { $_ => [] } @{$files -> {$uri}{diags} || ['-'] } ) ;
+    my %diags = ( map { $_ => [] } @{$files -> {$uri}{diags} } ) ;
     foreach my $src (keys %{$files -> {$uri}{messages}})
         {
         my $msgs = $files -> {$uri}{messages}{$src} ;

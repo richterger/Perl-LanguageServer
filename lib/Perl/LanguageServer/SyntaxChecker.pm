@@ -271,9 +271,10 @@ sub background_checker
                 #print STDERR $line, "\n" ;
                 next if ($line =~ /had compilation errors/) ;
                 $filename = $1 if ($line =~ /at (.+?) line (\d+)[,.]/) ;
+                #print STDERR "line = $lineno  file=$filename fn=$fn\n" ;
+                $filename ||= $fn ;
                 $lineno   = $1 if ($line =~ / line (\d+)[,.]/) ;
 
-                #print STDERR "line = $lineno  file=$filename\n" ;
                 $msg .= $line ;
                 if ($lineno)
                     {
