@@ -1,6 +1,6 @@
 # Change Log
 
-## 2.6.0   not yet released
+## 2.6.0   `2023-07-23`
 
 - Add debug setting for running as different user. See sudoUser setting. (#174) [wielandp]
 - Allow to use a string for debuggee arguments. (#149, #173) [wielandp]

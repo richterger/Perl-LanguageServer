@@ -1097,7 +1097,7 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =head1 Change Log
 
-=head2 2.6.0   not yet released
+=head2 2.6.0   C<2023-07-23>
 
 =over
 
