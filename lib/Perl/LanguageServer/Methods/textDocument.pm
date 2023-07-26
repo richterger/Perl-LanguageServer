@@ -402,7 +402,7 @@ sub _rpcreq_rangeFormatting
     $self -> logger (pp($req -> params)) ;
     my $fn = $uri ;
     $fn =~ s/^file:\/\/// ;
-    $fn = $self -> file_client2server ($fn) ;
+    $fn = $workspace -> file_client2server ($fn) ;
 
     #FormattingOptions
     # Size of a tab in spaces.
