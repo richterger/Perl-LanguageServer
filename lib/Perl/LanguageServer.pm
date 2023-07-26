@@ -33,7 +33,7 @@ Version 2.5.0
 
 =cut
 
-our $VERSION = '2.6.0';
+our $VERSION = '2.6.1';
 
 
 =head1 SYNOPSIS
@@ -1096,6 +1096,14 @@ CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THE PACKAGE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =head1 Change Log
+
+=head2 2.6.1   C<2023-07-26>
+
+=over
+
+=item * Fix: Formatting with perltidy was broken in 2.6.0
+
+=back
 
 =head2 2.6.0   C<2023-07-23>
 

@@ -181,7 +181,7 @@ export async function activate(context: vscode.ExtensionContext)
         }
     let logFile         : string     = config.get('logFile') || '' ;
     let logLevel        : number     = config.get('logLevel') || 0 ;
-    let client_version  : string     = "2.6.0" ;
+    let client_version  : string     = "2.6.1" ;
     let perlArgsOpt     : string[]   = [...perlIncOpt,
                                         ...perlArgs,
                                         '-MPerl::LanguageServer', '-e', 'Perl::LanguageServer::run', '--',

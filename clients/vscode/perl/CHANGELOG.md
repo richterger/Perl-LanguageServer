@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.6.1   `2023-07-26`
+
+- Fix: Formatting with perltidy was broken in 2.6.0
+
 ## 2.6.0   `2023-07-23`
 
 - Add debug setting for running as different user. See sudoUser setting. (#174) [wielandp]
@@ -11,6 +15,7 @@
 - Add setting useTaintForSyntaxCheck. If true, use taint mode for syntax check (#172) [wielandp]
 - Add setting useTaintForDebug. If true, use taint mode inside debugger (#181) [wielandp]
 - Add debug adapter request `source`, which allows to display source of eval or file that are not available to vscode (#180) [wielandp]
+
 - Fix: Spelling (#170, #171) [pkg-perl-tools]
 - Fix: Convert charset encoding of debugger output according to current locale (#167) [wielandp]
 - Fix: Fix diagnostic notifications override on clients (based on #185) [bmeneg]
@@ -22,6 +27,7 @@
 - Add configuration `disablePassEnv` to not pass environment variables.
 - Support for `logLevel` and `logFile` settings via LanguageServer protocol and
 not only via command line options (#97) [schellj]
+
 - Fix: "No DB::DB routine defined" (#91) [peterdragon]
 - Fix: Typos and spelling in README (#159) [dseynhae]
 - Fix: Update call to gensym(), to fix 'strict subs' error (#164) [KohaAloha]

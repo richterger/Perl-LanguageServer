@@ -2,7 +2,7 @@
     "name": "perl",
     "displayName": "Perl",
     "description": "Language Server and Debugger for Perl",
-    "version": "2.6.0",
+    "version": "2.6.1",
     "publisher": "richterger",
     "repository": "https://github.com/richterger/Perl-LanguageServer",
     "license": "SEE LICENSE IN LICENSE",
