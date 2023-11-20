@@ -9,9 +9,7 @@ use File::Basename ;
 
 use v5.16;
 
-no if $] >= 5.018, warnings => 'experimental'; # given, when, Smartmatch
 no warnings 'uninitialized' ;
-use feature 'switch'; # perl 5.16
 
 use Compiler::Lexer;
 use Data::Dump qw{dump} ;
@@ -133,14 +131,14 @@ sub parse_perl_source
             delete $state{method_mod} ;
             }
 
-        given ($token -> {name})
+        for($token -> {name})
             {
-            when (['VarDecl', 'OurDecl', 'FunctionDecl'])
+            if (/^(?:VarDecl|OurDecl|FunctionDecl)$/)
                 {
                 $decl = $token -> {data},
                 $declline = $token -> {line} ;
                 }
-            when (/Var$/)
+            elsif (/Var$/)
                 {
                 $top = $decl eq 'our' || !$parent?\@vars:$parent ;
                 push @$top,
@@ -155,7 +153,7 @@ sub parse_perl_source
                 $token -> {line} = $declline if ($decl) ;
                 $decl = undef ;
                 }
-            when ('LeftBrace')
+            elsif ($_ eq 'LeftBrace')
                 {
                 $brace_level++ ;
                 $decl = undef ;
@@ -164,7 +162,7 @@ sub parse_perl_source
                     $vars[-1]{name} =~ s/^\$/%/ ;
                     }
                 }
-            when (['RightBrace', 'SemiColon'])
+            elsif (/^(?:RightBrace|SemiColon)$/)
                 {
                 $brace_level-- if ($token -> {name} eq 'RightBrace') ;
                 if (@stack > 0 && $brace_level == $stack[-1]{brace_level})
@@ -183,14 +181,14 @@ sub parse_perl_source
                     continue ;
                     }
                 }
-            when ('LeftBracket')
+            elsif ($_ eq 'LeftBracket')
                 {
                 if (@vars && $vars[-1]{kind} == SymbolKindVariable)
                     {
                     $vars[-1]{name} =~ s/^\$/@/ ;
                     }
                 }
-            when (['Function', 'Method'])
+            elsif (/^(?:Function|Method)$/)
                 {
                 if ($token -> {data} =~ /^\w/)
                     {
@@ -227,7 +225,7 @@ sub parse_perl_source
                     }
                 $decl = undef ;
                 }
-            when ('ArgumentArray')
+            elsif ($_ eq 'ArgumentArray')
                 {
                 if ($func_param)
                     {
@@ -261,7 +259,7 @@ sub parse_perl_source
                     $func_param = undef ;
                     }
                 }
-            when ('Prototype')
+            elsif ($_ eq 'Prototype')
                 {
                 if ($func_param)
                     {
@@ -285,16 +283,16 @@ sub parse_perl_source
                     $func_param = undef ;
                     }
                 }
-            when (['Package', 'UseDecl'] )
+            elsif (/^(?:Package|UseDecl)$/)
                 {
                 $state{is} = $token -> {data} ;
                 $state{module} = 1 ;
                 }
-            when (['ShortHashDereference', 'ShortArrayDereference'])
+            elsif (/^(?:ShortHashDereference|ShortArrayDereference)$/)
                 {
                 $state{scalar} = '$' ;
                 }
-            when ('Key')
+            elsif ($_ eq 'Key')
                 {
                 if (exists ($state{constant}))
                     {
@@ -319,11 +317,11 @@ sub parse_perl_source
                         } ;
                     $add = $top -> [-1] ;
                     }
-                elsif ($token -> {data} ~~ ['has', 'class_has'])
+                elsif ($token -> {data} =~ /^(?:has|class_has)$/)
                     {
                     $state{has} = 1 ;
                     }
-                elsif ($token -> {data} ~~ ['around', 'before', 'after'])
+                elsif ($token -> {data} =~ /^(?:around|before|after)$/)
                     {
                     $state{method_mod} = 1 ;
                     $decl = $token -> {data},
@@ -340,7 +338,7 @@ sub parse_perl_source
                     $add = $top -> [-1] ;
                     }
                 }
-            when ('RawString')
+            elsif ($_ eq 'RawString')
                 {
                 if (exists ($state{has}))
                     {
@@ -355,7 +353,7 @@ sub parse_perl_source
                     $add = $top -> [-1] ;
                     }
                 }
-            when ('UsedName')
+            elsif ($_ eq 'UsedName')
                 {
                 if ($token -> {data} eq 'constant')
                     {
@@ -367,22 +365,22 @@ sub parse_perl_source
                     $state{ns} = [$token->{data}] ;
                     }
                 }
-            when ('Namespace')
+            elsif($_ eq 'Namespace')
                 {
                 $state{ns} ||= [] ;
                 push @{$state{ns}}, $token -> {data} ;
                 }
-            when ('NamespaceResolver')
+            elsif ($_ eq 'NamespaceResolver')
                 {
                 # make sure it is not matched below
                 }
-            when ('Assign')
+            elsif ($_ eq 'Assign' or $token -> {data} =~ /^\W/)
                 {
-                $decl = undef ;
-                continue ;
-                }
-            when ($token -> {data} =~ /^\W/)
-                {
+                if ($_ eq 'Assign')
+                    {
+                        $decl = undef ;
+                    }
+
                 if (exists ($state{ns}))
                     {
                     if ($state{module})
