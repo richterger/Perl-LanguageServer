@@ -131,306 +131,306 @@ sub parse_perl_source
             delete $state{method_mod} ;
             }
 
-        for($token -> {name})
+        my $name = $token -> {name} ;
+        if ($name =~ /^(?:VarDecl|OurDecl|FunctionDecl)$/)
             {
-            if (/^(?:VarDecl|OurDecl|FunctionDecl)$/)
+            $decl = $token -> {data},
+            $declline = $token -> {line} ;
+            }
+        elsif ($name =~ /Var$/)
+            {
+            $top = $decl eq 'our' || !$parent?\@vars:$parent ;
+            push @$top,
                 {
-                $decl = $token -> {data},
-                $declline = $token -> {line} ;
+                name        => $token -> {data},
+                kind        => SymbolKindVariable,
+                containerName => $decl eq 'our'?$package:$func,
+                ($decl?(definition   => $decl):()),
+                ($decl eq 'my'?(localvar => $decl):()),
+                } ;
+            $add = $top -> [-1] ;
+            $token -> {line} = $declline if ($decl) ;
+            $decl = undef ;
+            }
+        elsif ($name eq 'LeftBrace')
+            {
+            $brace_level++ ;
+            $decl = undef ;
+            if (@vars && $vars[-1]{kind} == SymbolKindVariable)
+                {
+                $vars[-1]{name} =~ s/^\$/%/ ;
                 }
-            elsif (/Var$/)
+            }
+        elsif ($name =~ /^(?:RightBrace|SemiColon)$/)
+            {
+            $brace_level-- if ($name eq 'RightBrace') ;
+            if (@stack > 0 && $brace_level == $stack[-1]{brace_level})
                 {
-                $top = $decl eq 'our' || !$parent?\@vars:$parent ;
+                my $stacktop = pop @stack ;
+                $parent = $stacktop -> {parent} ;
+                $func   = $stacktop -> {func} ;
+                my $symbol = $stacktop -> {symbol} ;
+                my $start_line = $symbol -> {range}{start}{line} // $symbol -> {line} ;
+                $symbol ->  {range} = { start => { line => $start_line, character => 0 }, end => { line => $token -> {line}-1, character => 9999 }}
+                    if (defined ($start_line)) ;
+                }
+            if ($name eq 'SemiColon')
+                {
+                $decl = undef ;
+                # continue does only work in switch statement, which is deprecated and was removed
+                # unclear, if this is still necessray?
+                #continue ;
+                }
+            }
+        elsif ($name eq 'LeftBracket')
+            {
+            if (@vars && $vars[-1]{kind} == SymbolKindVariable)
+                {
+                $vars[-1]{name} =~ s/^\$/@/ ;
+                }
+            }
+        elsif ($name =~ /^(?:Function|Method)$/)
+            {
+            if ($token -> {data} =~ /^\w/)
+                {
+                $top = !$parent?\@vars:$parent ;
                 push @$top,
                     {
                     name        => $token -> {data},
-                    kind        => SymbolKindVariable,
-                    containerName => $decl eq 'our'?$package:$func,
+                    kind        => SymbolKindFunction,
+                    containerName => @stack?$func:$package,
                     ($decl?(definition   => $decl):()),
-                    ($decl eq 'my'?(localvar => $decl):()),
-                    } ;
-                $add = $top -> [-1] ;
-                $token -> {line} = $declline if ($decl) ;
-                $decl = undef ;
-                }
-            elsif ($_ eq 'LeftBrace')
-                {
-                $brace_level++ ;
-                $decl = undef ;
-                if (@vars && $vars[-1]{kind} == SymbolKindVariable)
+                    }  ;
+                $func_param = $add = $top -> [-1] ;
+                if ($decl)
                     {
-                    $vars[-1]{name} =~ s/^\$/%/ ;
-                    }
-                }
-            elsif (/^(?:RightBrace|SemiColon)$/)
-                {
-                $brace_level-- if ($token -> {name} eq 'RightBrace') ;
-                if (@stack > 0 && $brace_level == $stack[-1]{brace_level})
-                    {
-                    my $stacktop = pop @stack ;
-                    $parent = $stacktop -> {parent} ;
-                    $func   = $stacktop -> {func} ;
-                    my $symbol = $stacktop -> {symbol} ;
-                    my $start_line = $symbol -> {range}{start}{line} // $symbol -> {line} ;
-                    $symbol ->  {range} = { start => { line => $start_line, character => 0 }, end => { line => $token -> {line}-1, character => 9999 }}
-                        if (defined ($start_line)) ;
-                    }
-                if ($token -> {name} eq 'SemiColon')
-                    {
-                    $decl = undef ;
-                    continue ;
-                    }
-                }
-            elsif ($_ eq 'LeftBracket')
-                {
-                if (@vars && $vars[-1]{kind} == SymbolKindVariable)
-                    {
-                    $vars[-1]{name} =~ s/^\$/@/ ;
-                    }
-                }
-            elsif (/^(?:Function|Method)$/)
-                {
-                if ($token -> {data} =~ /^\w/)
-                    {
-                    $top = !$parent?\@vars:$parent ;
-                    push @$top,
+                    push @stack,
                         {
-                        name        => $token -> {data},
-                        kind        => SymbolKindFunction,
-                        containerName => @stack?$func:$package,
-                        ($decl?(definition   => $decl):()),
-                        }  ;
-                    $func_param = $add = $top -> [-1] ;
-                    if ($decl)
+                        brace_level => $brace_level,
+                        parent      => $parent,
+                        func        => $func,
+                        'package'   => $package,
+                        symbol      => $add,
+                        } ;
+                    $token -> {line} = $declline ;
+                    $func = $token -> {data} ;
+                    $parent = $top -> [-1]{children} ||= [] ;
+                    }
+                my $src = $source[$token -> {line}-1] ;
+                my $i ;
+                if ($src && ($i = index($src, $func) >= 0))
+                    {
+                    $beginchar = $i + 1 ;
+                    $endchar   = $i + 1 + length ($func) ;
+                    }
+                }
+            $decl = undef ;
+            }
+        elsif ($name eq 'ArgumentArray')
+            {
+            if ($func_param)
+                {
+                my @params ;
+                if ($tokens -> [$token_ndx - 1]{name} eq 'Assign' &&
+                    $tokens -> [$token_ndx - 2]{name} eq 'RightParenthesis')
+                    {
+                    for (my $i = $token_ndx - 3; $i >= 0; $i--)
                         {
-                        push @stack,
-                            {
-                            brace_level => $brace_level,
-                            parent      => $parent,
-                            func        => $func,
-                            'package'   => $package,
-                            symbol      => $add,
-                            } ;
-                        $token -> {line} = $declline ;
-                        $func = $token -> {data} ;
-                        $parent = $top -> [-1]{children} ||= [] ;
+                        next if ($tokens -> [$i]{name} eq 'Comma') ;
+                        last if ($tokens -> [$i]{name} !~ /Var$/) ;
+                        push @params, $tokens -> [$i]{data} ;
                         }
-                    my $src = $source[$token -> {line}-1] ;
-                    my $i ;
-                    if ($src && ($i = index($src, $func) >= 0))
-                        {
-                        $beginchar = $i + 1 ;
-                        $endchar   = $i + 1 + length ($func) ;
-                        }
-                    }
-                $decl = undef ;
-                }
-            elsif ($_ eq 'ArgumentArray')
-                {
-                if ($func_param)
-                    {
-                    my @params ;
-                    if ($tokens -> [$token_ndx - 1]{name} eq 'Assign' &&
-                        $tokens -> [$token_ndx - 2]{name} eq 'RightParenthesis')
-                        {
-                        for (my $i = $token_ndx - 3; $i >= 0; $i--)
-                            {
-                            next if ($tokens -> [$i]{name} eq 'Comma') ;
-                            last if ($tokens -> [$i]{name} !~ /Var$/) ;
-                            push @params, $tokens -> [$i]{data} ;
-                            }
-                        my $func_doc = $self -> _get_docu (\@source, $func_param -> {range}{start}{line} // $func_param -> {line}) ;
-                        my @parameters ;
-                        foreach my $p (reverse @params)
-                            {
-                            push @parameters,
-                                {
-                                label => $p,
-                                } ;
-                            }
-                        $func_param -> {detail} = '(' . join (',', reverse @params) . ')' ;
-                        $func_param -> {signature} =
-                            {
-                            label => $func_param -> {name} . $func_param -> {detail},
-                            documentation => $func_doc,
-                            parameters => \@parameters
-                            } ;
-                        }
-                    $func_param = undef ;
-                    }
-                }
-            elsif ($_ eq 'Prototype')
-                {
-                if ($func_param)
-                    {
-                    my @params = split /\s*,\s*/, $token -> {data} ;
                     my $func_doc = $self -> _get_docu (\@source, $func_param -> {range}{start}{line} // $func_param -> {line}) ;
                     my @parameters ;
-                    foreach my $p (@params)
+                    foreach my $p (reverse @params)
                         {
                         push @parameters,
                             {
                             label => $p,
                             } ;
                         }
-                    $func_param -> {detail} = '(' . join (',', @params) . ')' ;
+                    $func_param -> {detail} = '(' . join (',', reverse @params) . ')' ;
                     $func_param -> {signature} =
                         {
                         label => $func_param -> {name} . $func_param -> {detail},
                         documentation => $func_doc,
                         parameters => \@parameters
                         } ;
-                    $func_param = undef ;
                     }
+                $func_param = undef ;
                 }
-            elsif (/^(?:Package|UseDecl)$/)
+            }
+        elsif ($name eq 'Prototype')
+            {
+            if ($func_param)
                 {
-                $state{is} = $token -> {data} ;
-                $state{module} = 1 ;
-                }
-            elsif (/^(?:ShortHashDereference|ShortArrayDereference)$/)
-                {
-                $state{scalar} = '$' ;
-                }
-            elsif ($_ eq 'Key')
-                {
-                if (exists ($state{constant}))
+                my @params = split /\s*,\s*/, $token -> {data} ;
+                my $func_doc = $self -> _get_docu (\@source, $func_param -> {range}{start}{line} // $func_param -> {line}) ;
+                my @parameters ;
+                foreach my $p (@params)
                     {
-                    $top = \@vars ;
-                    push @$top,
+                    push @parameters,
                         {
-                        name        => $token -> {data},
-                        kind        => SymbolKindConstant,
-                        containerName => $package,
-                        definition   => 1,
+                        label => $p,
                         } ;
-                    $add = $top -> [-1] ;
                     }
-                elsif (exists ($state{scalar}))
+                $func_param -> {detail} = '(' . join (',', @params) . ')' ;
+                $func_param -> {signature} =
                     {
-                    $top = $decl eq 'our' || !$parent?\@vars:$parent ;
-                    push @$top,
-                        {
-                        name        => $state{scalar} . $token -> {data},
-                        kind        => SymbolKindVariable,
-                        containerName => $decl eq 'our'?$package:$func,
-                        } ;
-                    $add = $top -> [-1] ;
-                    }
-                elsif ($token -> {data} =~ /^(?:has|class_has)$/)
-                    {
-                    $state{has} = 1 ;
-                    }
-                elsif ($token -> {data} =~ /^(?:around|before|after)$/)
-                    {
-                    $state{method_mod} = 1 ;
-                    $decl = $token -> {data},
-                    $declline = $token -> {line} ;
-                    }
-                elsif ($token -> {data} =~ /^[a-z_][a-z0-9_]+$/i)
-                    {
-                    $top = \@vars ;
-                    push @$top,
-                        {
-                        name        => $token -> {data},
-                        kind        => SymbolKindFunction,
-                        }  ;
-                    $add = $top -> [-1] ;
-                    }
+                    label => $func_param -> {name} . $func_param -> {detail},
+                    documentation => $func_doc,
+                    parameters => \@parameters
+                    } ;
+                $func_param = undef ;
                 }
-            elsif ($_ eq 'RawString')
+            }
+        elsif ($name =~ /^(?:Package|UseDecl)$/)
+            {
+            $state{is} = $token -> {data} ;
+            $state{module} = 1 ;
+            }
+        elsif ($name =~ /^(?:ShortHashDereference|ShortArrayDereference)$/)
+            {
+            $state{scalar} = '$' ;
+            }
+        elsif ($name eq 'Key')
+            {
+            if (exists ($state{constant}))
                 {
-                if (exists ($state{has}))
+                $top = \@vars ;
+                push @$top,
                     {
-                    $top = \@vars ;
-                    push @$top,
-                        {
-                        name        => $token -> {data},
-                        kind        => SymbolKindProperty,
-                        containerName => $package,
-                        definition   => 1,
-                        } ;
-                    $add = $top -> [-1] ;
-                    }
+                    name        => $token -> {data},
+                    kind        => SymbolKindConstant,
+                    containerName => $package,
+                    definition   => 1,
+                    } ;
+                $add = $top -> [-1] ;
                 }
-            elsif ($_ eq 'UsedName')
+            elsif (exists ($state{scalar}))
                 {
-                if ($token -> {data} eq 'constant')
+                $top = $decl eq 'our' || !$parent?\@vars:$parent ;
+                push @$top,
                     {
-                    delete $state{module} ;
-                    $state{constant} = 1 ;
-                    }
-                else
+                    name        => $state{scalar} . $token -> {data},
+                    kind        => SymbolKindVariable,
+                    containerName => $decl eq 'our'?$package:$func,
+                    } ;
+                $add = $top -> [-1] ;
+                }
+            elsif ($token -> {data} =~ /^(?:has|class_has)$/)
+                {
+                $state{has} = 1 ;
+                }
+            elsif ($token -> {data} =~ /^(?:around|before|after)$/)
+                {
+                $state{method_mod} = 1 ;
+                $decl = $token -> {data},
+                $declline = $token -> {line} ;
+                }
+            elsif ($token -> {data} =~ /^[a-z_][a-z0-9_]+$/i)
+                {
+                $top = \@vars ;
+                push @$top,
                     {
-                    $state{ns} = [$token->{data}] ;
-                    }
+                    name        => $token -> {data},
+                    kind        => SymbolKindFunction,
+                    }  ;
+                $add = $top -> [-1] ;
                 }
-            elsif($_ eq 'Namespace')
+            }
+        elsif ($name eq 'RawString')
+            {
+            if (exists ($state{has}))
                 {
-                $state{ns} ||= [] ;
-                push @{$state{ns}}, $token -> {data} ;
-                }
-            elsif ($_ eq 'NamespaceResolver')
-                {
-                # make sure it is not matched below
-                }
-            elsif ($_ eq 'Assign' or $token -> {data} =~ /^\W/)
-                {
-                if ($_ eq 'Assign')
+                $top = \@vars ;
+                push @$top,
                     {
-                        $decl = undef ;
-                    }
+                    name        => $token -> {data},
+                    kind        => SymbolKindProperty,
+                    containerName => $package,
+                    definition   => 1,
+                    } ;
+                $add = $top -> [-1] ;
+                }
+            }
+        elsif ($name eq 'UsedName')
+            {
+            if ($token -> {data} eq 'constant')
+                {
+                delete $state{module} ;
+                $state{constant} = 1 ;
+                }
+            else
+                {
+                $state{ns} = [$token->{data}] ;
+                }
+            }
+        elsif($name eq 'Namespace')
+            {
+            $state{ns} ||= [] ;
+            push @{$state{ns}}, $token -> {data} ;
+            }
+        elsif ($name eq 'NamespaceResolver')
+            {
+            # make sure it is not matched below
+            }
+        elsif ($name eq 'Assign' or $token -> {data} =~ /^\W/)
+            {
+            if ($name eq 'Assign')
+                {
+                $decl = undef ;
+                }
 
-                if (exists ($state{ns}))
+            if (exists ($state{ns}))
+                {
+                if ($state{module})
                     {
-                    if ($state{module})
+                    my $def ;
+                    if ($state{is} eq 'package')
                         {
-                        my $def ;
-                        if ($state{is} eq 'package')
+                        $def = 1 ;
+                        $package = join ('::', @{$state{ns}}) ;
+                        $top = \@vars ;
+                        push @$top,
                             {
-                            $def = 1 ;
-                            $package = join ('::', @{$state{ns}}) ;
-                            $top = \@vars ;
-                            push @$top,
-                                {
-                                name        => $package,
-                                kind        => SymbolKindModule,
-                                #containerName => join ('::', @{$state{ns}}),
-                                #($def?(definition   => $def):()),
-                                definition => 1,
-                                } ;
-                            $add = $top -> [-1] ;
-                            }
-                        else
-                            {
-                            my $name = pop @{$state{ns}} ;
-                            $top = \@vars ;
-                            push @$top,
-                                {
-                                name        => $name,
-                                kind        => SymbolKindModule,
-                                containerName => join ('::', @{$state{ns}}),
-                                ($def?(definition   => $def):()),
-                                } ;
-                            $add = $top -> [-1] ;
-                            }
+                            name        => $package,
+                            kind        => SymbolKindModule,
+                            #containerName => join ('::', @{$state{ns}}),
+                            #($def?(definition   => $def):()),
+                            definition => 1,
+                            } ;
+                        $add = $top -> [-1] ;
                         }
                     else
                         {
-                        my $name = shift @{$state{ns}} ;
+                        my $name = pop @{$state{ns}} ;
                         $top = \@vars ;
                         push @$top,
                             {
                             name        => $name,
-                            kind        => SymbolKindFunction,
+                            kind        => SymbolKindModule,
                             containerName => join ('::', @{$state{ns}}),
+                            ($def?(definition   => $def):()),
                             } ;
                         $add = $top -> [-1] ;
                         }
                     }
-
-                %state = () ;
+                else
+                    {
+                    my $name = shift @{$state{ns}} ;
+                    $top = \@vars ;
+                    push @$top,
+                        {
+                        name        => $name,
+                        kind        => SymbolKindFunction,
+                        containerName => join ('::', @{$state{ns}}),
+                        } ;
+                    $add = $top -> [-1] ;
+                    }
                 }
+
+            %state = () ;
             }
         if ($add)
             {
