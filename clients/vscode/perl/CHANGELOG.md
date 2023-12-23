@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.6.2   `2023-12-23`
+
+- avoid given/when/smartmatch because these features are deprecated in perl 5.38 (#199) [real-dam]
+
 ## 2.6.1   `2023-07-26`
 
 - Fix: Formatting with perltidy was broken in 2.6.0

@@ -33,7 +33,7 @@ Version 2.5.0
 
 =cut
 
-our $VERSION = '2.6.1';
+our $VERSION = '2.6.2';
 
 
 =head1 SYNOPSIS
@@ -1096,6 +1096,14 @@ CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THE PACKAGE,
 EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 =head1 Change Log
+
+=head2 2.6.2   C<2023-12-23>
+
+=over
+
+=item * avoid given/when/smartmatch because these features are deprecated in perl 5.38 (#199) [real-dam]
+
+=back
 
 =head2 2.6.1   C<2023-07-26>
 
