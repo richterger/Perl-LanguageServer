@@ -178,8 +178,8 @@ sub parse_perl_source
                 {
                 $decl = undef ;
                 # continue does only work in switch statement, which is deprecated and was removed
-                # unclear, if this is still necessray?
-                #continue ;
+                # using goto instead of continue
+                goto FINISH_BLOCK;
                 }
             }
         elsif ($name eq 'LeftBracket')
@@ -382,6 +382,7 @@ sub parse_perl_source
                 $decl = undef ;
                 }
 
+            FINISH_BLOCK:
             if (exists ($state{ns}))
                 {
                 if ($state{module})
