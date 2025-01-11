@@ -59,7 +59,7 @@ BEGIN {
   for (my $i=0; $i <= $#ARGV; $i++) {
     if ($ARGV[$i] eq "<" && $i < $#ARGV) {
       # open stdin from file
-      open STDIN, "<", $ARGV[$i+1] or die "open stdin";
+      open STDIN, "<", $ARGV[$i+1] or die "open stdin from \"$ARGV[$i+1]\"";
       # remove from ARGV
       splice @ARGV, $i, 2;
     }
