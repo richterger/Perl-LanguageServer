@@ -271,8 +271,15 @@ sub signal
     return if (!$self -> pid) ;
 
     $self -> logger ("Send signal $signal to debuggee\n") ;
-
-    kill $signal, $self -> pid ;
+    if ($self->sudo_user)
+        {
+        my $cmd = "sudo -u ".$self->sudo_user." kill -s $signal `pgrep -P ".$self -> pid."`\n" ;
+        $self -> run_async ([$cmd]) ;
+        }
+    else
+        {
+        kill $signal, $self -> pid ;
+        }
     }
 
 # ---------------------------------------------------------------------------
