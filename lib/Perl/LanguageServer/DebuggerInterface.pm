@@ -1494,7 +1494,7 @@ sub req_source
     my ($class, $params) = @_ ;
 
     my $filename    = $params -> {filename} ;
-    my $source = join("", @{$main::{'_<'.$filename}});
+    my $source = join("", @{$main::{'_<'.$filename} // ["... source not found: $filename ..."]});
     $source =~ s/\n;$//;
 	  
     return { content => $source };
